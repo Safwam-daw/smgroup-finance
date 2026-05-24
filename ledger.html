@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — السجل المحاسبي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>📒 السجل المحاسبي</h2><p>جميع العمليات المالية</p></div>
+      <button class="btn btn-primary" onclick="UI.exportExcel('ledger-table','Daily_Ledger')">📊 تصدير Excel</button>
+    </div>
+    <div class="card" style="margin-bottom:16px;padding:14px 18px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>نوع العملية</label>
+          <select id="f-type" onchange="renderLedger()">
+            <option value="all">الكل</option><option value="dep">إيداع</option>
+            <option value="wit">سحب</option><option value="trf">تحويل</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>العملة</label>
+          <select id="f-cur" onchange="renderLedger()">
+            <option value="all">الكل</option><option value="usd">دولار</option><option value="eur">يورو</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>بحث بالحساب</label>
+          <input type="text" id="f-acc" placeholder="كود أو اسم…" oninput="renderLedger()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+          <input type="date" id="f-from" onchange="renderLedger()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+          <input type="date" id="f-to" onchange="renderLedger()">
+        </div>
+      </div>
+    </div>
+    <div id="ledger-totals" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;"></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tbl-wrap" style="border:none;border-radius:0;margin-top:0;">
+        <table id="ledger-table">
+          <thead><tr><th>الوقت</th><th>النوع</th><th>الحساب</th><th>العملة</th><th>المبلغ</th><th>سعر الصرف</th><th>بواسطة</th></tr></thead>
+          <tbody id="ledger-tbody"><tr><td colspan="7" class="empty-state">جاري التحميل…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="ledger-count" style="text-align:center;margin-top:12px;font-size:0.74rem;color:var(--text3);"></div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+let _allAccounts = [];
+const typeLabels = {dep:'إيداع',wit:'سحب',trf:'تحويل'};
+
+(async () => {
+  if (!await initApp('ledger')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  _allAccounts = await Accounts.getAll();
+  await renderLedger();
+})();
+
+async function renderLedger() {
+  UI.showLoading(true);
+  const fType = document.getElementById('f-type').value;
+  const fCur  = document.getElementById('f-cur').value;
+  const fAcc  = document.getElementById('f-acc').value.toLowerCase();
+  const fFrom = document.getElementById('f-from').value;
+  const fTo   = document.getElementById('f-to').value;
+
+  const filters = {};
+  if (fType !== 'all') filters.type = fType;
+  if (fCur  !== 'all') filters.cur  = fCur;
+  if (fFrom) filters.from_date = fFrom;
+  if (fTo)   filters.to_date   = fTo + 'T23:59:59';
+
+  let rows = await Transactions.getAll(filters);
+
+  if (fAcc) {
+    rows = rows.filter(t => {
+      const ids = [t.acc, t.from, t.to].filter(Boolean);
+      const names = ids.map(id => { const a=_allAccounts.find(x=>x.id===id); return a?a.name.toLowerCase():''; });
+      return ids.some(i=>i.toLowerCase().includes(fAcc)) || names.some(n=>n.includes(fAcc));
+    });
+  }
+
+  let totDep={usd:0,eur:0}, totWit={usd:0,eur:0};
+  rows.forEach(t => {
+    if(t.type==='dep') totDep[t.cur]+=parseFloat(t.amt);
+    if(t.type==='wit') totWit[t.cur]+=parseFloat(t.amt);
+  });
+
+  document.getElementById('ledger-totals').innerHTML = `
+    <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--green);">
+      <div class="stat-label">إجمالي الإيداعات</div>
+      <div style="font-size:0.88rem;font-weight:700;color:var(--green);margin-top:4px;">
+        $${totDep.usd.toFixed(2)} | €${totDep.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--red);">
+      <div class="stat-label">إجمالي السحوبات</div>
+      <div style="font-size:0.88rem;font-weight:700;color:var(--red);margin-top:4px;">
+        $${totWit.usd.toFixed(2)} | €${totWit.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--blue);">
+      <div class="stat-label">عدد العمليات</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--blue);margin-top:4px;">${rows.length}</div>
+    </div>`;
+
+  const tbody = document.getElementById('ledger-tbody');
+  tbody.innerHTML = rows.length
+    ? rows.map(t => {
+        const sym = t.cur==='usd'?'$':'€';
+        const color = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'}[t.type]||'var(--text)';
+        let accStr;
+        if(t.type==='trf') {
+          const fa=_allAccounts.find(x=>x.id===t.from), ta=_allAccounts.find(x=>x.id===t.to);
+          accStr=`${UI.escapeHtml(fa?.name||t.from)} <span style="color:var(--text3);">←</span> ${UI.escapeHtml(ta?.name||t.to)}`;
+        } else {
+          const a=_allAccounts.find(x=>x.id===t.acc);
+          accStr=`<span style="color:var(--text3);">${UI.escapeHtml(t.acc)}</span> ${UI.escapeHtml(a?.name||'')}`;
+        }
+        return `<tr>
+          <td style="font-size:0.73rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+          <td><span class="badge badge-${t.type}">${typeLabels[t.type]}</span></td>
+          <td>${accStr}</td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td style="font-weight:700;color:${color};">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="color:var(--text3);font-size:0.76rem;">${t.rate&&parseFloat(t.rate)!==1?'×'+t.rate:'—'}</td>
+          <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" class="empty-state"><div class="empty-icon">📒</div>لا توجد عمليات مطابقة</td></tr>';
+
+  document.getElementById('ledger-count').textContent = `عرض ${rows.length} عملية`;
+  UI.showLoading(false);
+}
+</script>
+</body>
+</html>

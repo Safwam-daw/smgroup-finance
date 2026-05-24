@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — لوحة التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>لوحة التحكم</h2><p>ملخص مالي سريع</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 تحديث</button>
+    </div>
+    <div class="grid-3" id="summary-cards" style="margin-bottom:20px;"></div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <h3>آخر العمليات</h3>
+        <div class="tbl-wrap">
+          <table id="recent-table">
+            <thead><tr><th>الوقت</th><th>النوع</th><th>المبلغ</th></tr></thead>
+            <tbody id="recent-tbody"><tr><td colspan="3" class="empty-state">جاري التحميل…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⚠️ حسابات مدينة</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>الحساب</th><th>رصيد $</th><th>رصيد €</th></tr></thead>
+            <tbody id="debtor-tbody"><tr><td colspan="3" class="empty-state">جاري التحميل…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/accounts.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  if (!await initApp('dashboard')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  await loadAll();
+})();
+
+async function loadAll() {
+  UI.showLoading(true);
+  try {
+    const [accounts, txns] = await Promise.all([Accounts.getAll(), Transactions.getAll()]);
+    await renderSummary(accounts, txns);
+    renderRecent(txns);
+    await renderDebtors(accounts);
+  } finally { UI.showLoading(false); }
+}
+
+async function renderSummary(accounts, txns) {
+  const today = txns.filter(t => new Date(t.date).toDateString() === new Date().toDateString()).length;
+  let debtorCount = 0;
+  for (const a of accounts) {
+    const usd = await Transactions.getBalance(a.id,'usd');
+    const eur = await Transactions.getBalance(a.id,'eur');
+    if (usd < 0 || eur < 0) debtorCount++;
+  }
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="stat-card" style="border-right:3px solid var(--gold);">
+      <div class="stat-label">إجمالي الحسابات</div>
+      <div class="stat-value" style="color:var(--gold);">${accounts.length}</div>
+    </div>
+    <div class="stat-card" style="border-right:3px solid var(--blue);">
+      <div class="stat-label">العمليات اليوم</div>
+      <div class="stat-value" style="color:var(--blue);">${today}</div>
+    </div>
+    <div class="stat-card" style="border-right:3px solid var(--red);">
+      <div class="stat-label">حسابات مدينة</div>
+      <div class="stat-value" style="color:var(--red);">${debtorCount}</div>
+    </div>`;
+}
+
+function renderRecent(txns) {
+  const rows = txns.slice(0,8);
+  const labels = {dep:'إيداع',wit:'سحب',trf:'تحويل'};
+  const colors = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'};
+  document.getElementById('recent-tbody').innerHTML = rows.length
+    ? rows.map(t => `<tr>
+        <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+        <td><span class="badge badge-${t.type}">${labels[t.type]||t.type}</span></td>
+        <td style="font-weight:600;color:${colors[t.type]||'var(--text)'};">${parseFloat(t.amt).toFixed(2)} ${t.cur.toUpperCase()}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" class="empty-state">لا توجد عمليات</td></tr>';
+}
+
+async function renderDebtors(accounts) {
+  const rows = [];
+  for (const a of accounts) {
+    const usd = await Transactions.getBalance(a.id,'usd');
+    const eur = await Transactions.getBalance(a.id,'eur');
+    if (usd < 0 || eur < 0) rows.push({a,usd,eur});
+  }
+  document.getElementById('debtor-tbody').innerHTML = rows.length
+    ? rows.map(({a,usd,eur}) => `<tr class="row-debtor">
+        <td><b>${UI.escapeHtml(a.id)}</b> — ${UI.escapeHtml(a.name)}</td>
+        <td style="color:${usd<0?'var(--red)':'var(--text)'};">${usd.toFixed(2)}</td>
+        <td style="color:${eur<0?'var(--red)':'var(--text)'};">${eur.toFixed(2)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" class="empty-state">لا توجد حسابات مدينة ✅</td></tr>';
+}
+</script>
+</body>
+</html>

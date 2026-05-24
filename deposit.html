@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — إيداع نقدي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header"><div><h2>💵 إيداع نقدي</h2><p>إضافة رصيد لحساب</p></div></div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>بيانات الإيداع</h3>
+        <div class="form-group">
+          <label>ابحث عن الحساب</label>
+          <div class="search-wrap">
+            <input type="text" id="dep-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
+            <div id="dep-res" class="search-dropdown"></div>
+          </div>
+          <input type="hidden" id="dep-id">
+        </div>
+        <div class="form-group"><label>العملة</label>
+          <select id="dep-cur" onchange="updatePreview()">
+            <option value="usd">🇺🇸 دولار USD</option>
+            <option value="eur">🇪🇺 يورو EUR</option>
+          </select>
+        </div>
+        <div class="form-group"><label>المبلغ</label>
+          <input type="number" id="dep-amount" placeholder="0.00" min="0" step="0.01" oninput="updatePreview()">
+        </div>
+        <div id="dep-preview" style="display:none;background:var(--green-dim);border:1px solid var(--green);
+          border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;"></div>
+        <button class="btn btn-primary btn-full" onclick="doDeposit()">✅ تأكيد الإيداع</button>
+      </div>
+      <div class="card">
+        <h3>آخر الإيداعات</h3>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>الوقت</th><th>الحساب</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
+          <tbody id="recent-dep-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+(async () => {
+  if (!await initApp('deposit')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  UI.initSearch('dep');
+  document.getElementById('dep-res').addEventListener('click', () => setTimeout(updatePreview, 100));
+  document.getElementById('dep-cur').addEventListener('change', updatePreview);
+  await renderRecent();
+})();
+
+async function updatePreview() {
+  const id  = document.getElementById('dep-id').value;
+  const cur = document.getElementById('dep-cur').value;
+  const amt = parseFloat(document.getElementById('dep-amount').value) || 0;
+  const preview = document.getElementById('dep-preview');
+  if (!id || amt <= 0) { preview.style.display='none'; return; }
+  const sym = cur==='usd'?'$':'€';
+  const before = await Transactions.getBalance(id, cur);
+  const after  = before + amt;
+  preview.innerHTML = `<span style="color:var(--text2);">الرصيد الحالي:</span> <b>${sym}${before.toFixed(2)}</b>
+    &nbsp;→&nbsp; <span style="color:var(--text2);">الجديد:</span>
+    <b style="color:var(--green);">${sym}${after.toFixed(2)}</b>`;
+  preview.style.display = 'block';
+}
+
+async function doDeposit() {
+  const id  = document.getElementById('dep-id').value;
+  const cur = document.getElementById('dep-cur').value;
+  const amt = parseFloat(document.getElementById('dep-amount').value);
+  UI.showLoading(true);
+  const result = await Transactions.deposit(id, cur, amt);
+  UI.showLoading(false);
+  if (result.ok) {
+    UI.toast('تم الإيداع بنجاح ✅');
+    document.getElementById('dep-search').value='';
+    document.getElementById('dep-id').value='';
+    document.getElementById('dep-amount').value='';
+    document.getElementById('dep-preview').style.display='none';
+    await UI.updateTreasury();
+    await renderRecent();
+  } else { UI.toast(result.error,'error'); }
+}
+
+async function renderRecent() {
+  const txns = (await Transactions.getAll({type:'dep'})).slice(0,10);
+  document.getElementById('recent-dep-tbody').innerHTML = txns.length
+    ? (await Promise.all(txns.map(async t => {
+        const acc = await Accounts.getById(t.acc);
+        const sym = t.cur==='usd'?'$':'€';
+        return `<tr>
+          <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+          <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>
+          <td style="color:var(--green);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }))).join('')
+    : '<tr><td colspan="4" class="empty-state">لا توجد إيداعات</td></tr>';
+}
+</script>
+</body>
+</html>

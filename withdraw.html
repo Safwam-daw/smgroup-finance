@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — سحب نقدي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header"><div><h2>💸 سحب نقدي</h2><p>خصم رصيد من حساب</p></div></div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>بيانات السحب</h3>
+        <div class="form-group">
+          <label>ابحث عن الحساب</label>
+          <div class="search-wrap">
+            <input type="text" id="wit-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
+            <div id="wit-res" class="search-dropdown"></div>
+          </div>
+          <input type="hidden" id="wit-id">
+        </div>
+        <div class="form-group"><label>العملة</label>
+          <select id="wit-cur" onchange="updatePreview()">
+            <option value="usd">🇺🇸 دولار USD</option>
+            <option value="eur">🇪🇺 يورو EUR</option>
+          </select>
+        </div>
+        <div class="form-group"><label>المبلغ</label>
+          <input type="number" id="wit-amount" placeholder="0.00" min="0" step="0.01" oninput="updatePreview()">
+        </div>
+        <div id="wit-preview" style="display:none;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;"></div>
+        <button class="btn btn-danger btn-full" onclick="doWithdraw(false)">⚠️ تأكيد السحب</button>
+      </div>
+      <div class="card">
+        <h3>آخر السحوبات</h3>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>الوقت</th><th>الحساب</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
+          <tbody id="recent-wit-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Overdraft Modal -->
+<div id="overdraft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:420px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+    <h3>رصيد غير كافٍ</h3>
+    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;"></p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
+      <button class="btn btn-danger" onclick="doWithdraw(true)">السحب بالسالب</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+(async () => {
+  if (!await initApp('withdraw')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  UI.initSearch('wit');
+  document.getElementById('wit-res').addEventListener('click', () => setTimeout(updatePreview, 100));
+  document.getElementById('wit-cur').addEventListener('change', updatePreview);
+  await renderRecent();
+})();
+
+async function updatePreview() {
+  const id  = document.getElementById('wit-id').value;
+  const cur = document.getElementById('wit-cur').value;
+  const amt = parseFloat(document.getElementById('wit-amount').value) || 0;
+  const preview = document.getElementById('wit-preview');
+  if (!id || amt <= 0) { preview.style.display='none'; return; }
+  const sym = cur==='usd'?'$':'€';
+  const before = await Transactions.getBalance(id, cur);
+  const after  = before - amt;
+  const over   = after < 0;
+  preview.innerHTML = `<span style="color:var(--text2);">الرصيد الحالي:</span> <b>${sym}${before.toFixed(2)}</b>
+    &nbsp;→&nbsp; <span style="color:var(--text2);">الجديد:</span>
+    <b style="color:${over?'var(--red)':'var(--text)'};">${sym}${after.toFixed(2)}</b>
+    ${over?'<span style="color:var(--red);font-size:0.75rem;"> ⚠️ سالب</span>':''}`;
+  preview.style.background = over?'var(--red-dim)':'rgba(34,197,94,0.06)';
+  preview.style.border = over?'1px solid var(--red)':'1px solid var(--green)';
+  preview.style.display = 'block';
+}
+
+async function doWithdraw(force) {
+  const id  = document.getElementById('wit-id').value;
+  const cur = document.getElementById('wit-cur').value;
+  const amt = parseFloat(document.getElementById('wit-amount').value);
+  UI.showLoading(true);
+  const result = await Transactions.withdraw(id, cur, amt, force);
+  UI.showLoading(false);
+  if (result.ok) {
+    UI.toast('تم السحب بنجاح');
+    closeOverdraft();
+    document.getElementById('wit-search').value='';
+    document.getElementById('wit-id').value='';
+    document.getElementById('wit-amount').value='';
+    document.getElementById('wit-preview').style.display='none';
+    await UI.updateTreasury();
+    await renderRecent();
+  } else if (result.needsConfirm) {
+    const sym = cur==='usd'?'$':'€';
+    document.getElementById('overdraft-msg').innerHTML =
+      `الرصيد الحالي: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
+       المبلغ المطلوب: <b>${sym}${amt.toFixed(2)}</b><br>
+       سيصبح الرصيد: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+    document.getElementById('overdraft-modal').style.display='flex';
+  } else { UI.toast(result.error,'error'); }
+}
+function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
+
+async function renderRecent() {
+  const txns = (await Transactions.getAll({type:'wit'})).slice(0,10);
+  document.getElementById('recent-wit-tbody').innerHTML = txns.length
+    ? (await Promise.all(txns.map(async t => {
+        const acc = await Accounts.getById(t.acc);
+        const sym = t.cur==='usd'?'$':'€';
+        return `<tr>
+          <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+          <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>
+          <td style="color:var(--red);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }))).join('')
+    : '<tr><td colspan="4" class="empty-state">لا توجد سحوبات</td></tr>';
+}
+</script>
+</body>
+</html>

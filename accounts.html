@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — إدارة الحسابات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>إدارة الحسابات</h2><p>إنشاء ومتابعة حسابات الزبائن والشركات</p></div>
+      <button class="btn btn-primary" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 تصدير Excel</button>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card" id="create-card">
+        <h3>➕ فتح حساب جديد</h3>
+        <div class="form-group"><label>نوع الحساب</label>
+          <select id="acc-type" onchange="refreshCode()"><option value="customer">زبون</option><option value="company">شركة</option></select>
+        </div>
+        <div class="form-group"><label>كود الحساب (تلقائي)</label><input type="text" id="acc-code" readonly></div>
+        <div class="form-group"><label>اسم الحساب</label><input type="text" id="acc-name" placeholder="اسم الزبون أو الشركة"></div>
+        <button class="btn btn-primary btn-full" onclick="doCreate()">💾 حفظ الحساب</button>
+      </div>
+      <div class="card">
+        <h3>🔍 بحث وتصفية</h3>
+        <div class="form-group"><label>بحث سريع</label>
+          <input type="text" id="filter-input" placeholder="اسم أو كود…" oninput="renderAccounts()"></div>
+        <div class="form-group"><label>نوع الحساب</label>
+          <select id="filter-type" onchange="renderAccounts()">
+            <option value="all">الكل</option><option value="customer">زبائن فقط</option><option value="company">شركات فقط</option>
+          </select></div>
+        <div class="form-group"><label>حالة الرصيد</label>
+          <select id="filter-bal" onchange="renderAccounts()">
+            <option value="all">الكل</option><option value="debtor">مدينون فقط ⚠️</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">قائمة الحسابات</h3>
+        <span id="acc-count" style="font-size:0.75rem;color:var(--text3);"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table id="acc-table">
+          <thead><tr><th>الكود</th><th>الاسم</th><th>النوع</th><th>رصيد $</th><th>رصيد €</th><th>كشف</th></tr></thead>
+          <tbody id="acc-tbody"><tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Statement Modal -->
+    <div id="stmt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+      <div class="card" style="width:100%;max-width:680px;max-height:85vh;overflow-y:auto;position:relative;">
+        <button onclick="closeStmt()" style="position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
+        <h3 id="stmt-title">كشف الحساب</h3>
+        <div class="tbl-wrap" style="margin-top:14px;">
+          <table id="stmt-table">
+            <thead><tr><th>التاريخ</th><th>النوع</th><th>العملة</th><th>دين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+            <tbody id="stmt-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary" onclick="UI.exportExcel('stmt-table','Account_Statement')">📊 تصدير Excel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+let _allAccounts = [];
+
+(async () => {
+  if (!await initApp('accounts')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  if (!Auth.isAdmin()) document.getElementById('create-card').style.display = 'none';
+  await refreshCode();
+  await renderAccounts();
+})();
+
+async function refreshCode() {
+  document.getElementById('acc-code').value = await Accounts.generateCode(document.getElementById('acc-type').value);
+}
+
+async function doCreate() {
+  const type = document.getElementById('acc-type').value;
+  const name = document.getElementById('acc-name').value;
+  UI.showLoading(true);
+  const result = await Accounts.create(type, name);
+  UI.showLoading(false);
+  if (result.ok) {
+    UI.toast('تم إنشاء الحساب: ' + result.id);
+    document.getElementById('acc-name').value = '';
+    await refreshCode();
+    await renderAccounts();
+    await UI.updateTreasury();
+  } else { UI.toast(result.error, 'error'); }
+}
+
+async function renderAccounts() {
+  const filterQ    = document.getElementById('filter-input').value.toLowerCase();
+  const filterType = document.getElementById('filter-type').value;
+  const filterBal  = document.getElementById('filter-bal').value;
+  _allAccounts = await Accounts.getAll();
+  let list = _allAccounts;
+  if (filterQ)              list = list.filter(a => a.id.includes(filterQ) || a.name.toLowerCase().includes(filterQ));
+  if (filterType !== 'all') list = list.filter(a => a.type === filterType);
+  const tbody = document.getElementById('acc-tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>لا توجد حسابات</td></tr>';
+    document.getElementById('acc-count').textContent = '0 حساب';
+    return;
+  }
+  let rows = [], shown = 0;
+  for (const a of list) {
+    const usd = await Transactions.getBalance(a.id,'usd');
+    const eur = await Transactions.getBalance(a.id,'eur');
+    const isDebtor = usd < 0 || eur < 0;
+    if (filterBal === 'debtor' && !isDebtor) continue;
+    shown++;
+    rows.push(`<tr class="${isDebtor?'row-debtor':''}">
+      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${isDebtor?' ⚠️':''}</td>
+      <td>${UI.escapeHtml(a.name)}</td>
+      <td><span class="badge-type">${a.type==='company'?'شركة':'زبون'}</span></td>
+      <td style="color:${usd<0?'var(--red)':'var(--text)'};font-weight:600;">${usd.toFixed(2)}</td>
+      <td style="color:${eur<0?'var(--red)':'var(--text)'};font-weight:600;">${eur.toFixed(2)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="showStmt('${UI.escapeHtml(a.id)}','${UI.escapeHtml(a.name)}')">كشف</button></td>
+    </tr>`);
+  }
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="6" class="empty-state">لا توجد نتائج</td></tr>';
+  document.getElementById('acc-count').textContent = shown + ' حساب';
+}
+
+async function showStmt(id, name) {
+  document.getElementById('stmt-title').textContent = 'كشف الحساب — ' + name + ' (' + id + ')';
+  document.getElementById('stmt-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr>';
+  document.getElementById('stmt-modal').style.display = 'flex';
+  const txns = (await Transactions.getAll()).filter(t => t.acc===id||t.from===id||t.to===id).reverse();
+  const labels = {dep:'إيداع',wit:'سحب',trf:'تحويل'};
+  let runUsd=0, runEur=0;
+  document.getElementById('stmt-tbody').innerHTML = txns.length
+    ? txns.map(t => {
+        let debit=0,credit=0;
+        if(t.type==='dep'&&t.acc===id) credit=parseFloat(t.amt);
+        if(t.type==='wit'&&t.acc===id) debit=parseFloat(t.amt);
+        if(t.type==='trf'&&t.from===id) debit=parseFloat(t.amt);
+        if(t.type==='trf'&&t.to===id) credit=parseFloat(t.amt)*(parseFloat(t.rate)||1);
+        if(t.cur==='usd') runUsd+=credit-debit; else runEur+=credit-debit;
+        const run=t.cur==='usd'?runUsd:runEur, sym=t.cur==='usd'?'$':'€';
+        return `<tr>
+          <td style="font-size:0.73rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+          <td><span class="badge badge-${t.type}">${labels[t.type]}</span></td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td style="color:var(--red);">${debit>0?sym+debit.toFixed(2):'—'}</td>
+          <td style="color:var(--green);">${credit>0?sym+credit.toFixed(2):'—'}</td>
+          <td style="font-weight:700;color:${run<0?'var(--red)':'var(--text)'};">${sym}${run.toFixed(2)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" class="empty-state">لا توجد عمليات</td></tr>';
+}
+function closeStmt() { document.getElementById('stmt-modal').style.display='none'; }
+</script>
+</body>
+</html>

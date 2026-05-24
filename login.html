@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — تسجيل الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c;--gold-light:#e8c96e;
+  --bg:#07090f;--surface:#0d1117;--surface2:#131b27;
+  --border:#1e2d42;--border2:#243550;
+  --text:#e8eaf0;--text2:#8a9bb5;--text3:#4a5a72;--red:#ef4444;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);direction:rtl;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:radial-gradient(circle at 20% 20%,rgba(201,168,76,0.05) 0%,transparent 50%),
+                   radial-gradient(circle at 80% 80%,rgba(167,139,250,0.04) 0%,transparent 50%);}
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:44px 40px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
+.login-logo h1{font-size:2rem;font-weight:700;color:var(--gold);letter-spacing:0.05em;}
+.login-logo p{font-size:0.75rem;color:var(--text3);margin-top:6px;}
+.login-divider{width:40px;height:2px;background:var(--gold);margin:16px auto 28px;border-radius:2px;}
+.form-group{margin-bottom:16px;text-align:right;}
+.form-group label{display:block;font-size:0.72rem;color:var(--text2);margin-bottom:7px;font-weight:500;}
+.form-group input{width:100%;padding:13px 14px;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);border-radius:10px;font-family:inherit;font-size:0.9rem;outline:none;
+  transition:border-color .2s,box-shadow .2s;direction:rtl;}
+.form-group input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+.login-btn{width:100%;padding:14px;background:var(--gold);color:#000;border:none;border-radius:10px;
+  font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;margin-top:6px;}
+.login-btn:hover{background:var(--gold-light);}
+.login-btn:active{transform:scale(0.98);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.error-msg{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+  border-radius:8px;padding:10px;font-size:0.8rem;color:var(--red);margin-top:14px;display:none;}
+.error-msg.show{display:block;}
+.login-footer{margin-top:24px;font-size:0.68rem;color:var(--text3);}
+.conn-status{font-size:0.7rem;color:var(--text3);margin-bottom:16px;}
+.conn-ok{color:#22c55e;}
+@media(max-width:480px){.login-box{padding:32px 24px;}.login-logo h1{font-size:1.7rem;}}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>SM-Group</h1>
+      <p>نظام إدارة الخزينة المزدوجة</p>
+    </div>
+    <div class="login-divider"></div>
+    <div class="conn-status" id="conn-status">⏳ جاري الاتصال بقاعدة البيانات…</div>
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input type="text" id="login-username" placeholder="أدخل اسم المستخدم" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">دخول للنظام</button>
+    <div class="error-msg" id="login-error"></div>
+    <div class="login-footer">V3.0 — SM-Group · Supabase Cloud</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  // فحص الاتصال
+  (async () => {
+    try {
+      const users = await Storage.getUsers();
+      document.getElementById('conn-status').innerHTML = '<span class="conn-ok">✅ متصل بقاعدة البيانات</span>';
+    } catch(e) {
+      document.getElementById('conn-status').textContent = '❌ تعذّر الاتصال — تحقق من الإنترنت';
+    }
+  })();
+
+  if (Auth.restoreSession()) window.location.href = 'dashboard.html';
+
+  async function doLogin() {
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('login-error');
+    btn.disabled = true;
+    btn.textContent = 'جاري التحقق…';
+    err.classList.remove('show');
+    const u = document.getElementById('login-username').value;
+    const p = document.getElementById('login-pass').value;
+    const result = await Auth.login(u, p);
+    if (result.ok) {
+      window.location.href = 'dashboard.html';
+    } else {
+      err.textContent = result.error;
+      err.classList.add('show');
+      document.getElementById('login-pass').value = '';
+      btn.disabled = false;
+      btn.textContent = 'دخول للنظام';
+    }
+  }
+</script>
+</body>
+</html>
