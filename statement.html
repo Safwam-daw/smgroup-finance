@@ -34,10 +34,42 @@
 
 /* Print styles */
 @media print {
-  .acc-selector,.btn,.filter-row,#sidebar,#topbar,#sidebar-overlay,#toast { display:none!important; }
-  .acc-header { border:2px solid #333!important; }
-  body { background:white!important; color:black!important; }
-  .bal-chip { border:1px solid #333!important; background:white!important; color:black!important; }
+  /* إخفاء كل عناصر الواجهة */
+  .acc-selector,.filter-row,.btn,.pagination,
+  #sidebar,#topbar,#sidebar-overlay,#toast,
+  #treasury-bar,#treasury-placeholder,.no-print { display:none!important; }
+
+  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  html,body { background:#fff!important; color:#111!important; }
+  #main { margin:0!important; padding:16px!important; }
+
+  /* ترويسة الطباعة */
+  .print-header { display:block!important; }
+
+  /* بطاقة الحساب */
+  .acc-header {
+    background:#fff!important; border:2px solid #c9a84c!important;
+    border-radius:8px; padding:14px 18px!important;
+  }
+  .acc-header-info h3 { color:#111!important; }
+  .acc-header-info p  { color:#555!important; }
+  .bal-chip {
+    border:1px solid #c9a84c!important;
+    background:#fffbef!important; color:#111!important;
+  }
+
+  /* الجدول */
+  .tbl-wrap { border:1px solid #ccc!important; overflow:visible!important; }
+  table { min-width:unset!important; font-size:0.79rem; width:100%!important; }
+  th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; padding:7px 9px; }
+  td { border-bottom:1px solid #eee!important; color:#111!important; padding:6px 9px; }
+  tr:hover td { background:none!important; }
+  .badge-dep { background:#e8f8ef!important; color:#16a34a!important; }
+  .badge-wit { background:#fef2f2!important; color:#dc2626!important; }
+  .badge-trf { background:#eff6ff!important; color:#2563eb!important; }
+
+  /* تذييل */
+  .print-footer { display:block!important; }
 }
 
 /* Mobile tweaks */
@@ -55,8 +87,22 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
 
+    <!-- ترويسة الطباعة (مخفية في الشاشة) -->
+    <div class="print-header" style="display:none; margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c9a84c;padding-bottom:12px;">
+        <div>
+          <h1 style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
+          <p style="font-size:0.75rem;color:#555;margin-top:3px;">نظام إدارة الخزينة المزدوجة</p>
+        </div>
+        <div style="text-align:left;">
+          <p style="font-size:0.75rem;color:#555;">تاريخ الطباعة: <b id="print-date"></b></p>
+          <p style="font-size:0.75rem;color:#555;margin-top:2px;">بواسطة: <b id="print-user"></b></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Account selector -->
-    <div class="page-header">
+    <div class="page-header no-print">
       <div><h2>📋 كشف الحساب</h2><p>عرض وإدارة حركات حساب محدد</p></div>
     </div>
 
@@ -150,6 +196,11 @@
       <div id="stmt-count" style="text-align:center;margin-top:10px;font-size:0.74rem;color:var(--text3);"></div>
     </div>
 
+    <!-- تذييل الطباعة -->
+    <div class="print-footer" style="display:none;margin-top:20px;border-top:1px solid #ddd;padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
+      SM-Group — نظام إدارة الخزينة المزدوجة · طُبع بتاريخ <span id="print-date-footer"></span>
+    </div>
+
   </main>
 </div>
 
@@ -203,6 +254,15 @@ const typeLabel = { dep:'إيداع', wit:'سحب', trf:'تحويل' };
   await UI.updateTreasury();
   UI.initSearch('stmt');
   _allAccounts = await Accounts.getAll();
+
+  // بيانات الطباعة
+  const now = new Date().toLocaleDateString('ar-SA');
+  ['print-date','print-date-footer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = now;
+  });
+  const pu = document.getElementById('print-user');
+  if (pu) pu.textContent = Auth.getUser()?.user || '—';
 
   // إذا جاء من accounts.html برابط مباشر ?acc=XXXX
   const params = new URLSearchParams(location.search);
