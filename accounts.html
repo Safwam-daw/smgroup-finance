@@ -134,7 +134,7 @@ async function renderAccounts() {
       <td><span class="badge-type">${a.type==='company'?'شركة':'زبون'}</span></td>
       <td style="color:${usd<0?'var(--red)':'var(--text)'};font-weight:600;">${usd.toFixed(2)}</td>
       <td style="color:${eur<0?'var(--red)':'var(--text)'};font-weight:600;">${eur.toFixed(2)}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="showStmt('${UI.escapeHtml(a.id)}','${UI.escapeHtml(a.name)}')">كشف</button></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+a.id)">📋 كشف</button></td>
     </tr>`);
   }
   tbody.innerHTML = rows.join('') || '<tr><td colspan="6" class="empty-state">لا توجد نتائج</td></tr>';
