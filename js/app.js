@@ -36,6 +36,9 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='statement'?'active':''}" onclick="navTo('statement.html')">
           <span class="nav-icon">📋</span> كشف الحساب
         </button>
+        <button class="nav-btn ${activePage==='account-view'?'active':''}" onclick="navTo('accounts.html')">
+          <span class="nav-icon">👁️</span> حركات الحساب
+        </button>
         <div class="nav-section-label" data-admin-only>الإدارة المتقدمة</div>
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only onclick="navTo('employees.html')">
           <span class="nav-icon">🛡️</span> إدارة الموظفين
