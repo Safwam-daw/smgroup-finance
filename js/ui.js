@@ -1,26 +1,24 @@
 /**
- * ui.js — SM-Group UI Utilities
+ * ui.js — SM-Group v4.2
+ * إضافة: Enter يختار أول نتيجة، initSearch محسّن
  */
-
 const UI = (() => {
 
-  function toast(msg, type = 'success') {
+  function toast(msg, type='success') {
     const el = document.getElementById('toast');
     if (!el) return;
     el.textContent = msg;
     el.className = 'show ' + type;
     clearTimeout(el._t);
-    el._t = setTimeout(() => { el.className = ''; }, 3200);
+    el._t = setTimeout(() => { el.className=''; }, 3200);
   }
 
-  // Loading overlay
   function showLoading(show) {
     let el = document.getElementById('loading-overlay');
     if (!el && show) {
       el = document.createElement('div');
       el.id = 'loading-overlay';
-      el.innerHTML = `<div style="
-        position:fixed;inset:0;background:rgba(7,9,15,0.7);z-index:9000;
+      el.innerHTML = `<div style="position:fixed;inset:0;background:rgba(7,9,15,0.7);z-index:9000;
         display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
         <div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--gold);
           border-radius:50%;animation:spin .7s linear infinite;"></div>
@@ -33,9 +31,7 @@ const UI = (() => {
         s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
         document.head.appendChild(s);
       }
-    } else if (el && !show) {
-      el.remove();
-    }
+    } else if (el && !show) { el.remove(); }
   }
 
   async function updateTreasury() {
@@ -96,38 +92,66 @@ const UI = (() => {
     });
   }
 
-  // Smart Search — async version
-  function initSearch(prefix) {
+  /**
+   * initSearch — بحث ذكي مع:
+   * - Enter يختار أول نتيجة تلقائياً
+   * - يُطلق حدث 'account-selected' عند الاختيار
+   * - onSelect callback اختياري
+   */
+  function initSearch(prefix, onSelect) {
     const input    = document.getElementById(prefix + '-search');
     const resBox   = document.getElementById(prefix + '-res');
-    const hiddenId = document.getElementById(prefix + '-id') || document.getElementById(prefix + '-acc-id');
+    const hiddenId = document.getElementById(prefix + '-id') ||
+                     document.getElementById(prefix + '-acc-id');
     if (!input || !resBox) return;
 
     let _debounce;
+    let _firstId = null; // أول نتيجة
+
     input.addEventListener('input', () => {
       clearTimeout(_debounce);
       _debounce = setTimeout(async () => {
-        const q = input.value;
-        if (!q.trim()) { resBox.style.display = 'none'; return; }
+        const q = input.value.trim();
+        if (!q) { resBox.style.display='none'; _firstId=null; return; }
         const hits = await Accounts.search(q);
-        if (!hits.length) { resBox.style.display = 'none'; return; }
-        resBox.innerHTML = hits.map(a =>
-          `<div class="s-item" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.name)}">
+        if (!hits.length) { resBox.style.display='none'; _firstId=null; return; }
+        _firstId = hits[0].id;
+        resBox.innerHTML = hits.map((a,i) =>
+          `<div class="s-item${i===0?' s-item-first':''}"
+               data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.name)}">
              ${escapeHtml(a.id)} — ${escapeHtml(a.name)}
            </div>`
         ).join('');
         resBox.style.display = 'block';
-      }, 200);
+        // تمييز أول عنصر
+        const first = resBox.querySelector('.s-item-first');
+        if (first) first.style.background = 'var(--gold-dim)';
+      }, 180);
+    });
+
+    // Enter = اختيار أول نتيجة
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const first = resBox.querySelector('.s-item');
+        if (first) selectItem(first.dataset.id, first.dataset.name);
+      }
     });
 
     resBox.addEventListener('click', (e) => {
       const item = e.target.closest('.s-item');
       if (!item) return;
-      input.value = item.dataset.id + ' — ' + item.dataset.name;
-      if (hiddenId) hiddenId.value = item.dataset.id;
-      resBox.style.display = 'none';
-      input.dispatchEvent(new Event('selected'));
+      selectItem(item.dataset.id, item.dataset.name);
     });
+
+    function selectItem(id, name) {
+      input.value = id + ' — ' + name;
+      if (hiddenId) hiddenId.value = id;
+      resBox.style.display = 'none';
+      _firstId = null;
+      input.dispatchEvent(new CustomEvent('account-selected', { detail: { id, name } }));
+      if (onSelect) onSelect(id, name);
+    }
 
     document.addEventListener('click', (e) => {
       if (!input.contains(e.target) && !resBox.contains(e.target))
@@ -137,8 +161,8 @@ const UI = (() => {
 
   function escapeHtml(str) {
     return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
   function formatDate(isoStr) {
@@ -150,17 +174,40 @@ const UI = (() => {
     } catch(e) { return isoStr; }
   }
 
+  // تاريخ اليوم بصيغة YYYY-MM-DD
+  function todayStr() {
+    return new Date().toISOString().slice(0,10);
+  }
+
+  // أول يوم في الشهر الحالي
+  function firstOfMonth(offset=0) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + offset);
+    d.setDate(1);
+    return d.toISOString().slice(0,10);
+  }
+
+  // آخر يوم في الشهر
+  function lastOfMonth(offset=0) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + offset + 1);
+    d.setDate(0);
+    return d.toISOString().slice(0,10);
+  }
+
   function exportExcel(tableId, filename) {
-    if (typeof XLSX === 'undefined') { toast('مكتبة Excel غير محملة', 'error'); return; }
+    if (typeof XLSX === 'undefined') { toast('مكتبة Excel غير محملة','error'); return; }
     const table = document.getElementById(tableId);
     if (!table) return;
-    const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' });
+    const wb = XLSX.utils.table_to_book(table, { sheet:'Sheet1' });
     XLSX.writeFile(wb, filename + '.xlsx');
   }
 
   return {
-    toast, showLoading, updateTreasury, initSidebar, toggleSidebar,
-    closeSidebarOnNav, fillUserInfo, applyRoleUI, initSearch,
-    escapeHtml, formatDate, exportExcel
+    toast, showLoading, updateTreasury,
+    initSidebar, toggleSidebar, closeSidebarOnNav,
+    fillUserInfo, applyRoleUI, initSearch,
+    escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth,
+    exportExcel
   };
 })();
