@@ -73,7 +73,7 @@
         <table id="acc-table">
           <thead><tr>
             <th>الكود</th><th>الاسم</th><th>النوع</th>
-            <th>رصيد $</th><th>رصيد €</th><th>كشف</th>
+            <th>رصيد $</th><th>رصيد €</th><th>حركات</th><th>كشف</th>
           </tr></thead>
           <tbody id="acc-tbody"><tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr></tbody>
         </table>
@@ -188,13 +188,14 @@ async function renderPage() {
       <td style="color:${usd<0?'var(--red)':'var(--text)'};font-weight:600;">${usd.toFixed(2)}</td>
       <td style="color:${eur<0?'var(--red)':'var(--text)'};font-weight:600;">${eur.toFixed(2)}</td>
       <td><button class="btn btn-ghost btn-sm no-print"
-            onclick="navTo('statement.html?acc=${UI.escapeHtml(a.id)}')">📋 كشف</button></td>
+            onclick="navTo('account-view.html?acc='+a.id)">👁️ حركات</button>
+      <button class="btn btn-ghost btn-sm no-print" onclick="navTo('statement.html?acc='+a.id)">📋 كشف</button></td>
     </tr>`;
   }));
 
   document.getElementById('acc-tbody').innerHTML =
     rows.length ? rows.join('') :
-    '<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>لا توجد نتائج</td></tr>';
+    '<tr><td colspan="7" class="empty-state"><div class="empty-icon">👥</div>لا توجد نتائج</td></tr>';
 
   document.getElementById('acc-count').textContent = total + ' حساب';
 

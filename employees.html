@@ -6,54 +6,124 @@
 <title>SM-Group — إدارة الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<style>
+.emp-card {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius); padding:16px 18px;
+  display:flex; align-items:center; gap:14px; margin-bottom:10px;
+  transition:border-color .2s;
+}
+.emp-card:hover { border-color:var(--border); }
+.emp-avatar {
+  width:42px; height:42px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; font-weight:700;
+}
+.emp-avatar.admin { background:var(--gold-dim); color:var(--gold); border:1px solid var(--gold); }
+.emp-avatar.employee { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue); }
+.emp-info { flex:1; overflow:hidden; }
+.emp-name { font-weight:700; font-size:0.9rem; }
+.emp-meta { font-size:0.72rem; color:var(--text3); margin-top:2px; }
+.emp-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:460px;padding:24px; }
+.modal-box h3 { margin-bottom:18px; }
+@media(max-width:640px){
+  .emp-card { flex-wrap:wrap; }
+  .emp-actions { width:100%; }
+  .emp-actions .btn { flex:1; }
+}
+</style>
 </head>
 <body>
 <div id="app">
   <main id="main">
     <div id="treasury-placeholder"></div>
-    <div class="page-header"><div><h2>🛡️ إدارة الموظفين</h2><p>إضافة المستخدمين وضبط الصلاحيات</p></div></div>
-    <div class="grid-2">
-      <div class="card">
-        <h3>➕ إضافة موظف جديد</h3>
-        <div class="form-group"><label>اسم المستخدم</label>
-          <input type="text" id="emp-user" placeholder="اسم المستخدم" autocomplete="off"></div>
-        <div class="form-group"><label>كلمة المرور</label>
-          <input type="password" id="emp-pass" placeholder="كلمة المرور" autocomplete="new-password"></div>
-        <div class="form-group"><label>تأكيد كلمة المرور</label>
-          <input type="password" id="emp-pass2" placeholder="أعد كتابة كلمة المرور"></div>
-        <div class="form-group"><label>الصلاحية</label>
-          <select id="emp-role">
-            <option value="employee">موظف — العمليات فقط</option>
-            <option value="admin">مدير — كافة الصلاحيات</option>
-          </select>
+    <div class="page-header">
+      <div><h2>🛡️ إدارة الموظفين</h2><p>إضافة المستخدمين وضبط الصلاحيات</p></div>
+    </div>
+
+    <!-- إضافة موظف -->
+    <div class="card" style="margin-bottom:16px;">
+      <h3>➕ إضافة موظف جديد</h3>
+      <div class="grid-2">
+        <div>
+          <div class="form-group">
+            <label>اسم المستخدم</label>
+            <input type="text" id="emp-user" placeholder="اسم المستخدم" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>الصلاحية</label>
+            <select id="emp-role">
+              <option value="employee">👤 موظف — العمليات اليومية</option>
+              <option value="admin">🛡️ مدير — كافة الصلاحيات</option>
+            </select>
+          </div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="doAdd()">💾 حفظ الموظف</button>
-        <div style="margin-top:16px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;">
-          <p style="font-size:0.75rem;color:var(--text2);line-height:1.7;">
-            <b style="color:var(--text);">🔐 ملاحظة:</b> كلمات المرور محفوظة بـ Base64 —
-            مناسب للبيئة الداخلية. للإنتاج استخدم bcrypt مع backend.
-          </p>
+        <div>
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="emp-pass" placeholder="كلمة المرور" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>تأكيد كلمة المرور</label>
+            <input type="password" id="emp-pass2" placeholder="أعد كتابة كلمة المرور">
+          </div>
         </div>
       </div>
-      <div class="card">
-        <h3>الموظفون المسجلون</h3>
-        <div class="tbl-wrap">
-          <table><thead><tr><th>المستخدم</th><th>الصلاحية</th><th>الإجراء</th></tr></thead>
-          <tbody id="emp-tbody"><tr><td colspan="3" class="empty-state">جاري التحميل…</td></tr></tbody></table>
-        </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="doAdd()" style="min-width:160px;">💾 إضافة الموظف</button>
+        <p style="font-size:0.72rem;color:var(--text3);">
+          🔐 كلمات المرور مشفرة — مناسب للاستخدام الداخلي
+        </p>
+      </div>
+    </div>
+
+    <!-- قائمة الموظفين -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">الموظفون المسجلون</h3>
+        <span id="emp-count" style="font-size:0.75rem;color:var(--text3);"></span>
+      </div>
+      <div id="emp-list">
+        <div class="empty-state">جاري التحميل…</div>
       </div>
     </div>
   </main>
 </div>
 
-<div id="del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
-  <div class="card" style="width:100%;max-width:380px;text-align:center;">
+<!-- Delete Modal -->
+<div id="del-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
     <h3>تأكيد الحذف</h3>
     <p id="del-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;"></p>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
-      <button class="btn btn-danger" id="del-confirm-btn">حذف</button>
+      <button class="btn btn-danger" id="del-confirm-btn">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Password Modal -->
+<div id="pass-modal" class="modal-back">
+  <div class="modal-box">
+    <h3>🔑 تغيير كلمة المرور</h3>
+    <input type="hidden" id="pass-uid">
+    <div class="form-group">
+      <label>كلمة المرور الجديدة</label>
+      <input type="password" id="pass-new" placeholder="كلمة المرور الجديدة">
+    </div>
+    <div class="form-group">
+      <label>تأكيد كلمة المرور</label>
+      <input type="password" id="pass-new2" placeholder="أعد كتابة كلمة المرور">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closePass()">إلغاء</button>
+      <button class="btn btn-primary" onclick="savePass()">💾 حفظ</button>
     </div>
   </div>
 </div>
@@ -72,35 +142,71 @@
 
 async function doAdd() {
   const u  = document.getElementById('emp-user').value.trim();
-  const p  = document.getElementById('emp-pass').value.trim();
-  const p2 = document.getElementById('emp-pass2').value.trim();
+  const p  = document.getElementById('emp-pass').value;
+  const p2 = document.getElementById('emp-pass2').value;
   const r  = document.getElementById('emp-role').value;
   if (!u) { UI.toast('أدخل اسم المستخدم','error'); return; }
   if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
   if (p !== p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
   UI.showLoading(true);
   const users = await Storage.getUsers();
-  if (users.find(x => x.username === u)) { UI.showLoading(false); UI.toast('اسم المستخدم موجود بالفعل','error'); return; }
+  if (users.find(x => x.username === u)) {
+    UI.showLoading(false); UI.toast('اسم المستخدم موجود بالفعل','error'); return;
+  }
   const ok = await Storage.saveUser({ user: u, pass: btoa(p), role: r });
   UI.showLoading(false);
   if (ok) {
-    document.getElementById('emp-user').value='';
-    document.getElementById('emp-pass').value='';
-    document.getElementById('emp-pass2').value='';
+    ['emp-user','emp-pass','emp-pass2'].forEach(id => document.getElementById(id).value='');
     UI.toast('تم إضافة الموظف ✅');
     await renderEmployees();
   } else { UI.toast('خطأ في الحفظ','error'); }
 }
 
+async function renderEmployees() {
+  const users   = await Storage.getUsers();
+  const current = Auth.getUser().user;
+  const list    = document.getElementById('emp-list');
+  document.getElementById('emp-count').textContent = users.length + ' مستخدم';
+
+  if (!users.length) { list.innerHTML='<div class="empty-state">لا يوجد موظفون</div>'; return; }
+
+  list.innerHTML = users.map(u => {
+    const isMe      = u.username === current;
+    const isAdmin   = u.role === 'admin';
+    const isRoot    = u.username === 'admin';
+    const roleLabel = isAdmin ? '🛡️ مدير النظام' : '👤 موظف';
+    const roleColor = isAdmin ? 'var(--gold)' : 'var(--blue)';
+    const initial   = u.username.charAt(0).toUpperCase();
+    const avatarCls = isAdmin ? 'admin' : 'employee';
+
+    const actions = isRoot
+      ? `<span style="font-size:0.75rem;color:var(--text3);padding:6px 10px;">محمي</span>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openPass(${u.id})">🔑 كلمة المرور</button>
+         <button class="btn btn-danger btn-sm" onclick="confirmDel(${u.id},'${UI.escapeHtml(u.username)}')">🗑️ حذف</button>`;
+
+    return `<div class="emp-card">
+      <div class="emp-avatar ${avatarCls}">${initial}</div>
+      <div class="emp-info">
+        <div class="emp-name">
+          ${UI.escapeHtml(u.username)}
+          ${isMe ? '<span style="font-size:0.68rem;color:var(--gold);margin-right:6px;">(أنت)</span>' : ''}
+        </div>
+        <div class="emp-meta" style="color:${roleColor};">${roleLabel}</div>
+      </div>
+      <div class="emp-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Delete ─────────────────────────────────────────────
 let _delId = null;
 function confirmDel(id, username) {
   _delId = id;
   document.getElementById('del-msg').textContent = `هل تريد حذف المستخدم "${username}" بشكل نهائي؟`;
   document.getElementById('del-confirm-btn').onclick = doDelete;
-  document.getElementById('del-modal').style.display='flex';
+  document.getElementById('del-modal').classList.add('open');
 }
-function closeDel() { _delId=null; document.getElementById('del-modal').style.display='none'; }
-
+function closeDel() { _delId=null; document.getElementById('del-modal').classList.remove('open'); }
 async function doDelete() {
   UI.showLoading(true);
   await Storage.deleteUser(_delId);
@@ -110,22 +216,26 @@ async function doDelete() {
   await renderEmployees();
 }
 
-async function renderEmployees() {
-  const users   = await Storage.getUsers();
-  const current = Auth.getUser().user;
-  document.getElementById('emp-tbody').innerHTML = users.map(u => `
-    <tr>
-      <td style="font-weight:600;">${UI.escapeHtml(u.username)}
-        ${u.username===current?'<span style="font-size:0.68rem;color:var(--gold);"> (أنت)</span>':''}
-      </td>
-      <td><span class="badge ${u.role==='admin'?'badge-dep':'badge-trf'}">
-        ${u.role==='admin'?'🛡️ مدير':'👤 موظف'}
-      </span></td>
-      <td>${u.username==='admin'
-        ? '<span style="color:var(--text3);font-size:0.75rem;">محمي</span>'
-        : `<button class="btn btn-danger btn-sm" onclick="confirmDel(${u.id},'${UI.escapeHtml(u.username)}')">حذف</button>`
-      }</td>
-    </tr>`).join('');
+// ── Change Password ────────────────────────────────────
+let _passUid = null;
+function openPass(id) {
+  _passUid = id;
+  document.getElementById('pass-uid').value = id;
+  document.getElementById('pass-new').value  = '';
+  document.getElementById('pass-new2').value = '';
+  document.getElementById('pass-modal').classList.add('open');
+}
+function closePass() { document.getElementById('pass-modal').classList.remove('open'); }
+async function savePass() {
+  const p  = document.getElementById('pass-new').value;
+  const p2 = document.getElementById('pass-new2').value;
+  if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
+  if (p !== p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
+  UI.showLoading(true);
+  const ok = await Storage.updateUserPass(_passUid, btoa(p));
+  UI.showLoading(false);
+  if (ok) { closePass(); UI.toast('تم تغيير كلمة المرور ✅'); }
+  else { UI.toast('خطأ في الحفظ','error'); }
 }
 </script>
 </body>
