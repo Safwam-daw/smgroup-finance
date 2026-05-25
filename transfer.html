@@ -11,62 +11,101 @@
 <div id="app">
   <main id="main">
     <div id="treasury-placeholder"></div>
-    <div class="page-header"><div><h2>🔄 تحويل أرصدة</h2><p>نقل رصيد بين حسابين</p></div></div>
-    <div class="grid-2">
-      <div class="card">
-        <h3>بيانات التحويل</h3>
-        <div class="form-group">
-          <label>من حساب (المرسل)</label>
-          <div class="search-wrap">
-            <input type="text" id="trf-from-search" placeholder="ابحث…" autocomplete="off">
-            <div id="trf-from-res" class="search-dropdown"></div>
-          </div>
-          <input type="hidden" id="trf-from-id">
+    <div class="page-header">
+      <div><h2>🔄 تحويل أرصدة</h2><p>نقل رصيد بين حسابين</p></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h3>بيانات التحويل</h3>
+
+      <!-- المرسل -->
+      <div class="form-group">
+        <label>من حساب (المرسل) <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <div class="search-wrap">
+          <input type="text" id="trf-from-search" placeholder="ابحث…" autocomplete="off">
+          <div id="trf-from-res" class="search-dropdown"></div>
         </div>
-        <div class="form-group">
-          <label>إلى حساب (المستقبل)</label>
-          <div class="search-wrap">
-            <input type="text" id="trf-to-search" placeholder="ابحث…" autocomplete="off">
-            <div id="trf-to-res" class="search-dropdown"></div>
-          </div>
-          <input type="hidden" id="trf-to-id">
-        </div>
-        <div class="grid-2">
-          <div class="form-group"><label>العملة</label>
-            <select id="trf-cur" onchange="updatePreview()">
-              <option value="usd">🇺🇸 دولار USD</option>
-              <option value="eur">🇪🇺 يورو EUR</option>
-            </select>
-          </div>
-          <div class="form-group"><label>سعر الصرف</label>
-            <input type="number" id="trf-rate" placeholder="1.00" value="1" step="0.0001" min="0" oninput="updatePreview()">
-          </div>
-        </div>
-        <div class="form-group"><label>المبلغ</label>
-          <input type="number" id="trf-amount" placeholder="0.00" min="0" step="0.01" oninput="updatePreview()">
-        </div>
-        <div id="trf-preview" style="display:none;border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.83rem;background:var(--surface2);border:1px solid var(--border2);">
-          <div id="trf-prev-from" style="margin-bottom:8px;"></div>
-          <div id="trf-prev-to"></div>
-        </div>
-        <button class="btn btn-primary btn-full" onclick="doTransfer(false)">🔄 تنفيذ التحويل</button>
+        <input type="hidden" id="trf-from-id">
       </div>
-      <div class="card">
-        <h3>آخر التحويلات</h3>
-        <div class="tbl-wrap">
-          <table><thead><tr><th>الوقت</th><th>من</th><th>إلى</th><th>المبلغ</th></tr></thead>
-          <tbody id="recent-trf-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody></table>
+      <!-- بطاقة رصيد المرسل -->
+      <div id="from-bal-box" style="display:none; margin-bottom:12px; padding:10px 14px;
+           background:var(--surface2); border:1px solid var(--border2); border-radius:8px;
+           font-size:0.83rem; display:none;">
+        <span style="color:var(--text3);">رصيد المرسل:</span>
+        <b id="from-bal-usd" style="margin-right:10px;color:var(--gold);"></b>
+        <b id="from-bal-eur" style="margin-right:10px;color:var(--euro);"></b>
+      </div>
+
+      <!-- المستقبل -->
+      <div class="form-group">
+        <label>إلى حساب (المستقبل)</label>
+        <div class="search-wrap">
+          <input type="text" id="trf-to-search" placeholder="ابحث…" autocomplete="off">
+          <div id="trf-to-res" class="search-dropdown"></div>
         </div>
+        <input type="hidden" id="trf-to-id">
+      </div>
+      <!-- بطاقة رصيد المستقبل -->
+      <div id="to-bal-box" style="display:none; margin-bottom:12px; padding:10px 14px;
+           background:var(--surface2); border:1px solid var(--border2); border-radius:8px;
+           font-size:0.83rem;">
+        <span style="color:var(--text3);">رصيد المستقبل:</span>
+        <b id="to-bal-usd" style="margin-right:10px;color:var(--gold);"></b>
+        <b id="to-bal-eur" style="margin-right:10px;color:var(--euro);"></b>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>العملة</label>
+          <select id="trf-cur" onchange="updatePreview()">
+            <option value="usd">🇺🇸 دولار USD</option>
+            <option value="eur">🇪🇺 يورو EUR</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>سعر الصرف (للمستقبل)</label>
+          <input type="number" id="trf-rate" value="1" step="0.0001" min="0" oninput="updatePreview()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>المبلغ</label>
+        <input type="number" id="trf-amount" placeholder="0.00" min="0" step="0.01"
+               oninput="updatePreview()"
+               onkeydown="if(event.key==='Enter') doTransfer(false)">
+      </div>
+
+      <!-- معاينة -->
+      <div id="trf-preview" style="display:none; border-radius:8px; padding:14px;
+           margin-bottom:16px; background:var(--surface2); border:1px solid var(--border2); font-size:0.83rem;">
+        <div id="trf-prev-from" style="margin-bottom:8px;"></div>
+        <div id="trf-prev-to"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="doTransfer(false)">🔄 تنفيذ التحويل</button>
+    </div>
+
+    <!-- آخر التحويلات -->
+    <div class="card">
+      <h3>آخر التحويلات</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>الوقت</th><th>من</th><th>إلى</th><th>المبلغ</th></tr></thead>
+          <tbody id="recent-trf-tbody">
+            <tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 </div>
 
-<div id="overdraft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+<!-- Overdraft Modal -->
+<div id="overdraft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+     z-index:1000;align-items:center;justify-content:center;padding:16px;">
   <div class="card" style="width:100%;max-width:420px;text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
     <h3>رصيد المرسل غير كافٍ</h3>
-    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;"></p>
+    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.7;"></p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
       <button class="btn btn-danger" onclick="doTransfer(true)">المتابعة بالسالب</button>
@@ -83,12 +122,37 @@
   if (!await initApp('transfer')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-  UI.initSearch('trf-from');
-  UI.initSearch('trf-to');
-  ['trf-from-res','trf-to-res'].forEach(id =>
-    document.getElementById(id).addEventListener('click', () => setTimeout(updatePreview, 100)));
+
+  // عند اختيار المرسل → اعرض رصيده
+  UI.initSearch('trf-from', async (id) => {
+    await showBalBox('from', id);
+    updatePreview();
+  });
+
+  // عند اختيار المستقبل → اعرض رصيده
+  UI.initSearch('trf-to', async (id) => {
+    await showBalBox('to', id);
+    updatePreview();
+  });
+
   await renderRecent();
 })();
+
+async function showBalBox(side, id) {
+  const box    = document.getElementById(side + '-bal-box');
+  const usdEl  = document.getElementById(side + '-bal-usd');
+  const eurEl  = document.getElementById(side + '-bal-eur');
+  if (!id) { box.style.display='none'; return; }
+  const [usd, eur] = await Promise.all([
+    Storage.getBalance(id,'usd'),
+    Storage.getBalance(id,'eur')
+  ]);
+  usdEl.textContent = '$' + usd.toFixed(2);
+  eurEl.textContent = '€' + eur.toFixed(2);
+  usdEl.style.color = usd < 0 ? 'var(--red)' : 'var(--gold)';
+  eurEl.style.color = eur < 0 ? 'var(--red)' : 'var(--euro)';
+  box.style.display = 'block';
+}
 
 async function updatePreview() {
   const fromId = document.getElementById('trf-from-id').value;
@@ -96,20 +160,21 @@ async function updatePreview() {
   const cur    = document.getElementById('trf-cur').value;
   const amt    = parseFloat(document.getElementById('trf-amount').value) || 0;
   const rate   = parseFloat(document.getElementById('trf-rate').value) || 1;
-  const preview = document.getElementById('trf-preview');
-  if (!fromId || !toId || amt <= 0) { preview.style.display='none'; return; }
-  const sym = cur==='usd'?'$':'€';
-  const fromBal = await Transactions.getBalance(fromId, cur);
-  const newFrom = fromBal - amt;
+  const box    = document.getElementById('trf-preview');
+  if (!fromId || !toId || amt <= 0) { box.style.display='none'; return; }
+  const sym      = cur==='usd'?'$':'€';
+  const fromBal  = await Storage.getBalance(fromId, cur);
+  const newFrom  = fromBal - amt;
   const received = amt * rate;
   document.getElementById('trf-prev-from').innerHTML =
-    `<span style="color:var(--text2);">المرسل — قبل:</span> <b>${sym}${fromBal.toFixed(2)}</b>
-     &nbsp;→&nbsp; <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>`;
+    `<span style="color:var(--text3);">المرسل بعد:</span>
+     <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
+     ${newFrom<0?'<span style="color:var(--red);font-size:0.75rem;"> ⚠️ سالب</span>':''}`;
   document.getElementById('trf-prev-to').innerHTML =
-    `<span style="color:var(--text2);">المستقبل يستلم:</span>
+    `<span style="color:var(--text3);">المستقبل يستلم:</span>
      <b style="color:var(--green);">+${sym}${received.toFixed(2)}</b>
      ${rate!==1?`<span style="color:var(--text3);font-size:0.75rem;"> (×${rate})</span>`:''}`;
-  preview.style.display='block';
+  box.style.display = 'block';
 }
 
 async function doTransfer(force) {
@@ -128,6 +193,7 @@ async function doTransfer(force) {
     ['trf-from-id','trf-to-id'].forEach(id => document.getElementById(id).value='');
     document.getElementById('trf-amount').value='';
     document.getElementById('trf-preview').style.display='none';
+    ['from-bal-box','to-bal-box'].forEach(id => document.getElementById(id).style.display='none');
     await UI.updateTreasury();
     await renderRecent();
   } else if (result.needsConfirm) {
@@ -145,10 +211,12 @@ async function renderRecent() {
   const txns = (await Transactions.getAll({type:'trf'})).slice(0,10);
   document.getElementById('recent-trf-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
-        const [fromAcc, toAcc] = await Promise.all([Accounts.getById(t.from), Accounts.getById(t.to)]);
+        const [fromAcc, toAcc] = await Promise.all([
+          Accounts.getById(t.from), Accounts.getById(t.to)
+        ]);
         const sym = t.cur==='usd'?'$':'€';
         return `<tr>
-          <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+          <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(fromAcc?fromAcc.name:t.from)}</td>
           <td>${UI.escapeHtml(toAcc?toAcc.name:t.to)}</td>
           <td style="color:var(--blue);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>

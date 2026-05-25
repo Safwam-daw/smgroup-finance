@@ -13,40 +13,54 @@
     <div id="treasury-placeholder"></div>
     <div class="page-header">
       <div><h2>لوحة التحكم</h2><p>ملخص مالي سريع</p></div>
-      <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 تحديث</button>
+      <button class="btn btn-ghost btn-sm no-print" onclick="loadAll()">🔄 تحديث</button>
     </div>
+
+    <!-- بطاقات الإحصاء -->
     <div class="grid-3" id="summary-cards" style="margin-bottom:20px;"></div>
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div class="card">
-        <h3>آخر العمليات</h3>
-        <div class="tbl-wrap">
-          <table id="recent-table">
-            <thead><tr><th>الوقت</th><th>النوع</th><th>المبلغ</th></tr></thead>
-            <tbody id="recent-tbody"><tr><td colspan="3" class="empty-state">جاري التحميل…</td></tr></tbody>
-          </table>
-        </div>
+
+    <!-- آخر العمليات -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">⚡ آخر العمليات</h3>
+        <button class="btn btn-ghost btn-sm no-print" onclick="navTo('ledger.html')">عرض الكل</button>
       </div>
-      <div class="card">
-        <h3>⚠️ حسابات مدينة</h3>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>الحساب</th><th>رصيد $</th><th>رصيد €</th></tr></thead>
-            <tbody id="debtor-tbody"><tr><td colspan="3" class="empty-state">جاري التحميل…</td></tr></tbody>
-          </table>
-        </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>الوقت</th><th>النوع</th><th>الحساب</th><th>المبلغ</th></tr></thead>
+          <tbody id="recent-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody>
+        </table>
       </div>
     </div>
+
+    <!-- حسابات مدينة -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">⚠️ حسابات مدينة</h3>
+        <span id="debtor-count" style="font-size:0.75rem;color:var(--red);"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>الكود</th><th>الاسم</th><th>رصيد $</th><th>رصيد €</th><th>كشف</th></tr></thead>
+          <tbody id="debtor-tbody"><tr><td colspan="5" class="empty-state">جاري التحميل…</td></tr></tbody>
+        </table>
+      </div>
+      <!-- pagination للمدينين -->
+      <div class="pagination no-print" id="debtor-pages"></div>
+    </div>
+
   </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/accounts.js"></script>
-<script src="js/transactions.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/app.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
 <script>
+const PAGE_SIZE = 10;
+let _debtors = [];
+let _debtorPage = 1;
+
 (async () => {
   if (!await initApp('dashboard')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
@@ -57,21 +71,18 @@
 async function loadAll() {
   UI.showLoading(true);
   try {
-    const [accounts, txns] = await Promise.all([Accounts.getAll(), Transactions.getAll()]);
-    await renderSummary(accounts, txns);
+    const [accounts, txns] = await Promise.all([
+      Accounts.getAll(),
+      Transactions.getAll({ limit: 10 })
+    ]);
+    renderSummary(accounts, txns);
     renderRecent(txns);
-    await renderDebtors(accounts);
+    await buildDebtors(accounts);
   } finally { UI.showLoading(false); }
 }
 
-async function renderSummary(accounts, txns) {
+function renderSummary(accounts, txns) {
   const today = txns.filter(t => new Date(t.date).toDateString() === new Date().toDateString()).length;
-  let debtorCount = 0;
-  for (const a of accounts) {
-    const usd = await Transactions.getBalance(a.id,'usd');
-    const eur = await Transactions.getBalance(a.id,'eur');
-    if (usd < 0 || eur < 0) debtorCount++;
-  }
   document.getElementById('summary-cards').innerHTML = `
     <div class="stat-card" style="border-right:3px solid var(--gold);">
       <div class="stat-label">إجمالي الحسابات</div>
@@ -83,37 +94,68 @@ async function renderSummary(accounts, txns) {
     </div>
     <div class="stat-card" style="border-right:3px solid var(--red);">
       <div class="stat-label">حسابات مدينة</div>
-      <div class="stat-value" style="color:var(--red);">${debtorCount}</div>
+      <div class="stat-value" id="debtor-stat" style="color:var(--red);">—</div>
     </div>`;
 }
 
 function renderRecent(txns) {
-  const rows = txns.slice(0,8);
   const labels = {dep:'إيداع',wit:'سحب',trf:'تحويل'};
-  const colors = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'};
-  document.getElementById('recent-tbody').innerHTML = rows.length
-    ? rows.map(t => `<tr>
-        <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+  const colors  = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'};
+  document.getElementById('recent-tbody').innerHTML = txns.length
+    ? txns.map(t => `<tr>
+        <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
         <td><span class="badge badge-${t.type}">${labels[t.type]||t.type}</span></td>
-        <td style="font-weight:600;color:${colors[t.type]||'var(--text)'};">${parseFloat(t.amt).toFixed(2)} ${t.cur.toUpperCase()}</td>
+        <td style="font-size:0.78rem;">${UI.escapeHtml(t.acc||t.from||'—')}</td>
+        <td style="font-weight:600;color:${colors[t.type]||'var(--text)'};">
+          ${parseFloat(t.amt).toFixed(2)} ${t.cur.toUpperCase()}</td>
       </tr>`).join('')
-    : '<tr><td colspan="3" class="empty-state">لا توجد عمليات</td></tr>';
+    : '<tr><td colspan="4" class="empty-state">لا توجد عمليات</td></tr>';
 }
 
-async function renderDebtors(accounts) {
-  const rows = [];
+async function buildDebtors(accounts) {
+  _debtors = [];
   for (const a of accounts) {
-    const usd = await Transactions.getBalance(a.id,'usd');
-    const eur = await Transactions.getBalance(a.id,'eur');
-    if (usd < 0 || eur < 0) rows.push({a,usd,eur});
+    const usd = await Storage.getBalance(a.id,'usd');
+    const eur = await Storage.getBalance(a.id,'eur');
+    if (usd < 0 || eur < 0) _debtors.push({a,usd,eur});
   }
-  document.getElementById('debtor-tbody').innerHTML = rows.length
-    ? rows.map(({a,usd,eur}) => `<tr class="row-debtor">
-        <td><b>${UI.escapeHtml(a.id)}</b> — ${UI.escapeHtml(a.name)}</td>
+  const el = document.getElementById('debtor-stat');
+  if (el) el.textContent = _debtors.length;
+  document.getElementById('debtor-count').textContent =
+    _debtors.length ? _debtors.length + ' حساب مدين' : '';
+  _debtorPage = 1;
+  renderDebtorPage();
+}
+
+function renderDebtorPage() {
+  const start = (_debtorPage-1)*PAGE_SIZE;
+  const page  = _debtors.slice(start, start+PAGE_SIZE);
+  const totalPages = Math.ceil(_debtors.length/PAGE_SIZE);
+
+  document.getElementById('debtor-tbody').innerHTML = page.length
+    ? page.map(({a,usd,eur}) => `<tr class="row-debtor">
+        <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
+        <td>${UI.escapeHtml(a.name)}</td>
         <td style="color:${usd<0?'var(--red)':'var(--text)'};">${usd.toFixed(2)}</td>
         <td style="color:${eur<0?'var(--red)':'var(--text)'};">${eur.toFixed(2)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc=${a.id}')">📋</button></td>
       </tr>`).join('')
-    : '<tr><td colspan="3" class="empty-state">لا توجد حسابات مدينة ✅</td></tr>';
+    : '<tr><td colspan="5" class="empty-state">لا توجد حسابات مدينة ✅</td></tr>';
+
+  // Pagination
+  const pg = document.getElementById('debtor-pages');
+  if (totalPages <= 1) { pg.innerHTML=''; return; }
+  pg.innerHTML = `
+    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage-1})" ${_debtorPage===1?'disabled':''}>‹ السابق</button>
+    <span>${_debtorPage} / ${totalPages}</span>
+    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''}>التالي ›</button>`;
+}
+
+function goDebtor(p) {
+  const totalPages = Math.ceil(_debtors.length/PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  _debtorPage = p;
+  renderDebtorPage();
 }
 </script>
 </body>
