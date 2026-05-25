@@ -11,47 +11,63 @@
 <div id="app">
   <main id="main">
     <div id="treasury-placeholder"></div>
-    <div class="page-header"><div><h2>💸 سحب نقدي</h2><p>خصم رصيد من حساب</p></div></div>
-    <div class="grid-2">
-      <div class="card">
-        <h3>بيانات السحب</h3>
-        <div class="form-group">
-          <label>ابحث عن الحساب</label>
-          <div class="search-wrap">
-            <input type="text" id="wit-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
-            <div id="wit-res" class="search-dropdown"></div>
-          </div>
-          <input type="hidden" id="wit-id">
+    <div class="page-header">
+      <div><h2>💸 سحب نقدي</h2><p>خصم رصيد من حساب</p></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h3>بيانات السحب</h3>
+      <div class="form-group">
+        <label>ابحث عن الحساب <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <div class="search-wrap">
+          <input type="text" id="wit-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
+          <div id="wit-res" class="search-dropdown"></div>
         </div>
-        <div class="form-group"><label>العملة</label>
+        <input type="hidden" id="wit-id">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>العملة</label>
           <select id="wit-cur" onchange="updatePreview()">
             <option value="usd">🇺🇸 دولار USD</option>
             <option value="eur">🇪🇺 يورو EUR</option>
           </select>
         </div>
-        <div class="form-group"><label>المبلغ</label>
-          <input type="number" id="wit-amount" placeholder="0.00" min="0" step="0.01" oninput="updatePreview()">
+        <div class="form-group">
+          <label>المبلغ</label>
+          <input type="number" id="wit-amount" placeholder="0.00" min="0" step="0.01"
+                 oninput="updatePreview()"
+                 onkeydown="if(event.key==='Enter') doWithdraw(false)">
         </div>
-        <div id="wit-preview" style="display:none;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;"></div>
-        <button class="btn btn-danger btn-full" onclick="doWithdraw(false)">⚠️ تأكيد السحب</button>
       </div>
-      <div class="card">
-        <h3>آخر السحوبات</h3>
-        <div class="tbl-wrap">
-          <table><thead><tr><th>الوقت</th><th>الحساب</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
-          <tbody id="recent-wit-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody></table>
-        </div>
+
+      <div id="wit-preview" style="display:none; border-radius:8px; padding:14px;
+           margin-bottom:16px; font-size:0.84rem; line-height:1.8;"></div>
+
+      <button class="btn btn-danger btn-full" onclick="doWithdraw(false)">⚠️ تأكيد السحب</button>
+    </div>
+
+    <div class="card">
+      <h3>آخر السحوبات</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>الوقت</th><th>الحساب</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
+          <tbody id="recent-wit-tbody">
+            <tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 </div>
 
 <!-- Overdraft Modal -->
-<div id="overdraft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+<div id="overdraft-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+     z-index:1000;align-items:center;justify-content:center;padding:16px;">
   <div class="card" style="width:100%;max-width:420px;text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
     <h3>رصيد غير كافٍ</h3>
-    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;"></p>
+    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.7;"></p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
       <button class="btn btn-danger" onclick="doWithdraw(true)">السحب بالسالب</button>
@@ -68,8 +84,7 @@
   if (!await initApp('withdraw')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-  UI.initSearch('wit');
-  document.getElementById('wit-res').addEventListener('click', () => setTimeout(updatePreview, 100));
+  UI.initSearch('wit', () => setTimeout(updatePreview, 80));
   document.getElementById('wit-cur').addEventListener('change', updatePreview);
   await renderRecent();
 })();
@@ -78,19 +93,26 @@ async function updatePreview() {
   const id  = document.getElementById('wit-id').value;
   const cur = document.getElementById('wit-cur').value;
   const amt = parseFloat(document.getElementById('wit-amount').value) || 0;
-  const preview = document.getElementById('wit-preview');
-  if (!id || amt <= 0) { preview.style.display='none'; return; }
-  const sym = cur==='usd'?'$':'€';
-  const before = await Transactions.getBalance(id, cur);
+  const box = document.getElementById('wit-preview');
+  if (!id) { box.style.display='none'; return; }
+  const sym    = cur==='usd'?'$':'€';
+  const before = await Storage.getBalance(id, cur);
   const after  = before - amt;
   const over   = after < 0;
-  preview.innerHTML = `<span style="color:var(--text2);">الرصيد الحالي:</span> <b>${sym}${before.toFixed(2)}</b>
-    &nbsp;→&nbsp; <span style="color:var(--text2);">الجديد:</span>
-    <b style="color:${over?'var(--red)':'var(--text)'};">${sym}${after.toFixed(2)}</b>
-    ${over?'<span style="color:var(--red);font-size:0.75rem;"> ⚠️ سالب</span>':''}`;
-  preview.style.background = over?'var(--red-dim)':'rgba(34,197,94,0.06)';
-  preview.style.border = over?'1px solid var(--red)':'1px solid var(--green)';
-  preview.style.display = 'block';
+  box.innerHTML = `
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">الرصيد الحالي</div>
+           <div style="font-weight:700;font-size:1rem;">${sym}${before.toFixed(2)}</div></div>
+      <div style="color:var(--text3);font-size:1.2rem;align-self:center;">→</div>
+      <div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">بعد السحب</div>
+           <div style="font-weight:700;font-size:1rem;color:${over?'var(--red)':'var(--text)'};">
+             ${sym}${after.toFixed(2)}${over?' ⚠️':''}</div></div>
+      ${amt>0?`<div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">المبلغ</div>
+           <div style="font-weight:700;font-size:1rem;color:var(--red);">-${sym}${amt.toFixed(2)}</div></div>`:''}
+    </div>`;
+  box.style.background = over ? 'var(--red-dim)'    : 'var(--surface2)';
+  box.style.border     = over ? '1px solid var(--red)' : '1px solid var(--border2)';
+  box.style.display    = 'block';
 }
 
 async function doWithdraw(force) {
@@ -127,7 +149,7 @@ async function renderRecent() {
         const acc = await Accounts.getById(t.acc);
         const sym = t.cur==='usd'?'$':'€';
         return `<tr>
-          <td style="font-size:0.72rem;color:var(--text3);">${UI.formatDate(t.date)}</td>
+          <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>
           <td style="color:var(--red);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
           <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
