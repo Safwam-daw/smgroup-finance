@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — كشف الحساب</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ── Statement-specific styles ── */
+.acc-selector { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:20px; }
+.acc-selector .search-wrap { flex:1; min-width:200px; }
+.acc-header {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px 20px; margin-bottom:16px; display:flex; justify-content:space-between;
+  align-items:center; flex-wrap:wrap; gap:12px;
+}
+.acc-header-info h3 { font-size:1.1rem; font-weight:700; }
+.acc-header-info p  { font-size:0.75rem; color:var(--text3); margin-top:3px; }
+.bal-chips { display:flex; gap:10px; flex-wrap:wrap; }
+.bal-chip {
+  padding:8px 16px; border-radius:20px; font-size:0.85rem; font-weight:700;
+  border:1px solid; display:flex; align-items:center; gap:6px;
+}
+
+/* Edit modal */
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  width:100%;max-width:460px;padding:24px; }
+.modal-box h3 { margin-bottom:18px; }
+
+/* Print styles */
+@media print {
+  .acc-selector,.btn,.filter-row,#sidebar,#topbar,#sidebar-overlay,#toast { display:none!important; }
+  .acc-header { border:2px solid #333!important; }
+  body { background:white!important; color:black!important; }
+  .bal-chip { border:1px solid #333!important; background:white!important; color:black!important; }
+}
+
+/* Mobile tweaks */
+@media(max-width:640px){
+  .acc-header { flex-direction:column; align-items:flex-start; }
+  .bal-chips { width:100%; }
+  .bal-chip { flex:1; justify-content:center; }
+  .filter-row { flex-direction:column; }
+  .filter-row .form-group { min-width:unset!important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+
+    <!-- Account selector -->
+    <div class="page-header">
+      <div><h2>📋 كشف الحساب</h2><p>عرض وإدارة حركات حساب محدد</p></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="acc-selector">
+        <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0;">
+          <label>ابحث عن حساب</label>
+          <div class="search-wrap">
+            <input type="text" id="stmt-search" placeholder="اسم أو كود الحساب…" autocomplete="off">
+            <div id="stmt-res" class="search-dropdown"></div>
+          </div>
+          <input type="hidden" id="stmt-acc-id">
+        </div>
+        <button class="btn btn-primary" onclick="loadStatement()" style="align-self:flex-end;min-width:110px;">
+          🔍 عرض الكشف
+        </button>
+      </div>
+    </div>
+
+    <!-- Account header (hidden until loaded) -->
+    <div id="acc-header-box" style="display:none;">
+      <div class="acc-header">
+        <div class="acc-header-info">
+          <h3 id="acc-header-name">—</h3>
+          <p id="acc-header-meta">—</p>
+        </div>
+        <div class="bal-chips">
+          <div class="bal-chip" id="chip-usd" style="color:var(--gold);border-color:var(--gold);background:var(--gold-dim);">
+            🇺🇸 <span id="bal-usd">$0.00</span>
+          </div>
+          <div class="bal-chip" id="chip-eur" style="color:var(--euro);border-color:var(--euro);background:var(--euro-dim);">
+            🇪🇺 <span id="bal-eur">€0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+        <div class="filter-row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>النوع</label>
+            <select id="f-type" onchange="renderRows()">
+              <option value="all">الكل</option>
+              <option value="dep">إيداع</option>
+              <option value="wit">سحب</option>
+              <option value="trf">تحويل</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>العملة</label>
+            <select id="f-cur" onchange="renderRows()">
+              <option value="all">الكل</option>
+              <option value="usd">دولار</option>
+              <option value="eur">يورو</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+            <input type="date" id="f-from" onchange="renderRows()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+            <input type="date" id="f-to" onchange="renderRows()">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-self:flex-end;">
+            <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
+            <button class="btn btn-primary btn-sm" onclick="exportStatement()">📊 Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+          <table id="stmt-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>النوع</th>
+                <th>الطرف الآخر</th>
+                <th>العملة</th>
+                <th>دين (خروج)</th>
+                <th>دائن (دخول)</th>
+                <th>ملاحظة</th>
+                <th>إجراء</th>
+              </tr>
+            </thead>
+            <tbody id="stmt-tbody">
+              <tr><td colspan="8" class="empty-state">اختر حساباً أولاً</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="stmt-count" style="text-align:center;margin-top:10px;font-size:0.74rem;color:var(--text3);"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit Note Modal -->
+<div id="edit-modal" class="modal-back">
+  <div class="modal-box">
+    <h3>✏️ تعديل الملاحظة</h3>
+    <div class="form-group">
+      <label>الملاحظة</label>
+      <input type="text" id="edit-note-input" placeholder="أدخل ملاحظة…">
+    </div>
+    <input type="hidden" id="edit-txn-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeEdit()">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveNote()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="del-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
+    <h3>تأكيد حذف العملية</h3>
+    <p style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;">
+      سيتم حذف العملية وعكس تأثيرها على رصيد الحساب تلقائياً.<br>
+      <b style="color:var(--red);">لا يمكن التراجع عن هذا الإجراء.</b>
+    </p>
+    <input type="hidden" id="del-txn-id">
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelete()">🗑️ حذف نهائي</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+let _currentAccId = null;
+let _allTxns      = [];
+let _allAccounts  = [];
+
+const typeLabel = { dep:'إيداع', wit:'سحب', trf:'تحويل' };
+
+(async () => {
+  if (!await initApp('statement')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  UI.initSearch('stmt');
+  _allAccounts = await Accounts.getAll();
+
+  // إذا جاء من accounts.html برابط مباشر ?acc=XXXX
+  const params = new URLSearchParams(location.search);
+  const accParam = params.get('acc');
+  if (accParam) {
+    const acc = _allAccounts.find(a => a.id === accParam);
+    if (acc) {
+      document.getElementById('stmt-search').value = acc.id + ' — ' + acc.name;
+      document.getElementById('stmt-acc-id').value = acc.id;
+      await loadStatement();
+    }
+  }
+})();
+
+async function loadStatement() {
+  const id = document.getElementById('stmt-acc-id').value;
+  if (!id) { UI.toast('اختر حساباً أولاً', 'error'); return; }
+  _currentAccId = id;
+  UI.showLoading(true);
+  const acc = _allAccounts.find(a => a.id === id) || await Accounts.getById(id);
+  const [usd, eur, txns] = await Promise.all([
+    Storage.getBalance(id, 'usd'),
+    Storage.getBalance(id, 'eur'),
+    Storage.getTxns({ acc: id })
+  ]);
+  _allTxns = txns;
+  UI.showLoading(false);
+
+  // Fill header
+  document.getElementById('acc-header-name').textContent = acc.name + ' (' + acc.id + ')';
+  document.getElementById('acc-header-meta').textContent = (acc.type==='company'?'شركة':'زبون') + ' · ' + UI.formatDate(acc.created_at||'');
+  document.getElementById('bal-usd').textContent = '$' + usd.toFixed(2);
+  document.getElementById('bal-eur').textContent = '€' + eur.toFixed(2);
+  const usdChip = document.getElementById('chip-usd');
+  const eurChip = document.getElementById('chip-eur');
+  usdChip.style.color = usd < 0 ? 'var(--red)' : 'var(--gold)';
+  usdChip.style.borderColor = usd < 0 ? 'var(--red)' : 'var(--gold)';
+  usdChip.style.background = usd < 0 ? 'var(--red-dim)' : 'var(--gold-dim)';
+  eurChip.style.color = eur < 0 ? 'var(--red)' : 'var(--euro)';
+  eurChip.style.borderColor = eur < 0 ? 'var(--red)' : 'var(--euro)';
+  eurChip.style.background = eur < 0 ? 'var(--red-dim)' : 'var(--euro-dim)';
+
+  document.getElementById('acc-header-box').style.display = 'block';
+  renderRows();
+}
+
+function renderRows() {
+  const fType = document.getElementById('f-type').value;
+  const fCur  = document.getElementById('f-cur').value;
+  const fFrom = document.getElementById('f-from').value;
+  const fTo   = document.getElementById('f-to').value;
+
+  let rows = _allTxns;
+  if (fType !== 'all') rows = rows.filter(t => t.type === fType);
+  if (fCur  !== 'all') rows = rows.filter(t => t.cur === fCur);
+  if (fFrom) rows = rows.filter(t => new Date(t.date) >= new Date(fFrom));
+  if (fTo)   rows = rows.filter(t => new Date(t.date) <= new Date(fTo + 'T23:59:59'));
+
+  const tbody = document.getElementById('stmt-tbody');
+  const canEdit = Auth.isAdmin();
+
+  tbody.innerHTML = rows.length
+    ? rows.map(t => {
+        const sym = t.cur==='usd'?'$':'€';
+        const isFrom = t.type==='trf' && t.from===_currentAccId;
+        const isTo   = t.type==='trf' && t.to===_currentAccId;
+        let debit=0, credit=0;
+        if (t.type==='dep') credit = parseFloat(t.amt);
+        if (t.type==='wit') debit  = parseFloat(t.amt);
+        if (isFrom) debit  = parseFloat(t.amt);
+        if (isTo)   credit = parseFloat(t.amt) * (parseFloat(t.rate)||1);
+        // الطرف الآخر
+        let counterpart = '—';
+        if (t.type==='trf') {
+          const otherId = isFrom ? t.to : t.from;
+          const other = _allAccounts.find(a=>a.id===otherId);
+          counterpart = other ? UI.escapeHtml(other.name) : otherId;
+          if (isFrom) counterpart = '← ' + counterpart;
+          else counterpart = '→ ' + counterpart;
+        }
+        const editBtns = canEdit ? `
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,''))}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>
+        ` : '—';
+        return `<tr>
+          <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+          <td><span class="badge badge-${t.type}">${typeLabel[t.type]}</span></td>
+          <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td style="color:var(--red);font-weight:600;">${debit>0?sym+debit.toFixed(2):'—'}</td>
+          <td style="color:var(--green);font-weight:600;">${credit>0?sym+credit.toFixed(2):'—'}</td>
+          <td style="font-size:0.75rem;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${UI.escapeHtml(t.note||'')}">
+            ${UI.escapeHtml(t.note||'—')}
+          </td>
+          <td style="white-space:nowrap;">${editBtns}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>لا توجد حركات مطابقة</td></tr>';
+
+  document.getElementById('stmt-count').textContent = `${rows.length} حركة`;
+}
+
+// ── Edit Note ─────────────────────────────────────────
+function openEdit(id, currentNote) {
+  document.getElementById('edit-txn-id').value = id;
+  document.getElementById('edit-note-input').value = currentNote;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit() { document.getElementById('edit-modal').classList.remove('open'); }
+
+async function saveNote() {
+  const id   = document.getElementById('edit-txn-id').value;
+  const note = document.getElementById('edit-note-input').value;
+  UI.showLoading(true);
+  const result = await Transactions.updateNote(id, note);
+  UI.showLoading(false);
+  if (result.ok) {
+    closeEdit();
+    UI.toast('تم حفظ الملاحظة ✅');
+    // تحديث في الذاكرة
+    const t = _allTxns.find(x => String(x.id) === String(id));
+    if (t) t.note = note;
+    renderRows();
+  } else { UI.toast(result.error, 'error'); }
+}
+
+// ── Delete ────────────────────────────────────────────
+function openDel(id) {
+  document.getElementById('del-txn-id').value = id;
+  document.getElementById('del-modal').classList.add('open');
+}
+function closeDel() { document.getElementById('del-modal').classList.remove('open'); }
+
+async function doDelete() {
+  const id = document.getElementById('del-txn-id').value;
+  UI.showLoading(true);
+  const result = await Transactions.deleteTxn(id);
+  UI.showLoading(false);
+  if (result.ok) {
+    closeDel();
+    UI.toast('تم الحذف وعكس تأثير العملية ✅');
+    await loadStatement(); // أعد التحميل لتحديث الرصيد
+    await UI.updateTreasury();
+  } else { UI.toast(result.error, 'error'); }
+}
+
+// ── Export ────────────────────────────────────────────
+function exportStatement() {
+  if (typeof XLSX === 'undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById('stmt-table'), { sheet:'كشف الحساب' });
+  const accName = document.getElementById('acc-header-name').textContent;
+  XLSX.writeFile(wb, 'كشف_' + accName + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
+}
+</script>
+</body>
+</html>
