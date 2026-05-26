@@ -14,35 +14,35 @@ function buildSidebar(activePage) {
       </div>
       <div class="sidebar-nav">
         <div class="nav-section-label">الرئيسية</div>
-        <button class="nav-btn ${activePage==='dashboard'?'active':''}" onclick="navTo('dashboard.html')">
+        <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
         </button>
         <div class="nav-section-label">العمليات اليومية</div>
-        <button class="nav-btn ${activePage==='accounts'?'active':''}" onclick="navTo('accounts.html')">
+        <button class="nav-btn ${activePage==='accounts'?'active':''}" data-page="accounts" onclick="navTo('accounts.html')">
           <span class="nav-icon">👥</span> إدارة الحسابات
         </button>
-        <button class="nav-btn ${activePage==='deposit'?'active':''}" onclick="navTo('deposit.html')">
+        <button class="nav-btn ${activePage==='deposit'?'active':''}" data-page="deposit" onclick="navTo('deposit.html')">
           <span class="nav-icon">💵</span> إيداع نقدي
         </button>
-        <button class="nav-btn ${activePage==='withdraw'?'active':''}" onclick="navTo('withdraw.html')">
+        <button class="nav-btn ${activePage==='withdraw'?'active':''}" data-page="withdraw" onclick="navTo('withdraw.html')">
           <span class="nav-icon">💸</span> سحب نقدي
         </button>
-        <button class="nav-btn ${activePage==='transfer'?'active':''}" onclick="navTo('transfer.html')">
+        <button class="nav-btn ${activePage==='transfer'?'active':''}" data-page="transfer" onclick="navTo('transfer.html')">
           <span class="nav-icon">🔄</span> تحويل أرصدة
         </button>
-        <button class="nav-btn ${activePage==='ledger'?'active':''}" onclick="navTo('ledger.html')">
+        <button class="nav-btn ${activePage==='ledger'?'active':''}" data-page="ledger" onclick="navTo('ledger.html')">
           <span class="nav-icon">📒</span> السجل المحاسبي
         </button>
-        <button class="nav-btn ${activePage==='statement'?'active':''}" onclick="navTo('statement.html')">
+        <button class="nav-btn ${activePage==='statement'?'active':''}" data-page="statement" onclick="navTo('statement.html')">
           <span class="nav-icon">📋</span> كشف الحساب
         </button>
         <div class="nav-section-label" data-admin-only>الإدارة المتقدمة</div>
-        <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only onclick="navTo('employees.html')">
+        <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only data-page="employees" onclick="navTo('employees.html')">
           <span class="nav-icon">🛡️</span> إدارة الموظفين
         </button>
         <div class="nav-section-label">أدوات النظام</div>
-        <button class="nav-btn" onclick="window.print()">
-          <span class="nav-icon">🖨️</span> طباعة الشاشة
+        <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
+          <span class="nav-icon">⚙️</span> الإعدادات
         </button>
         <button class="nav-btn" onclick="Storage.exportBackup()">
           <span class="nav-icon">📥</span> تصدير نسخة احتياطية
@@ -71,13 +71,20 @@ function buildSidebar(activePage) {
 function buildTreasuryBar() {
   return `
     <div id="treasury-bar">
-      <div class="stat-card" style="flex:1;border-right:3px solid var(--gold);">
-        <div class="stat-label">خزينة الدولار</div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--gold);">
+        <div class="stat-label">💵 خزينة الدولار</div>
         <div class="stat-value" id="t-usd" style="color:var(--gold);">$0.00</div>
       </div>
-      <div class="stat-card" style="flex:1;border-right:3px solid var(--euro);">
-        <div class="stat-label">خزينة اليورو</div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--euro);">
+        <div class="stat-label">💶 خزينة اليورو</div>
         <div class="stat-value" id="t-eur" style="color:var(--euro);">€0.00</div>
+      </div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
+        <div class="stat-label">📈 الأرباح</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;">
+          <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1.1rem;">$0.00</span>
+          <span style="color:var(--green);font-weight:700;" id="t-profit-eur">€0.00</span>
+        </div>
       </div>
     </div>
   `;
@@ -95,15 +102,53 @@ async function initApp(pageId) {
     window.location.href = 'login.html';
     return false;
   }
-  if (pageId === 'employees' && !Auth.isAdmin()) {
-    window.location.href = 'dashboard.html';
-    return false;
+
+  // حماية الصفحات بالصلاحيات
+  const permMap = {
+    'dashboard': 'dashboard',
+    'accounts':  'accounts',
+    'deposit':   'deposit',
+    'withdraw':  'withdraw',
+    'transfer':  'transfer',
+    'ledger':    'ledger',
+    'statement': 'statement',
+    'account-view': 'statement',
+    'employees': 'employees',
+    'settings':  null  // متاح للجميع
+  };
+
+  if (permMap[pageId] !== undefined && permMap[pageId] !== null) {
+    if (!Auth.can(permMap[pageId])) {
+      window.location.href = 'deposit.html'; // توجيه للصفحة الأساسية
+      return false;
+    }
   }
+
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
   UI.initSidebar();
   UI.closeSidebarOnNav();
   UI.fillUserInfo();
   UI.applyRoleUI();
+  applyNavPermissions();
   await UI.updateTreasury();
   return true;
+}
+
+// إخفاء أزرار التنقل التي ليس للمستخدم صلاحية عليها
+function applyNavPermissions() {
+  const permMap = {
+    'dashboard': 'dashboard',
+    'accounts':  'accounts',
+    'deposit':   'deposit',
+    'withdraw':  'withdraw',
+    'transfer':  'transfer',
+    'ledger':    'ledger',
+    'statement': 'statement',
+    'employees': 'employees'
+  };
+  document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+    const page = btn.dataset.page;
+    const perm = permMap[page];
+    if (perm && !Auth.can(perm)) btn.style.display = 'none';
+  });
 }

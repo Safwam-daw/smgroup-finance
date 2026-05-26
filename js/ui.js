@@ -35,9 +35,17 @@ const UI = (() => {
   }
 
   async function updateTreasury() {
-    const totals = await Transactions.getTreasuryTotals();
+    // تحميل الخزينة والأرباح بالتوازي
+    const [totals, profitAcc] = await Promise.all([
+      Transactions.getTreasuryTotals(),
+      Storage.getAccounts().then(accs => accs.find(a => a.id === '9999') || null)
+    ]);
+
     const usdEl = document.getElementById('t-usd');
     const eurEl = document.getElementById('t-eur');
+    const pusdEl = document.getElementById('t-profit-usd');
+    const peurEl = document.getElementById('t-profit-eur');
+
     if (usdEl) {
       usdEl.textContent = '$' + totals.usd.toFixed(2);
       usdEl.style.color = totals.usd < 0 ? 'var(--red)' : 'var(--gold)';
@@ -45,6 +53,16 @@ const UI = (() => {
     if (eurEl) {
       eurEl.textContent = '€' + totals.eur.toFixed(2);
       eurEl.style.color = totals.eur < 0 ? 'var(--red)' : 'var(--euro)';
+    }
+    if (pusdEl && profitAcc) {
+      const pu = parseFloat(profitAcc.bal_usd || 0);
+      pusdEl.textContent = '$' + pu.toFixed(2);
+      pusdEl.style.color = pu < 0 ? 'var(--red)' : 'var(--green)';
+    }
+    if (peurEl && profitAcc) {
+      const pe = parseFloat(profitAcc.bal_eur || 0);
+      peurEl.textContent = '€' + pe.toFixed(2);
+      peurEl.style.color = pe < 0 ? 'var(--red)' : 'var(--green)';
     }
   }
 

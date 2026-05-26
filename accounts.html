@@ -14,7 +14,7 @@
     <div id="treasury-placeholder"></div>
     <div class="page-header">
       <div><h2>إدارة الحسابات</h2><p>إنشاء ومتابعة حسابات الزبائن والشركات</p></div>
-      <button class="btn btn-primary no-print" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 تصدير Excel</button>
+      <button class="btn btn-primary no-print" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 Excel</button>
     </div>
 
     <!-- فتح حساب جديد (مدير فقط) -->
@@ -34,28 +34,29 @@
         </div>
         <div>
           <div class="form-group"><label>اسم الحساب</label>
-            <input type="text" id="acc-name" placeholder="اسم الزبون أو الشركة">
+            <input type="text" id="acc-name" placeholder="اسم الزبون أو الشركة"
+                   onkeydown="if(event.key==='Enter') doCreate()">
           </div>
           <button class="btn btn-primary btn-full" style="margin-top:6px;" onclick="doCreate()">💾 حفظ الحساب</button>
         </div>
       </div>
     </div>
 
-    <!-- فلاتر البحث -->
+    <!-- فلاتر -->
     <div class="card" style="margin-bottom:16px;padding:14px 16px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
         <div class="form-group" style="flex:2;min-width:160px;margin-bottom:0;"><label>بحث سريع</label>
-          <input type="text" id="filter-input" placeholder="اسم أو كود…" oninput="filterChanged()">
+          <input type="text" id="filter-input" placeholder="اسم أو كود…" oninput="applyFilter()">
         </div>
         <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>النوع</label>
-          <select id="filter-type" onchange="filterChanged()">
+          <select id="filter-type" onchange="applyFilter()">
             <option value="all">الكل</option>
             <option value="customer">زبائن</option>
             <option value="company">شركات</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>الرصيد</label>
-          <select id="filter-bal" onchange="filterChanged()">
+          <select id="filter-bal" onchange="applyFilter()">
             <option value="all">الكل</option>
             <option value="debtor">مدينون ⚠️</option>
           </select>
@@ -65,7 +66,7 @@
 
     <!-- جدول الحسابات -->
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
         <h3 style="margin-bottom:0;">قائمة الحسابات</h3>
         <span id="acc-count" style="font-size:0.75rem;color:var(--text3);"></span>
       </div>
@@ -73,14 +74,15 @@
         <table id="acc-table">
           <thead><tr>
             <th>الكود</th><th>الاسم</th><th>النوع</th>
-            <th>رصيد $</th><th>رصيد €</th><th>كشف</th>
+            <th>رصيد $</th><th>رصيد €</th><th>إجراءات</th>
           </tr></thead>
-          <tbody id="acc-tbody"><tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr></tbody>
+          <tbody id="acc-tbody">
+            <tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr>
+          </tbody>
         </table>
       </div>
       <div class="pagination no-print" id="acc-pages"></div>
     </div>
-
   </main>
 </div>
 
@@ -89,9 +91,10 @@
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/app.js"></script>
 <script>
-const PAGE_SIZE = 10;
-let _filteredList = [];
-let _currentPage  = 1;
+const PAGE_SIZE  = 15;
+let _allAccounts = [];  // القائمة الكاملة مع الأرصدة
+let _filtered    = [];
+let _page        = 1;
 
 (async () => {
   if (!await initApp('accounts')) return;
@@ -99,8 +102,22 @@ let _currentPage  = 1;
   await UI.updateTreasury();
   if (!Auth.isAdmin()) document.getElementById('create-card').style.display='none';
   await refreshCode();
-  await buildList();
+  await loadAccounts();
 })();
+
+// تحميل الحسابات مع الأرصدة من الـ Cache مرة واحدة
+async function loadAccounts() {
+  UI.showLoading(true);
+  const raw = await Accounts.getAll();
+  // الأرصدة موجودة في الكائن مباشرة من Supabase (bal_usd, bal_eur)
+  _allAccounts = raw.map(a => ({
+    ...a,
+    usd: parseFloat(a.bal_usd || 0),
+    eur: parseFloat(a.bal_eur || 0)
+  }));
+  UI.showLoading(false);
+  applyFilter();
+}
 
 async function refreshCode() {
   document.getElementById('acc-code').value =
@@ -117,105 +134,81 @@ async function doCreate() {
     UI.toast('تم إنشاء الحساب: ' + result.id);
     document.getElementById('acc-name').value = '';
     await refreshCode();
-    await buildList();
+    await loadAccounts();
     await UI.updateTreasury();
   } else { UI.toast(result.error,'error'); }
 }
 
-// بناء القائمة الكاملة مع الأرصدة
-async function buildList() {
-  UI.showLoading(true);
-  const all = await Accounts.getAll();
-  // نجلب الأرصدة مرة واحدة
-  _filteredList = await Promise.all(all.map(async a => ({
-    ...a,
-    usd: await Storage.getBalance(a.id,'usd'),
-    eur: await Storage.getBalance(a.id,'eur')
-  })));
-  UI.showLoading(false);
-  filterChanged();
-}
-
-function filterChanged() {
-  const q    = document.getElementById('filter-input').value.toLowerCase();
+function applyFilter() {
+  const q    = document.getElementById('filter-input').value.toLowerCase().trim();
   const type = document.getElementById('filter-type').value;
   const bal  = document.getElementById('filter-bal').value;
-  let list = _filteredList;
-  if (q)         list = list.filter(a => a.id.includes(q)||a.name.toLowerCase().includes(q));
-  if (type!=='all') list = list.filter(a => a.type===type);
-  if (bal==='debtor') list = list.filter(a => a.usd<0||a.eur<0);
-  _filteredList = list; // تصفية مؤقتة
-  // لا نريد تعديل المصفوفة الأصلية — أعد البناء
-  applyFilter();
-}
 
-let _filtered = [];
-async function applyFilter() {
-  const all = await Accounts.getAll();
-  const q    = document.getElementById('filter-input').value.toLowerCase();
-  const type = document.getElementById('filter-type').value;
-  const bal  = document.getElementById('filter-bal').value;
-  _filtered = all.filter(a => {
-    if (q && !a.id.includes(q) && !a.name.toLowerCase().includes(q)) return false;
-    if (type!=='all' && a.type!==type) return false;
+  _filtered = _allAccounts.filter(a => {
+    if (q && !a.id.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
+    if (type !== 'all' && a.type !== type) return false;
+    if (bal === 'debtor' && a.usd >= 0 && a.eur >= 0) return false;
     return true;
   });
-  // إذا فلتر بالرصيد نحتاج الأرصدة
-  if (bal==='debtor') {
-    const withBal = await Promise.all(_filtered.map(async a => ({
-      ...a, usd:await Storage.getBalance(a.id,'usd'), eur:await Storage.getBalance(a.id,'eur')
-    })));
-    _filtered = withBal.filter(a => a.usd<0||a.eur<0);
-  }
-  _currentPage = 1;
-  await renderPage();
+  _page = 1;
+  renderPage();
 }
 
-async function renderPage() {
-  const total = _filtered.length;
-  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
-  const page = _filtered.slice((_currentPage-1)*PAGE_SIZE, _currentPage*PAGE_SIZE);
-
-  // نجلب الأرصدة للصفحة الحالية فقط
-  const rows = await Promise.all(page.map(async a => {
-    const usd = a.usd!==undefined ? a.usd : await Storage.getBalance(a.id,'usd');
-    const eur = a.eur!==undefined ? a.eur : await Storage.getBalance(a.id,'eur');
-    const debtor = usd<0||eur<0;
-    return `<tr class="${debtor?'row-debtor':''}">
-      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}</td>
-      <td>${UI.escapeHtml(a.name)}</td>
-      <td><span class="badge-type">${a.type==='company'?'شركة':'زبون'}</span></td>
-      <td style="color:${usd<0?'var(--red)':'var(--text)'};font-weight:600;">${usd.toFixed(2)}</td>
-      <td style="color:${eur<0?'var(--red)':'var(--text)'};font-weight:600;">${eur.toFixed(2)}</td>
-      <td><button class="btn btn-ghost btn-sm no-print"
-            onclick="navTo('statement.html?acc=${UI.escapeHtml(a.id)}')">📋 كشف</button></td>
-    </tr>`;
-  }));
-
-  document.getElementById('acc-tbody').innerHTML =
-    rows.length ? rows.join('') :
-    '<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>لا توجد نتائج</td></tr>';
+function renderPage() {
+  const total      = _filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  const start      = (_page - 1) * PAGE_SIZE;
+  const pagItems   = _filtered.slice(start, start + PAGE_SIZE);
 
   document.getElementById('acc-count').textContent = total + ' حساب';
 
+  const tbody = document.getElementById('acc-tbody');
+  if (!pagItems.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>لا توجد نتائج</td></tr>';
+    document.getElementById('acc-pages').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = pagItems.map(a => {
+    const debtor = a.usd < 0 || a.eur < 0;
+    return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
+              onclick="navTo('account-view.html?acc=${a.id}')">
+      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor ? ' ⚠️' : ''}</td>
+      <td>${UI.escapeHtml(a.name)}</td>
+      <td><span class="badge-type">${a.type === 'company' ? 'شركة' : 'زبون'}</span></td>
+      <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${a.usd.toFixed(2)}</td>
+      <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${a.eur.toFixed(2)}</td>
+      <td onclick="event.stopPropagation();" style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm"
+          onclick="navTo('account-view.html?acc=${a.id}')">👁️ حركات</button>
+        <button class="btn btn-ghost btn-sm"
+          onclick="navTo('statement.html?acc=${a.id}')">📋 كشف</button>
+      </td>
+    </tr>`;
+  }).join('');
+
   // Pagination
   const pg = document.getElementById('acc-pages');
-  if (totalPages<=1) { pg.innerHTML=''; return; }
-  pg.innerHTML = `
-    <button class="btn btn-ghost btn-sm" onclick="goPage(${_currentPage-1})" ${_currentPage===1?'disabled':''}>‹ السابق</button>
-    <span>${_currentPage} / ${totalPages}</span>
-    <button class="btn btn-ghost btn-sm" onclick="goPage(${_currentPage+1})" ${_currentPage===totalPages?'disabled':''}>التالي ›</button>`;
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp = Math.max(1, _page-2), ep = Math.min(totalPages, _page+2);
+  if (sp > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if (sp > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for (let i = sp; i <= ep; i++)
+    html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+  if (ep < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if (ep < totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML = html;
 }
 
-async function goPage(p) {
-  const totalPages = Math.ceil(_filtered.length/PAGE_SIZE)||1;
-  if (p<1||p>totalPages) return;
-  _currentPage = p;
-  await renderPage();
+function goPage(p) {
+  const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > t) return;
+  _page = p;
+  renderPage();
 }
-
-// تشغيل الفلتر عند البداية
-(async()=>{ await applyFilter(); })();
 </script>
 </body>
 </html>

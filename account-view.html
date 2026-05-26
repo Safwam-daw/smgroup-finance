@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — حركات الحساب</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.acc-hero {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:20px; margin-bottom:16px;
+}
+.acc-hero-top {
+  display:flex; justify-content:space-between;
+  align-items:flex-start; flex-wrap:wrap; gap:12px;
+}
+.acc-hero-name { font-size:1.15rem; font-weight:700; }
+.acc-hero-meta { font-size:0.73rem; color:var(--text3); margin-top:4px; }
+.bal-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.bal-box {
+  flex:1; min-width:120px; padding:12px 16px;
+  border-radius:var(--radius-sm); border:1px solid;
+  display:flex; flex-direction:column; gap:4px;
+}
+.bal-box-label { font-size:0.67rem; color:var(--text3); }
+.bal-box-val   { font-size:1.2rem; font-weight:700; }
+
+/* أزرار العمليات السريعة */
+.ops-bar {
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;
+}
+.ops-bar .btn { flex:1; min-width:100px; }
+
+/* فلاتر */
+.quick-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.qf-btn {
+  padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.76rem;
+  font-family:inherit; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.qf-btn:hover,.qf-btn.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold); }
+
+.cell-credit { background:var(--green-dim); color:var(--green); font-weight:700;
+  padding:3px 8px; border-radius:6px; display:inline-block; }
+.cell-debit  { background:var(--red-dim); color:var(--red); font-weight:700;
+  padding:3px 8px; border-radius:6px; display:inline-block; }
+
+/* Modal */
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:460px;padding:24px;
+  max-height:90vh; overflow-y:auto; }
+.modal-box h3 { margin-bottom:18px; }
+
+/* Print */
+@media print {
+  #sidebar,#topbar,#sidebar-overlay,#toast,#treasury-bar,
+  #treasury-placeholder,.no-print,.ops-bar,.quick-filters,
+  .filter-card { display:none!important; }
+  *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  body { background:#fff!important; color:#111!important; }
+  #main { margin:0!important; padding:16px!important; }
+  .acc-hero { background:#fff!important; border:2px solid #c9a84c!important; }
+  .bal-box  { background:#fffbef!important; border-color:#c9a84c!important; }
+  .bal-box-val { color:#111!important; }
+  table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
+  th  { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; }
+  td  { border-bottom:1px solid #eee!important; color:#111!important; }
+  .cell-credit { background:#e8f8ef!important; color:#16a34a!important; }
+  .cell-debit  { background:#fef2f2!important; color:#dc2626!important; }
+  .badge-dep { background:#e8f8ef!important; color:#16a34a!important; }
+  .badge-wit { background:#fef2f2!important; color:#dc2626!important; }
+  .badge-trf { background:#eff6ff!important; color:#2563eb!important; }
+}
+
+@media(max-width:640px){
+  .acc-hero-top { flex-direction:column; }
+  .acc-hero-top .btn-group { width:100%; }
+  .acc-hero-top .btn-group .btn { flex:1; }
+  .bal-row { gap:8px; }
+  .bal-box { min-width:calc(50% - 4px); }
+  .bal-box-val { font-size:1rem; }
+  .ops-bar .btn { font-size:0.82rem; padding:10px 12px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+
+    <!-- بطاقة الحساب -->
+    <div class="acc-hero" id="acc-hero">
+      <div class="acc-hero-top">
+        <div>
+          <div class="acc-hero-name" id="hero-name">جاري التحميل…</div>
+          <div class="acc-hero-meta" id="hero-meta"></div>
+        </div>
+        <div class="btn-group no-print" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)">📋 كشف كامل</button>
+          <button class="btn btn-ghost btn-sm" onclick="history.back()">← رجوع</button>
+        </div>
+      </div>
+
+      <!-- أرصدة -->
+      <div class="bal-row" id="bal-row">
+        <div class="bal-box" id="box-usd" style="border-color:var(--gold);background:var(--gold-dim2);">
+          <div class="bal-box-label">🇺🇸 رصيد الدولار</div>
+          <div class="bal-box-val" id="bal-usd" style="color:var(--gold);">—</div>
+        </div>
+        <div class="bal-box" id="box-eur" style="border-color:var(--euro);background:var(--euro-dim);">
+          <div class="bal-box-label">🇪🇺 رصيد اليورو</div>
+          <div class="bal-box-val" id="bal-eur" style="color:var(--euro);">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- أزرار العمليات السريعة -->
+    <div class="ops-bar no-print">
+      <button class="btn btn-primary" onclick="openOp('dep')">
+        💵 إيداع
+      </button>
+      <button class="btn btn-danger" onclick="openOp('wit')">
+        💸 سحب
+      </button>
+      <button class="btn btn-ghost" onclick="openOp('trf')">
+        🔄 تحويل
+      </button>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="card filter-card" style="padding:14px 16px;margin-bottom:14px;">
+      <div class="quick-filters">
+        <button class="qf-btn active" onclick="setQuick('month')">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
+        <button class="qf-btn" onclick="setQuick('today')">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
+        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>النوع</label>
+          <select id="f-type" onchange="renderRows()">
+            <option value="all">الكل</option>
+            <option value="dep">إيداع</option>
+            <option value="wit">سحب</option>
+            <option value="trf">تحويل</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>العملة</label>
+          <select id="f-cur" onchange="renderRows()">
+            <option value="all">الكل</option>
+            <option value="usd">دولار</option>
+            <option value="eur">يورو</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+          <input type="date" id="f-from" onchange="clearQuick();renderRows()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+          <input type="date" id="f-to" onchange="clearQuick();renderRows()">
+        </div>
+        <div class="no-print" style="align-self:flex-end;">
+          <button class="btn btn-primary btn-sm" onclick="exportMovements()">📊 Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول الحركات -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+        <table id="mov-table">
+          <thead><tr>
+            <th>التاريخ</th><th>النوع</th><th>الطرف الآخر</th>
+            <th>العملة</th><th>دين</th><th>دائن</th>
+            <th class="no-print">ملاحظة</th><th class="no-print">إجراء</th>
+          </tr></thead>
+          <tbody id="mov-tbody">
+            <tr><td colspan="8" class="empty-state">جاري التحميل…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;
+         margin-top:12px;flex-wrap:wrap;gap:8px;">
+      <div id="mov-count" style="font-size:0.74rem;color:var(--text3);"></div>
+      <div class="pagination no-print" id="mov-pages"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal عملية سريعة -->
+<div id="op-modal" class="modal-back">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 id="op-title" style="margin-bottom:0;">عملية</h3>
+      <button onclick="closeOp()" style="background:none;border:none;color:var(--text2);
+        font-size:1.3rem;cursor:pointer;padding:4px;">✕</button>
+    </div>
+
+    <!-- إيداع / سحب -->
+    <div id="op-dep-wit">
+      <div class="form-group">
+        <label>العملة</label>
+        <select id="op-cur">
+          <option value="usd">🇺🇸 دولار USD</option>
+          <option value="eur">🇪🇺 يورو EUR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>المبلغ</label>
+        <input type="number" id="op-amount" placeholder="0.00" min="0" step="0.01"
+               onkeydown="if(event.key==='Enter') confirmOp()">
+      </div>
+      <!-- معاينة الرصيد -->
+      <div id="op-preview" style="display:none;border-radius:8px;padding:12px;
+           margin-bottom:14px;background:var(--surface2);border:1px solid var(--border2);
+           font-size:0.83rem;line-height:1.8;"></div>
+    </div>
+
+    <!-- تحويل -->
+    <div id="op-trf" style="display:none;">
+      <div class="form-group">
+        <label>إلى حساب <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <div class="search-wrap">
+          <input type="text" id="op-to-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
+          <div id="op-to-res" class="search-dropdown"></div>
+        </div>
+        <input type="hidden" id="op-to-id">
+      </div>
+      <!-- رصيد المستقبل -->
+      <div id="op-to-bal" style="display:none;padding:8px 12px;border-radius:8px;
+           background:var(--surface2);border:1px solid var(--border2);
+           font-size:0.82rem;margin-bottom:12px;"></div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>العملة</label>
+          <select id="op-trf-cur">
+            <option value="usd">🇺🇸 دولار</option>
+            <option value="eur">🇪🇺 يورو</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>سعر الصرف</label>
+          <input type="number" id="op-rate" value="1" step="0.0001" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>المبلغ</label>
+        <input type="number" id="op-trf-amount" placeholder="0.00" min="0" step="0.01"
+               onkeydown="if(event.key==='Enter') confirmOp()">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+      <button class="btn btn-ghost" onclick="closeOp()">إلغاء</button>
+      <button class="btn btn-primary" id="op-confirm-btn" onclick="confirmOp()">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal تأكيد سحب بالسالب -->
+<div id="overdraft-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+    <h3>رصيد غير كافٍ</h3>
+    <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.7;"></p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
+      <button class="btn btn-danger" onclick="confirmOp(true)">المتابعة بالسالب</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal تعديل ملاحظة -->
+<div id="edit-modal" class="modal-back">
+  <div class="modal-box">
+    <h3>✏️ تعديل الملاحظة</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>الملاحظة</label>
+      <input type="text" id="edit-note" placeholder="أدخل ملاحظة…"
+             onkeydown="if(event.key==='Enter') saveNote()">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeEdit()">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveNote()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal تأكيد حذف -->
+<div id="del-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
+    <h3>تأكيد حذف العملية</h3>
+    <p style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;">
+      سيتم حذف العملية وعكس تأثيرها على الرصيد.<br>
+      <b style="color:var(--red);">لا يمكن التراجع.</b>
+    </p>
+    <input type="hidden" id="del-id">
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelete()">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+const PAGE_SIZE  = 20;
+let _accId       = null;
+let _accObj      = null;
+let _allTxns     = [];
+let _allAccounts = [];
+let _filtered    = [];
+let _page        = 1;
+let _opType      = null; // 'dep' | 'wit' | 'trf'
+const typeLabel  = {dep:'إيداع', wit:'سحب', trf:'تحويل'};
+
+// ── Init ──────────────────────────────────────────────
+(async () => {
+  if (!await initApp('account-view')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+
+  _accId = new URLSearchParams(location.search).get('acc');
+  if (!_accId) { navTo('accounts.html'); return; }
+
+  UI.showLoading(true);
+  const [acc, txns, allAccounts, usd, eur] = await Promise.all([
+    Accounts.getById(_accId),
+    Storage.getTxns({ acc: _accId }),
+    Accounts.getAll(),
+    Storage.getBalance(_accId, 'usd'),
+    Storage.getBalance(_accId, 'eur')
+  ]);
+  UI.showLoading(false);
+
+  if (!acc) { UI.toast('الحساب غير موجود','error'); navTo('accounts.html'); return; }
+
+  _accObj      = acc;
+  _allTxns     = txns;
+  _allAccounts = allAccounts;
+
+  document.title = 'SM-Group — ' + acc.name;
+  document.getElementById('hero-name').textContent = acc.name + ' · ' + acc.id;
+  document.getElementById('hero-meta').textContent =
+    (acc.type==='company'?'شركة':'زبون') + ' · ' + txns.length + ' حركة إجمالاً';
+
+  updateBalBoxes(usd, eur);
+  UI.updateTreasury();
+
+  // تهيئة بحث التحويل
+  UI.initSearch('op-to', async (id) => {
+    const [bu, be] = await Promise.all([
+      Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
+    ]);
+    const box = document.getElementById('op-to-bal');
+    box.innerHTML = `رصيد المستقبل: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${be.toFixed(2)}</b>`;
+    box.style.display = 'block';
+  });
+
+  // تحديث معاينة في إيداع/سحب عند تغيير العملة أو المبلغ
+  document.getElementById('op-cur').addEventListener('change', updateOpPreview);
+  document.getElementById('op-amount').addEventListener('input', updateOpPreview);
+
+  setQuick('month', false);
+  renderRows();
+})();
+
+// ── Bal boxes ─────────────────────────────────────────
+function updateBalBoxes(usd, eur) {
+  const set = (boxId, valId, val, sym, posColor) => {
+    const box = document.getElementById(boxId);
+    const el  = document.getElementById(valId);
+    const neg = val < 0;
+    el.textContent = (neg?'-':'') + sym + Math.abs(val).toFixed(2);
+    el.style.color = neg ? 'var(--red)' : posColor;
+    box.style.borderColor = neg ? 'var(--red)' : (posColor==='var(--gold)'?'var(--gold)':'var(--euro)');
+    box.style.background  = neg ? 'var(--red-dim)' : (posColor==='var(--gold)'?'var(--gold-dim2)':'var(--euro-dim)');
+  };
+  set('box-usd','bal-usd', usd, '$', 'var(--gold)');
+  set('box-eur','bal-eur', eur, '€', 'var(--euro)');
+}
+
+// ── Quick Filters ─────────────────────────────────────
+function setQuick(key, apply=true) {
+  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+  const today = UI.todayStr();
+  const map = {
+    today:{ from:today,               to:today },
+    month:{ from:UI.firstOfMonth(0),  to:UI.lastOfMonth(0) },
+    prev: { from:UI.firstOfMonth(-1), to:UI.lastOfMonth(-1) },
+    all:  { from:'',                  to:'' }
+  };
+  const r = map[key]||map.month;
+  document.getElementById('f-from').value = r.from;
+  document.getElementById('f-to').value   = r.to;
+  const idx={month:0,prev:1,today:2,all:3}[key];
+  const btns = document.querySelectorAll('.qf-btn');
+  if (btns[idx]) btns[idx].classList.add('active');
+  if (apply) renderRows();
+}
+function clearQuick(){ document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
+
+// ── Render ────────────────────────────────────────────
+function renderRows() {
+  const fType = document.getElementById('f-type').value;
+  const fCur  = document.getElementById('f-cur').value;
+  const fFrom = document.getElementById('f-from').value;
+  const fTo   = document.getElementById('f-to').value;
+
+  _filtered = _allTxns.filter(t => {
+    if (fType!=='all' && t.type!==fType) return false;
+    if (fCur !=='all' && t.cur !==fCur)  return false;
+    if (fFrom && new Date(t.date) < new Date(fFrom)) return false;
+    if (fTo   && new Date(t.date) > new Date(fTo+'T23:59:59')) return false;
+    return true;
+  });
+  _page = 1;
+  renderPage();
+}
+
+function renderPage() {
+  const total      = _filtered.length;
+  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
+  const start      = (_page-1)*PAGE_SIZE;
+  const page       = _filtered.slice(start, start+PAGE_SIZE);
+  const canEdit    = Auth.isAdmin();
+
+  const tbody = document.getElementById('mov-tbody');
+  tbody.innerHTML = page.length ? page.map(t => {
+    const sym    = t.cur==='usd'?'$':'€';
+    const isFrom = t.type==='trf' && t.from===_accId;
+    const isTo   = t.type==='trf' && t.to===_accId;
+    let debit=0, credit=0;
+    if (t.type==='dep') credit = parseFloat(t.amt);
+    if (t.type==='wit') debit  = parseFloat(t.amt);
+    if (isFrom) debit  = parseFloat(t.amt);
+    if (isTo)   credit = parseFloat(t.amt)*(parseFloat(t.rate)||1);
+    let other = '—';
+    if (t.type==='trf') {
+      const oid = isFrom?t.to:t.from;
+      const oa  = _allAccounts.find(a=>a.id===oid);
+      other = UI.escapeHtml(oa?oa.name:oid);
+      other = isFrom?('← '+other):('→ '+other);
+    }
+    const dCell = debit>0  ? `<span class="cell-debit">${sym}${debit.toFixed(2)}</span>`   : '—';
+    const cCell = credit>0 ? `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>` : '—';
+    const editBtns = canEdit
+      ? `<button class="btn btn-ghost btn-sm"
+           onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}')">✏️</button>
+         <button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>`
+      : '—';
+    return `<tr>
+      <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+      <td><span class="badge badge-${t.type}">${typeLabel[t.type]}</span></td>
+      <td style="font-size:0.77rem;color:var(--text2);">${other}</td>
+      <td>${t.cur.toUpperCase()}</td>
+      <td>${dCell}</td>
+      <td>${cCell}</td>
+      <td class="no-print" style="font-size:0.73rem;color:var(--text2);max-width:100px;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+          title="${UI.escapeHtml(t.note||'')}">
+        ${UI.escapeHtml(t.note||'—')}
+      </td>
+      <td class="no-print" style="white-space:nowrap;">${editBtns}</td>
+    </tr>`;
+  }).join('')
+  : '<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>لا توجد حركات</td></tr>';
+
+  document.getElementById('mov-count').textContent =
+    total ? `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة` : 'لا توجد حركات';
+
+  const pg = document.getElementById('mov-pages');
+  if (totalPages<=1){ pg.innerHTML=''; return; }
+  let html=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp=Math.max(1,_page-2), ep=Math.min(totalPages,_page+2);
+  if(sp>1) html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if(sp>2) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for(let i=sp;i<=ep;i++)
+    html+=`<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+  if(ep<totalPages-1) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if(ep<totalPages)   html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(p) {
+  const t = Math.ceil(_filtered.length/PAGE_SIZE)||1;
+  if(p<1||p>t) return;
+  _page=p; renderPage();
+  document.querySelector('.card[style*="padding:0"]')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── أزرار العمليات ────────────────────────────────────
+function openOp(type) {
+  _opType = type;
+  const titles = {dep:'💵 إيداع لـ ', wit:'💸 سحب من ', trf:'🔄 تحويل من '};
+  document.getElementById('op-title').textContent = titles[type] + _accObj.name;
+
+  // إظهار/إخفاء الأقسام
+  document.getElementById('op-dep-wit').style.display = type!=='trf' ? 'block' : 'none';
+  document.getElementById('op-trf').style.display      = type==='trf'  ? 'block' : 'none';
+
+  // لون زر التأكيد
+  const btn = document.getElementById('op-confirm-btn');
+  btn.className = 'btn ' + (type==='wit' ? 'btn-danger' : 'btn-primary');
+
+  // تصفير
+  document.getElementById('op-amount').value = '';
+  document.getElementById('op-preview').style.display = 'none';
+  document.getElementById('op-to-search').value = '';
+  document.getElementById('op-to-id').value = '';
+  document.getElementById('op-to-bal').style.display = 'none';
+  document.getElementById('op-trf-amount').value = '';
+
+  document.getElementById('op-modal').classList.add('open');
+  setTimeout(() => {
+    const inp = type==='trf'
+      ? document.getElementById('op-to-search')
+      : document.getElementById('op-amount');
+    inp?.focus();
+  }, 150);
+}
+
+function closeOp() { document.getElementById('op-modal').classList.remove('open'); }
+function closeOverdraft() { document.getElementById('overdraft-modal').classList.remove('open'); }
+
+async function updateOpPreview() {
+  if (_opType==='trf') return;
+  const cur = document.getElementById('op-cur').value;
+  const amt = parseFloat(document.getElementById('op-amount').value)||0;
+  const box = document.getElementById('op-preview');
+  if (amt<=0) { box.style.display='none'; return; }
+  const sym    = cur==='usd'?'$':'€';
+  const before = await Storage.getBalance(_accId, cur);
+  const after  = _opType==='dep' ? before+amt : before-amt;
+  const neg    = after<0;
+  box.innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div><div style="font-size:0.68rem;color:var(--text3);">الرصيد الحالي</div>
+           <b>${sym}${before.toFixed(2)}</b></div>
+      <div style="color:var(--text3);align-self:center;">→</div>
+      <div><div style="font-size:0.68rem;color:var(--text3);">بعد العملية</div>
+           <b style="color:${neg?'var(--red)':(_opType==='dep'?'var(--green)':'var(--text)')};
+           ">${sym}${after.toFixed(2)}</b></div>
+    </div>`;
+  box.style.background = neg&&_opType==='wit' ? 'var(--red-dim)' : 'var(--surface2)';
+  box.style.border = neg&&_opType==='wit' ? '1px solid var(--red)' : '1px solid var(--border2)';
+  box.style.borderRadius = '8px'; box.style.padding = '12px'; box.style.marginBottom='14px';
+  box.style.display = 'block';
+}
+
+async function confirmOp(forceOverdraft=false) {
+  let result;
+  UI.showLoading(true);
+
+  if (_opType==='dep') {
+    const cur = document.getElementById('op-cur').value;
+    const amt = parseFloat(document.getElementById('op-amount').value);
+    result = await Transactions.deposit(_accId, cur, amt);
+
+  } else if (_opType==='wit') {
+    const cur = document.getElementById('op-cur').value;
+    const amt = parseFloat(document.getElementById('op-amount').value);
+    result = await Transactions.withdraw(_accId, cur, amt, forceOverdraft);
+
+  } else if (_opType==='trf') {
+    const toId = document.getElementById('op-to-id').value;
+    const cur  = document.getElementById('op-trf-cur').value;
+    const amt  = parseFloat(document.getElementById('op-trf-amount').value);
+    const rate = parseFloat(document.getElementById('op-rate').value)||1;
+    result = await Transactions.transfer(_accId, toId, cur, amt, rate, forceOverdraft);
+  }
+
+  UI.showLoading(false);
+
+  if (result.ok) {
+    closeOp();
+    closeOverdraft();
+    UI.toast('تمت العملية بنجاح ✅');
+    // أعد تحميل البيانات
+    const [txns, usd, eur] = await Promise.all([
+      Storage.getTxns({ acc: _accId }),
+      Storage.getBalance(_accId,'usd'),
+      Storage.getBalance(_accId,'eur')
+    ]);
+    _allTxns = txns;
+    document.getElementById('hero-meta').textContent =
+      (_accObj.type==='company'?'شركة':'زبون') + ' · ' + txns.length + ' حركة إجمالاً';
+    updateBalBoxes(usd, eur);
+    await UI.updateTreasury();
+    renderRows();
+  } else if (result.needsConfirm) {
+    UI.showLoading(false);
+    closeOp();
+    const cur = _opType==='trf'
+      ? document.getElementById('op-trf-cur').value
+      : document.getElementById('op-cur').value;
+    const amt = _opType==='trf'
+      ? parseFloat(document.getElementById('op-trf-amount').value)
+      : parseFloat(document.getElementById('op-amount').value);
+    const sym = cur==='usd'?'$':'€';
+    document.getElementById('overdraft-msg').innerHTML =
+      `الرصيد الحالي: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
+       المبلغ المطلوب: <b>${sym}${amt.toFixed(2)}</b><br>
+       سيصبح: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+    document.getElementById('overdraft-modal').classList.add('open');
+  } else {
+    UI.toast(result.error,'error');
+  }
+}
+
+// ── تعديل / حذف ───────────────────────────────────────
+function openEdit(id, note) {
+  document.getElementById('edit-id').value   = id;
+  document.getElementById('edit-note').value = note;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit() { document.getElementById('edit-modal').classList.remove('open'); }
+
+async function saveNote() {
+  const id   = document.getElementById('edit-id').value;
+  const note = document.getElementById('edit-note').value;
+  UI.showLoading(true);
+  const r = await Transactions.updateNote(id, note);
+  UI.showLoading(false);
+  if (r.ok) {
+    closeEdit(); UI.toast('تم الحفظ ✅');
+    const t = _allTxns.find(x=>String(x.id)===String(id));
+    if (t) t.note = note;
+    renderRows();
+  } else { UI.toast(r.error,'error'); }
+}
+
+function openDel(id) {
+  document.getElementById('del-id').value = id;
+  document.getElementById('del-modal').classList.add('open');
+}
+function closeDel() { document.getElementById('del-modal').classList.remove('open'); }
+
+async function doDelete() {
+  const id = document.getElementById('del-id').value;
+  UI.showLoading(true);
+  const r = await Transactions.deleteTxn(id);
+  UI.showLoading(false);
+  if (r.ok) {
+    closeDel(); UI.toast('تم الحذف ✅');
+    _allTxns = _allTxns.filter(x=>String(x.id)!==String(id));
+    const [usd,eur] = await Promise.all([
+      Storage.getBalance(_accId,'usd'),
+      Storage.getBalance(_accId,'eur')
+    ]);
+    updateBalBoxes(usd, eur);
+    await UI.updateTreasury();
+    renderRows();
+  } else { UI.toast(r.error,'error'); }
+}
+
+// ── Export ─────────────────────────────────────────────
+function exportMovements() {
+  if (typeof XLSX==='undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById('mov-table'),{sheet:'الحركات'});
+  XLSX.writeFile(wb, 'حركات_'+_accObj.name+'_'+UI.todayStr()+'.xlsx');
+}
+</script>
+</body>
+</html>
