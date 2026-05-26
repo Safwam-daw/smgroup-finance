@@ -41,9 +41,6 @@ function buildSidebar(activePage) {
           <span class="nav-icon">🛡️</span> إدارة الموظفين
         </button>
         <div class="nav-section-label">أدوات النظام</div>
-        <button class="nav-btn" onclick="window.print()">
-          <span class="nav-icon">🖨️</span> طباعة الشاشة
-        </button>
         <button class="nav-btn" onclick="Storage.exportBackup()">
           <span class="nav-icon">📥</span> تصدير نسخة احتياطية
         </button>
