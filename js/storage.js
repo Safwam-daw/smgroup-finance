@@ -103,13 +103,12 @@ const Storage = (() => {
     return data;
   }
 
-  // الخزينة من جدول الحسابات مباشرة (سريع جداً)
+  // الخزينة = مجموع الأرصدة بدون حساب الأرباح (9999)
   async function getTreasuryTotals() {
     const accounts = await getAccounts();
-    // الخزينة = مجموع كل الأرصدة الإيجابية فقط (الأموال الموجودة فعلاً)
-    // أو: مجموع كل الأرصدة (مع المدينين)
     let usd=0, eur=0;
     accounts.forEach(a => {
+      if (a.id === '9999') return; // حساب الأرباح منفصل
       usd += parseFloat(a.bal_usd||0);
       eur += parseFloat(a.bal_eur||0);
     });

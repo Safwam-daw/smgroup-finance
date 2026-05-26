@@ -36,9 +36,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='statement'?'active':''}" onclick="navTo('statement.html')">
           <span class="nav-icon">📋</span> كشف الحساب
         </button>
-        <button class="nav-btn ${activePage==='account-view'?'active':''}" onclick="navTo('accounts.html')">
-          <span class="nav-icon">👁️</span> حركات الحساب
-        </button>
         <div class="nav-section-label" data-admin-only>الإدارة المتقدمة</div>
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only onclick="navTo('employees.html')">
           <span class="nav-icon">🛡️</span> إدارة الموظفين
@@ -74,13 +71,20 @@ function buildSidebar(activePage) {
 function buildTreasuryBar() {
   return `
     <div id="treasury-bar">
-      <div class="stat-card" style="flex:1;border-right:3px solid var(--gold);">
-        <div class="stat-label">خزينة الدولار</div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--gold);">
+        <div class="stat-label">💵 خزينة الدولار</div>
         <div class="stat-value" id="t-usd" style="color:var(--gold);">$0.00</div>
       </div>
-      <div class="stat-card" style="flex:1;border-right:3px solid var(--euro);">
-        <div class="stat-label">خزينة اليورو</div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--euro);">
+        <div class="stat-label">💶 خزينة اليورو</div>
         <div class="stat-value" id="t-eur" style="color:var(--euro);">€0.00</div>
+      </div>
+      <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
+        <div class="stat-label">📈 الأرباح</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;">
+          <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1.1rem;">$0.00</span>
+          <span style="color:var(--green);font-weight:700;" id="t-profit-eur">€0.00</span>
+        </div>
       </div>
     </div>
   `;
