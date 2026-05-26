@@ -113,7 +113,10 @@ async function doDeposit() {
   const result = await Transactions.deposit(id, cur, amt);
   UI.showLoading(false);
   if (result.ok) {
-    UI.toast('تم الإيداع بنجاح ✅');
+    const commMsg = result.commission > 0
+      ? ` · عمولة: ${result.commission.toFixed(4)}`
+      : '';
+    UI.toast('تم الإيداع بنجاح ✅' + commMsg);
     document.getElementById('dep-search').value = '';
     document.getElementById('dep-id').value = '';
     document.getElementById('dep-amount').value = '';
