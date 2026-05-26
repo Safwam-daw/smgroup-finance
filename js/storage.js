@@ -124,7 +124,10 @@ const Storage = (() => {
 
   async function saveUser(user) {
     const { error } = await _sb.from('users').insert({
-      username:user.user, pass:user.pass, role:user.role
+      username:    user.user,
+      pass:        user.pass,
+      role:        user.role,
+      permissions: user.permissions || null
     });
     return !error;
   }
@@ -143,7 +146,22 @@ const Storage = (() => {
     const { data, error } = await _sb.from('users')
       .select('*').eq('username',username).eq('pass',passBase64).single();
     if (error||!data) return null;
-    return { user:data.username, role:data.role, id:data.id };
+    return {
+      user: data.username,
+      role: data.role,
+      id:   data.id,
+      permissions: data.permissions || null
+    };
+  }
+
+  async function updateUserPermissions(id, permissions) {
+    const { error } = await _sb.from('users').update({ permissions }).eq('id', id);
+    return !error;
+  }
+
+  async function updateUserRole(id, role) {
+    const { error } = await _sb.from('users').update({ role }).eq('id', id);
+    return !error;
   }
 
   // ── Backup ────────────────────────────────────────────
@@ -162,6 +180,7 @@ const Storage = (() => {
     getAccounts, saveAccount, getBalance, updateBalance,
     getTxns, saveTxn, updateTxn, deleteTxn, getTxnById,
     getTreasuryTotals, getUsers, saveUser, deleteUser,
-    updateUserPass, findUser, exportBackup
+    updateUserPass, updateUserPermissions, updateUserRole,
+    findUser, exportBackup
   };
 })();
