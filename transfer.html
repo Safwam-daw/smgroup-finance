@@ -162,18 +162,38 @@ async function updatePreview() {
   const rate   = parseFloat(document.getElementById('trf-rate').value) || 1;
   const box    = document.getElementById('trf-preview');
   if (!fromId || !toId || amt <= 0) { box.style.display='none'; return; }
-  const sym      = cur==='usd'?'$':'€';
-  const fromBal  = await Storage.getBalance(fromId, cur);
-  const newFrom  = fromBal - amt;
-  const received = amt * rate;
+  const sym         = cur==='usd'?'$':'€';
+  const fromBal     = await Storage.getBalance(fromId, cur);
+  const newFrom     = fromBal - amt;
+  const gross       = parseFloat((amt * rate).toFixed(2));
+  // احسب العمولة على المستقبل
+  const accounts    = await Storage.getAccounts();
+  const toAcc       = accounts.find(a => a.id === toId);
+  const ratePct     = (toAcc && toAcc.type==='customer') ? parseFloat(toAcc.commission_rate??0.025) : 0;
+  const rawComm     = ratePct > 0 ? parseFloat((gross * ratePct / 100).toFixed(2)) : 0;
+  const commission  = rawComm >= 0.01 ? rawComm : 0;
+  const net         = parseFloat((gross - commission).toFixed(2));
+
   document.getElementById('trf-prev-from').innerHTML =
-    `<span style="color:var(--text3);">المرسل بعد:</span>
-     <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
-     ${newFrom<0?'<span style="color:var(--red);font-size:0.75rem;"> ⚠️ سالب</span>':''}`;
+    `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <div><div style="font-size:0.67rem;color:var(--text3);">يخرج من المرسل</div>
+           <b style="color:var(--red);">-${sym}${amt.toFixed(2)}</b></div>
+      <div><div style="font-size:0.67rem;color:var(--text3);">رصيد المرسل بعد</div>
+           <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
+           ${newFrom<0?'<span style="color:var(--red);font-size:0.72rem;"> ⚠️</span>':''}</div>
+    </div>`;
   document.getElementById('trf-prev-to').innerHTML =
-    `<span style="color:var(--text3);">المستقبل يستلم:</span>
-     <b style="color:var(--green);">+${sym}${received.toFixed(2)}</b>
-     ${rate!==1?`<span style="color:var(--text3);font-size:0.75rem;"> (×${rate})</span>`:''}`;
+    `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;
+          padding-top:10px;border-top:1px solid var(--border);">
+      <div><div style="font-size:0.67rem;color:var(--text3);">إجمالي للمستقبل</div>
+           <b>${sym}${gross.toFixed(2)}</b>
+           ${rate!==1?`<span style="font-size:0.72rem;color:var(--text3);"> (×${rate})</span>`:''}
+      </div>
+      ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">عمولة (${ratePct}%)</div>
+           <b style="color:var(--red);">-${sym}${commission.toFixed(2)}</b></div>`:''}
+      <div><div style="font-size:0.67rem;color:var(--text3);">يدخل حساب المستقبل</div>
+           <b style="color:var(--green);">+${sym}${net.toFixed(2)}</b></div>
+    </div>`;
   box.style.display = 'block';
 }
 
