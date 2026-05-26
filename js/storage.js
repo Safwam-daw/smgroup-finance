@@ -27,6 +27,12 @@ const Storage = (() => {
     return _accountsCache;
   }
 
+  async function updateAccount(id, changes) {
+    const { error } = await _sb.from('accounts').update(changes).eq('id', id);
+    if (!error) _invalidateAccounts();
+    return !error;
+  }
+
   async function saveAccount(account) {
     const { error } = await _sb.from('accounts').upsert({
       id:account.id, name:account.name, type:account.type, bal_usd:0, bal_eur:0
@@ -177,7 +183,7 @@ const Storage = (() => {
   }
 
   return {
-    getAccounts, saveAccount, getBalance, updateBalance,
+    getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
     getTxns, saveTxn, updateTxn, deleteTxn, getTxnById,
     getTreasuryTotals, getUsers, saveUser, deleteUser,
     updateUserPass, updateUserPermissions, updateUserRole,
