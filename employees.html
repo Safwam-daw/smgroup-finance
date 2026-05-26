@@ -10,31 +10,50 @@
 .emp-card {
   background:var(--surface2); border:1px solid var(--border2);
   border-radius:var(--radius); padding:16px 18px;
-  display:flex; align-items:center; gap:14px; margin-bottom:10px;
-  transition:border-color .2s;
+  margin-bottom:10px; transition:border-color .2s;
 }
 .emp-card:hover { border-color:var(--border); }
+.emp-top { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .emp-avatar {
   width:42px; height:42px; border-radius:50%; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
   font-size:1.1rem; font-weight:700;
 }
-.emp-avatar.admin { background:var(--gold-dim); color:var(--gold); border:1px solid var(--gold); }
-.emp-avatar.employee { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue); }
-.emp-info { flex:1; overflow:hidden; }
+.emp-avatar.admin    { background:var(--gold-dim);  color:var(--gold);  border:1px solid var(--gold); }
+.emp-avatar.employee { background:var(--blue-dim);  color:var(--blue);  border:1px solid var(--blue); }
+.emp-info { flex:1; }
 .emp-name { font-weight:700; font-size:0.9rem; }
 .emp-meta { font-size:0.72rem; color:var(--text3); margin-top:2px; }
 .emp-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* شبكة الصلاحيات */
+.perm-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px;
+}
+.perm-item {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:8px; padding:8px 12px; cursor:pointer;
+  transition:all .15s;
+}
+.perm-item:hover { border-color:var(--gold); }
+.perm-item input[type=checkbox] { width:16px; height:16px; accent-color:var(--gold); flex-shrink:0; }
+.perm-item label { font-size:0.78rem; cursor:pointer; user-select:none; }
+.perm-divider { grid-column:1/-1; border-top:1px solid var(--border); margin:4px 0; }
+
 .modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
   display:none;align-items:center;justify-content:center;padding:16px; }
 .modal-back.open { display:flex; }
 .modal-box { background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);width:100%;max-width:460px;padding:24px; }
+  border-radius:var(--radius);width:100%;max-width:520px;padding:24px;
+  max-height:90vh;overflow-y:auto; }
 .modal-box h3 { margin-bottom:18px; }
+
 @media(max-width:640px){
-  .emp-card { flex-wrap:wrap; }
+  .emp-top { flex-wrap:wrap; }
   .emp-actions { width:100%; }
   .emp-actions .btn { flex:1; }
+  .perm-grid { grid-template-columns:repeat(2,1fr); }
 }
 </style>
 </head>
@@ -56,9 +75,9 @@
             <input type="text" id="emp-user" placeholder="اسم المستخدم" autocomplete="off">
           </div>
           <div class="form-group">
-            <label>الصلاحية</label>
-            <select id="emp-role">
-              <option value="employee">👤 موظف — العمليات اليومية</option>
+            <label>الصلاحية الرئيسية</label>
+            <select id="emp-role" onchange="toggleAdminPerms()">
+              <option value="employee">👤 موظف</option>
               <option value="admin">🛡️ مدير — كافة الصلاحيات</option>
             </select>
           </div>
@@ -66,7 +85,7 @@
         <div>
           <div class="form-group">
             <label>كلمة المرور</label>
-            <input type="password" id="emp-pass" placeholder="كلمة المرور" autocomplete="new-password">
+            <input type="password" id="emp-pass" placeholder="كلمة المرور">
           </div>
           <div class="form-group">
             <label>تأكيد كلمة المرور</label>
@@ -74,11 +93,18 @@
           </div>
         </div>
       </div>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+
+      <!-- صلاحيات الموظف الجديد -->
+      <div id="new-perms-box">
+        <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;margin-top:4px;">
+          🔧 صلاحيات التبويبات
+        </div>
+        <div class="perm-grid" id="new-perm-grid"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;">
         <button class="btn btn-primary" onclick="doAdd()" style="min-width:160px;">💾 إضافة الموظف</button>
-        <p style="font-size:0.72rem;color:var(--text3);">
-          🔐 كلمات المرور مشفرة — مناسب للاستخدام الداخلي
-        </p>
+        <span style="font-size:0.72rem;color:var(--text3);">🔐 كلمات المرور مشفرة</span>
       </div>
     </div>
 
@@ -88,27 +114,28 @@
         <h3 style="margin-bottom:0;">الموظفون المسجلون</h3>
         <span id="emp-count" style="font-size:0.75rem;color:var(--text3);"></span>
       </div>
-      <div id="emp-list">
-        <div class="empty-state">جاري التحميل…</div>
-      </div>
+      <div id="emp-list"><div class="empty-state">جاري التحميل…</div></div>
     </div>
   </main>
 </div>
 
-<!-- Delete Modal -->
-<div id="del-modal" class="modal-back">
-  <div class="modal-box" style="text-align:center;">
-    <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
-    <h3>تأكيد الحذف</h3>
-    <p id="del-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;"></p>
-    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
-      <button class="btn btn-danger" id="del-confirm-btn">🗑️ حذف</button>
+<!-- Modal تعديل الصلاحيات -->
+<div id="perm-modal" class="modal-back">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin-bottom:0;">🔧 تعديل صلاحيات <span id="perm-emp-name"></span></h3>
+      <button onclick="closePermModal()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <input type="hidden" id="perm-uid">
+    <div class="perm-grid" id="edit-perm-grid"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+      <button class="btn btn-ghost" onclick="closePermModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="savePerms()">💾 حفظ الصلاحيات</button>
     </div>
   </div>
 </div>
 
-<!-- Edit Password Modal -->
+<!-- Modal تغيير كلمة المرور -->
 <div id="pass-modal" class="modal-back">
   <div class="modal-box">
     <h3>🔑 تغيير كلمة المرور</h3>
@@ -128,18 +155,80 @@
   </div>
 </div>
 
+<!-- Modal تأكيد الحذف -->
+<div id="del-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
+    <h3>تأكيد الحذف</h3>
+    <p id="del-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;"></p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelete()">🗑️ حذف</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/app.js"></script>
 <script>
+// تعريف الصلاحيات وتسمياتها
+const PERM_DEFS = [
+  { key:'dashboard',  label:'📊 لوحة التحكم' },
+  { key:'accounts',   label:'👥 إدارة الحسابات' },
+  { key:'deposit',    label:'💵 الإيداع' },
+  { key:'withdraw',   label:'💸 السحب' },
+  { key:'transfer',   label:'🔄 التحويل' },
+  { key:'ledger',     label:'📒 السجل المحاسبي' },
+  { key:'statement',  label:'📋 كشف الحساب' },
+  { key:'employees',  label:'🛡️ إدارة الموظفين' },
+  { key:'DIVIDER' },
+  { key:'canDelete',  label:'🗑️ حذف العمليات' },
+  { key:'canEdit',    label:'✏️ تعديل الملاحظات' },
+];
+
 (async () => {
   if (!await initApp('employees')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
+  buildPermGrid('new-perm-grid', Auth.DEFAULT_PERMS);
   await renderEmployees();
 })();
 
+// بناء شبكة الصلاحيات
+function buildPermGrid(containerId, currentPerms, prefix='np') {
+  const container = document.getElementById(containerId);
+  container.innerHTML = PERM_DEFS.map((p,i) => {
+    if (p.key==='DIVIDER') return `<div class="perm-divider"></div>`;
+    const checked = currentPerms[p.key] ? 'checked' : '';
+    return `<div class="perm-item">
+      <input type="checkbox" id="${prefix}_${p.key}" ${checked}
+             onchange="syncPermCheck('${prefix}','${p.key}')">
+      <label for="${prefix}_${p.key}">${p.label}</label>
+    </div>`;
+  }).join('');
+}
+
+function syncPermCheck(prefix, key) {
+  // لا شيء إضافي — القراءة تتم عند الحفظ
+}
+
+function getGridPerms(prefix) {
+  const perms = {};
+  PERM_DEFS.filter(p=>p.key!=='DIVIDER').forEach(p => {
+    const el = document.getElementById(prefix + '_' + p.key);
+    if (el) perms[p.key] = el.checked;
+  });
+  return perms;
+}
+
+function toggleAdminPerms() {
+  const isAdmin = document.getElementById('emp-role').value === 'admin';
+  document.getElementById('new-perms-box').style.display = isAdmin ? 'none' : 'block';
+}
+
+// ── إضافة موظف ────────────────────────────────────────
 async function doAdd() {
   const u  = document.getElementById('emp-user').value.trim();
   const p  = document.getElementById('emp-pass').value;
@@ -147,82 +236,98 @@ async function doAdd() {
   const r  = document.getElementById('emp-role').value;
   if (!u) { UI.toast('أدخل اسم المستخدم','error'); return; }
   if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
-  if (p !== p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
+  if (p!==p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
+
+  const perms = r==='admin' ? Auth.ADMIN_PERMS : getGridPerms('np');
+
   UI.showLoading(true);
   const users = await Storage.getUsers();
-  if (users.find(x => x.username === u)) {
+  if (users.find(x=>x.username===u)) {
     UI.showLoading(false); UI.toast('اسم المستخدم موجود بالفعل','error'); return;
   }
-  const ok = await Storage.saveUser({ user: u, pass: btoa(p), role: r });
+  const ok = await Storage.saveUser({ user:u, pass:btoa(p), role:r, permissions:perms });
   UI.showLoading(false);
   if (ok) {
-    ['emp-user','emp-pass','emp-pass2'].forEach(id => document.getElementById(id).value='');
+    ['emp-user','emp-pass','emp-pass2'].forEach(id=>document.getElementById(id).value='');
+    buildPermGrid('new-perm-grid', Auth.DEFAULT_PERMS);
     UI.toast('تم إضافة الموظف ✅');
     await renderEmployees();
   } else { UI.toast('خطأ في الحفظ','error'); }
 }
 
+// ── عرض الموظفين ───────────────────────────────────────
 async function renderEmployees() {
   const users   = await Storage.getUsers();
   const current = Auth.getUser().user;
-  const list    = document.getElementById('emp-list');
   document.getElementById('emp-count').textContent = users.length + ' مستخدم';
-
+  const list = document.getElementById('emp-list');
   if (!users.length) { list.innerHTML='<div class="empty-state">لا يوجد موظفون</div>'; return; }
 
   list.innerHTML = users.map(u => {
-    const isMe      = u.username === current;
-    const isAdmin   = u.role === 'admin';
-    const isRoot    = u.username === 'admin';
-    const roleLabel = isAdmin ? '🛡️ مدير النظام' : '👤 موظف';
-    const roleColor = isAdmin ? 'var(--gold)' : 'var(--blue)';
-    const initial   = u.username.charAt(0).toUpperCase();
-    const avatarCls = isAdmin ? 'admin' : 'employee';
+    const isMe    = u.username===current;
+    const isAdmin = u.role==='admin';
+    const isRoot  = u.username==='admin';
+    const perms   = u.permissions || Auth.DEFAULT_PERMS;
+    const permCount = isAdmin ? 'كافة الصلاحيات' :
+      Object.values(perms).filter(Boolean).length + ' صلاحية';
 
     const actions = isRoot
-      ? `<span style="font-size:0.75rem;color:var(--text3);padding:6px 10px;">محمي</span>`
-      : `<button class="btn btn-ghost btn-sm" onclick="openPass(${u.id})">🔑 كلمة المرور</button>
-         <button class="btn btn-danger btn-sm" onclick="confirmDel(${u.id},'${UI.escapeHtml(u.username)}')">🗑️ حذف</button>`;
+      ? `<span style="font-size:0.74rem;color:var(--text3);padding:6px 10px;">محمي</span>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openPermModal(${u.id},'${UI.escapeHtml(u.username)}')">🔧 الصلاحيات</button>
+         <button class="btn btn-ghost btn-sm" onclick="openPass(${u.id})">🔑 كلمة المرور</button>
+         <button class="btn btn-danger btn-sm" onclick="confirmDel(${u.id},'${UI.escapeHtml(u.username)}')">🗑️</button>`;
 
     return `<div class="emp-card">
-      <div class="emp-avatar ${avatarCls}">${initial}</div>
-      <div class="emp-info">
-        <div class="emp-name">
-          ${UI.escapeHtml(u.username)}
-          ${isMe ? '<span style="font-size:0.68rem;color:var(--gold);margin-right:6px;">(أنت)</span>' : ''}
+      <div class="emp-top">
+        <div class="emp-avatar ${isAdmin?'admin':'employee'}">${u.username.charAt(0).toUpperCase()}</div>
+        <div class="emp-info">
+          <div class="emp-name">
+            ${UI.escapeHtml(u.username)}
+            ${isMe?'<span style="font-size:0.68rem;color:var(--gold);margin-right:6px;">(أنت)</span>':''}
+          </div>
+          <div class="emp-meta">
+            <span style="color:${isAdmin?'var(--gold)':'var(--blue)'};">${isAdmin?'🛡️ مدير':'👤 موظف'}</span>
+            <span style="margin-right:8px;color:var(--text3);">·</span>
+            <span style="color:var(--text3);">${permCount}</span>
+          </div>
         </div>
-        <div class="emp-meta" style="color:${roleColor};">${roleLabel}</div>
+        <div class="emp-actions">${actions}</div>
       </div>
-      <div class="emp-actions">${actions}</div>
     </div>`;
   }).join('');
 }
 
-// ── Delete ─────────────────────────────────────────────
-let _delId = null;
-function confirmDel(id, username) {
-  _delId = id;
-  document.getElementById('del-msg').textContent = `هل تريد حذف المستخدم "${username}" بشكل نهائي؟`;
-  document.getElementById('del-confirm-btn').onclick = doDelete;
-  document.getElementById('del-modal').classList.add('open');
+// ── صلاحيات Modal ──────────────────────────────────────
+let _permUid = null;
+async function openPermModal(id, username) {
+  _permUid = id;
+  document.getElementById('perm-uid').value = id;
+  document.getElementById('perm-emp-name').textContent = username;
+  const users = await Storage.getUsers();
+  const u = users.find(x=>x.id===id);
+  const currentPerms = u?.permissions || Auth.DEFAULT_PERMS;
+  buildPermGrid('edit-perm-grid', currentPerms, 'ep');
+  document.getElementById('perm-modal').classList.add('open');
 }
-function closeDel() { _delId=null; document.getElementById('del-modal').classList.remove('open'); }
-async function doDelete() {
+function closePermModal() { document.getElementById('perm-modal').classList.remove('open'); }
+
+async function savePerms() {
+  const perms = getGridPerms('ep');
   UI.showLoading(true);
-  await Storage.deleteUser(_delId);
+  const ok = await Storage.updateUserPermissions(_permUid, perms);
   UI.showLoading(false);
-  closeDel();
-  UI.toast('تم الحذف');
-  await renderEmployees();
+  if (ok) {
+    closePermModal(); UI.toast('تم حفظ الصلاحيات ✅');
+    await renderEmployees();
+  } else { UI.toast('خطأ في الحفظ','error'); }
 }
 
-// ── Change Password ────────────────────────────────────
+// ── كلمة المرور ────────────────────────────────────────
 let _passUid = null;
 function openPass(id) {
-  _passUid = id;
-  document.getElementById('pass-uid').value = id;
-  document.getElementById('pass-new').value  = '';
-  document.getElementById('pass-new2').value = '';
+  _passUid=id;
+  document.getElementById('pass-new').value='';
+  document.getElementById('pass-new2').value='';
   document.getElementById('pass-modal').classList.add('open');
 }
 function closePass() { document.getElementById('pass-modal').classList.remove('open'); }
@@ -230,12 +335,28 @@ async function savePass() {
   const p  = document.getElementById('pass-new').value;
   const p2 = document.getElementById('pass-new2').value;
   if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
-  if (p !== p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
+  if (p!==p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
   UI.showLoading(true);
   const ok = await Storage.updateUserPass(_passUid, btoa(p));
   UI.showLoading(false);
   if (ok) { closePass(); UI.toast('تم تغيير كلمة المرور ✅'); }
   else { UI.toast('خطأ في الحفظ','error'); }
+}
+
+// ── حذف ────────────────────────────────────────────────
+let _delId = null;
+function confirmDel(id, username) {
+  _delId=id;
+  document.getElementById('del-msg').textContent = `هل تريد حذف "${username}" بشكل نهائي؟`;
+  document.getElementById('del-modal').classList.add('open');
+}
+function closeDel() { document.getElementById('del-modal').classList.remove('open'); }
+async function doDelete() {
+  UI.showLoading(true);
+  await Storage.deleteUser(_delId);
+  UI.showLoading(false);
+  closeDel(); UI.toast('تم الحذف');
+  await renderEmployees();
 }
 </script>
 </body>

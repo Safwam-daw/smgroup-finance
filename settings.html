@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — الإعدادات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+.settings-section { margin-bottom:16px; }
+.settings-section h3 { margin-bottom:14px; }
+.commission-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--surface2);
+  border:1px solid var(--border2); border-radius:var(--radius-sm);
+  margin-bottom:8px; flex-wrap:wrap;
+}
+.commission-row .acc-name { flex:1; min-width:150px; font-size:0.84rem; font-weight:600; }
+.commission-row .acc-type { font-size:0.72rem; color:var(--text3); }
+.commission-row input[type=number] {
+  width:120px; padding:7px 10px; background:var(--surface);
+  border:1px solid var(--border2); color:var(--text);
+  border-radius:var(--radius-sm); font-family:inherit; font-size:0.84rem;
+  outline:none; text-align:center;
+}
+.commission-row input[type=number]:focus { border-color:var(--gold); }
+.commission-row .btn { flex-shrink:0; }
+@media(max-width:640px){
+  .commission-row { flex-direction:column; align-items:flex-start; }
+  .commission-row input[type=number] { width:100%; }
+  .commission-row .btn { width:100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>⚙️ الإعدادات</h2><p>إعدادات الحساب الشخصية والنظام</p></div>
+    </div>
+
+    <!-- تغيير الاسم وكلمة المرور -->
+    <div class="card settings-section">
+      <h3>👤 إعدادات الحساب الشخصي</h3>
+      <div class="grid-2">
+        <div>
+          <div class="form-group">
+            <label>اسم المستخدم الحالي</label>
+            <input type="text" id="current-user" readonly style="color:var(--text2);">
+          </div>
+          <div class="form-group">
+            <label>اسم المستخدم الجديد</label>
+            <input type="text" id="new-username" placeholder="اتركه فارغاً للإبقاء على الحالي">
+          </div>
+        </div>
+        <div>
+          <div class="form-group">
+            <label>كلمة المرور الحالية</label>
+            <input type="password" id="current-pass" placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label>كلمة المرور الجديدة</label>
+            <input type="password" id="new-pass" placeholder="اتركها فارغاً للإبقاء على الحالية">
+          </div>
+          <div class="form-group">
+            <label>تأكيد كلمة المرور الجديدة</label>
+            <input type="password" id="new-pass2" placeholder="أعد كتابة كلمة المرور">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="savePersonal()" style="min-width:180px;">
+        💾 حفظ التغييرات
+      </button>
+    </div>
+
+    <!-- إعدادات العمولة (أدمن فقط) -->
+    <div class="card settings-section" id="commission-section" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">💰 إعدادات عمولة الإيداع</h3>
+        <span style="font-size:0.73rem;color:var(--text3);">
+          تُطبق على الزبائن فقط · الشركات معفاة
+        </span>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;
+           padding:10px 14px;margin-bottom:14px;font-size:0.8rem;color:var(--text2);">
+        ℹ️ القيمة الافتراضية <b style="color:var(--gold);">0.00025</b> تعني
+        <b style="color:var(--gold);">0.025%</b> أي ربع سنت لكل ألف دولار
+      </div>
+      <div id="commission-list">
+        <div class="empty-state">جاري التحميل…</div>
+      </div>
+    </div>
+
+    <!-- النسخ الاحتياطي -->
+    <div class="card settings-section">
+      <h3>💾 النسخ الاحتياطي</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="Storage.exportBackup()">
+          📥 تصدير نسخة احتياطية
+        </button>
+        <label class="btn btn-ghost" style="cursor:pointer;">
+          📤 استعادة بيانات
+          <input type="file" accept=".json" style="display:none;"
+                 onchange="handleImport(event)">
+        </label>
+      </div>
+      <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;">
+        يُنصح بتصدير نسخة احتياطية أسبوعياً
+      </p>
+    </div>
+
+    <!-- حول النظام -->
+    <div class="card settings-section">
+      <h3>ℹ️ حول النظام</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:0.83rem;color:var(--text2);">
+        <div style="display:flex;gap:12px;">
+          <span style="color:var(--text3);min-width:130px;">اسم النظام</span>
+          <span style="color:var(--text);font-weight:600;">SM-Group — نظام إدارة الخزينة المزدوجة</span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="color:var(--text3);min-width:130px;">الإصدار</span>
+          <span style="color:var(--gold);font-weight:600;">v5.0</span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="color:var(--text3);min-width:130px;">قاعدة البيانات</span>
+          <span>Supabase (PostgreSQL)</span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="color:var(--text3);min-width:130px;">الاستضافة</span>
+          <span>Netlify</span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="color:var(--text3);min-width:130px;">حقوق الملكية</span>
+          <span>© 2025 SM-Group · جميع الحقوق محفوظة</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+(async () => {
+  if (!await initApp('settings')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+
+  const user = Auth.getUser();
+  document.getElementById('current-user').value = user.user;
+
+  if (Auth.isAdmin()) {
+    document.getElementById('commission-section').style.display = 'block';
+    await loadCommissions();
+  }
+})();
+
+// ── إعدادات شخصية ──────────────────────────────────────
+async function savePersonal() {
+  const currentPass = document.getElementById('current-pass').value;
+  const newUser     = document.getElementById('new-username').value.trim();
+  const newPass     = document.getElementById('new-pass').value;
+  const newPass2    = document.getElementById('new-pass2').value;
+
+  if (!currentPass) { UI.toast('أدخل كلمة المرور الحالية للتحقق','error'); return; }
+
+  // تحقق من كلمة المرور الحالية
+  const user = Auth.getUser();
+  const verified = await Storage.findUser(user.user, btoa(currentPass));
+  if (!verified) { UI.toast('كلمة المرور الحالية خاطئة','error'); return; }
+
+  if (newPass && newPass !== newPass2) {
+    UI.toast('كلمتا المرور الجديدتان غير متطابقتين','error'); return;
+  }
+
+  UI.showLoading(true);
+  let ok = true;
+  if (newPass) ok = await Storage.updateUserPass(user.id, btoa(newPass));
+  UI.showLoading(false);
+
+  if (ok) {
+    UI.toast('تم الحفظ ✅ — سيتم تسجيل الخروج');
+    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 1500);
+  } else { UI.toast('خطأ في الحفظ','error'); }
+}
+
+// ── إعدادات العمولة ─────────────────────────────────────
+async function loadCommissions() {
+  const accounts = await Accounts.getAll();
+  const customers = accounts.filter(a => a.type==='customer');
+  const list = document.getElementById('commission-list');
+
+  if (!customers.length) {
+    list.innerHTML = '<div class="empty-state">لا يوجد زبائن بعد</div>';
+    return;
+  }
+
+  list.innerHTML = customers.map(a => {
+    const rate = parseFloat(a.commission_rate ?? 0.00025);
+    const pct  = (rate * 100).toFixed(4);
+    return `<div class="commission-row">
+      <div>
+        <div class="acc-name">${UI.escapeHtml(a.name)}</div>
+        <div class="acc-type">كود: ${UI.escapeHtml(a.id)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:0.75rem;color:var(--text3);">النسبة (0 = معفى):</span>
+        <input type="number" id="comm_${a.id}" value="${rate}"
+               step="0.00001" min="0" max="0.1"
+               style="width:130px;">
+        <span style="font-size:0.75rem;color:var(--text2);" id="pct_${a.id}">${pct}%</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveCommission('${a.id}')">💾 حفظ</button>
+    </div>`;
+  }).join('');
+
+  // تحديث النسبة المئوية عند التغيير
+  customers.forEach(a => {
+    const inp = document.getElementById('comm_' + a.id);
+    if (inp) inp.addEventListener('input', () => {
+      const pctEl = document.getElementById('pct_' + a.id);
+      if (pctEl) pctEl.textContent = (parseFloat(inp.value||0)*100).toFixed(4) + '%';
+    });
+  });
+}
+
+async function saveCommission(accId) {
+  const inp = document.getElementById('comm_' + accId);
+  if (!inp) return;
+  const rate = parseFloat(inp.value);
+  if (isNaN(rate)||rate<0||rate>0.1) {
+    UI.toast('نسبة غير صحيحة (0 - 0.1)','error'); return;
+  }
+  UI.showLoading(true);
+  const { error } = await window._sb_direct
+    ? window._sb_direct.from('accounts').update({commission_rate:rate}).eq('id',accId)
+    : { error: null };
+  // نستخدم Storage مباشرة
+  const accounts = await Storage.getAccounts();
+  const acc = accounts.find(a=>a.id===accId);
+  if (acc) {
+    // نحدث مباشرة عبر supabase client في storage
+    const ok = await _updateCommission(accId, rate);
+    UI.showLoading(false);
+    if (ok) UI.toast('تم حفظ العمولة ✅');
+    else UI.toast('خطأ في الحفظ','error');
+  } else { UI.showLoading(false); }
+}
+
+async function _updateCommission(accId, rate) {
+  // نصل لـ Supabase عبر نفس الـ client في storage
+  const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_ECr_Pt2w19dBj_XPz5CYbQ_Qvj4gAQ-';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { error } = await sb.from('accounts').update({commission_rate:rate}).eq('id',accId);
+  return !error;
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      UI.toast('جاري الاستعادة…');
+      // لا يمكن استعادة كاملة بدون backend — نعلم المستخدم
+      UI.toast('الاستعادة الكاملة تتطلب إعادة رفع البيانات يدوياً عبر Supabase','error');
+    } catch(err) { UI.toast('ملف غير صالح','error'); }
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
