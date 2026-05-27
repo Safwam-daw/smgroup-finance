@@ -40,7 +40,17 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only data-page="employees" onclick="navTo('employees.html')">
           <span class="nav-icon">🛡️</span> إدارة الموظفين
         </button>
+        <div class="nav-section-label" data-admin-only>التحليل والتدقيق</div>
+        <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" data-admin-only onclick="navTo('reports.html')">
+          <span class="nav-icon">📊</span> التقارير
+        </button>
+        <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" data-admin-only onclick="navTo('audit.html')">
+          <span class="nav-icon">🔍</span> سجل التدقيق
+        </button>
         <div class="nav-section-label">أدوات النظام</div>
+        <button class="nav-btn" onclick="window.open('client.html','_blank')">
+          <span class="nav-icon">👤</span> بوابة الزبون
+        </button>
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
           <span class="nav-icon">⚙️</span> الإعدادات
         </button>
@@ -114,6 +124,8 @@ async function initApp(pageId) {
     'statement': 'statement',
     'account-view': 'statement',
     'employees': 'employees',
+    'reports':   'employees',
+    'audit':     'employees',
     'settings':  null  // متاح للجميع
   };
 

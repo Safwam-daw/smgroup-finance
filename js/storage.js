@@ -148,6 +148,152 @@ const Storage = (() => {
     return !error;
   }
 
+  async function getTxnByParent(parentId) {
+    const { data, error } = await _sb.from('transactions')
+      .select('*').eq('parent_id', parentId).eq('is_commission_entry', true).single();
+    if (error||!data) return null;
+    return data;
+  }
+
+  // سجل التدقيق
+  // ── حذف الحساب مع تسوية الرصيد ─────────────────────
+  // ── بوابة الزبون ───────────────────────────────────────
+
+  // تسجيل دخول الزبون برقم الحساب + PIN
+  async function clientLogin(accountId, pin) {
+    const { data, error } = await _sb.from('accounts')
+      .select('*')
+      .eq('id', accountId.trim())
+      .eq('client_pin', pin.trim())
+      .single();
+    if (error || !data) return null;
+    if (data.type !== 'customer') return null;
+    return data;
+  }
+
+  // نشر الكشف للزبون (تحديث وقت النشر)
+  async function publishClientView(accountId, publishedBy) {
+    const { error } = await _sb.from('accounts').update({
+      client_published_at: new Date().toISOString(),
+      client_published_by: publishedBy
+    }).eq('id', accountId);
+    return !error;
+  }
+
+  // نشر كشوف كل الزبائن دفعة واحدة
+  async function publishAllClients(publishedBy) {
+    const { error } = await _sb.from('accounts').update({
+      client_published_at: new Date().toISOString(),
+      client_published_by: publishedBy
+    }).eq('type', 'customer');
+    return !error;
+  }
+
+  // توليد PIN جديد
+  async function regeneratePin(accountId) {
+    const pin = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    const { error } = await _sb.from('accounts').update({ client_pin: pin }).eq('id', accountId);
+    if (error) return null;
+    _invalidateAccounts();
+    return pin;
+  }
+
+  // جلب العمليات المنشورة للزبون (فقط قبل client_published_at)
+  async function getClientTxns(accountId, publishedAt) {
+    let q = _sb.from('transactions')
+      .select('*')
+      .or(`acc.eq.${accountId},from.eq.${accountId},to.eq.${accountId}`)
+      .order('date', { ascending: false });
+    if (publishedAt) q = q.lte('date', publishedAt);
+    const { data, error } = await q;
+    if (error) return [];
+    return data || [];
+  }
+
+  async function deleteAccount(accountId, deletedBy) {
+    // 1) اجلب الحساب الكامل
+    const { data: acc, error: accErr } = await _sb.from('accounts')
+      .select('*').eq('id', accountId).single();
+    if (accErr || !acc) return { ok:false, error:'الحساب غير موجود' };
+
+    const usd = parseFloat(acc.bal_usd || 0);
+    const eur = parseFloat(acc.bal_eur || 0);
+
+    // 2) سوِّ الرصيد مع حساب الأرباح 9999
+    const transfers = [];
+    if (usd !== 0) transfers.push(updateBalance('9999', 'usd', usd));
+    if (eur !== 0) transfers.push(updateBalance('9999', 'eur', eur));
+    if (transfers.length) await Promise.all(transfers);
+
+    // 3) سجّل الحساب في جدول المحذوفات
+    await _sb.from('deleted_accounts').insert({
+      id:           acc.id,
+      name:         acc.name,
+      type:         acc.type,
+      bal_usd:      usd,
+      bal_eur:      eur,
+      deleted_by:   deletedBy,
+      transfer_note: usd !== 0 || eur !== 0
+        ? `تم تحويل الرصيد ($${usd.toFixed(2)} | €${eur.toFixed(2)}) لحساب الأرباح تلقائياً`
+        : 'رصيد صفري — لا تحويل'
+    });
+
+    // 4) احذف الحساب
+    const { error } = await _sb.from('accounts').delete().eq('id', accountId);
+    if (error) return { ok:false, error:'خطأ في الحذف: ' + error.message };
+
+    _invalidateAccounts();
+    return { ok:true, usd, eur };
+  }
+
+  // ── إعادة استخدام أرقام الحسابات المحذوفة ─────────
+  async function getRecyclableId(type) {
+    const prefix = type === 'customer' ? '' : '4';
+    const { data } = await _sb.from('deleted_accounts')
+      .select('id').order('deleted_at', { ascending:true });
+    if (!data || !data.length) return null;
+    // أعد أول رقم محذوف من نفس النوع
+    const match = data.find(r =>
+      type === 'customer'
+        ? !r.id.startsWith('4') && !r.id.startsWith('9')
+        : r.id.startsWith('4')
+    );
+    if (!match) return null;
+    // احذفه من سلة المحذوفات
+    await _sb.from('deleted_accounts').delete().eq('id', match.id);
+    return match.id;
+  }
+
+  // ── إعدادات التنبيهات ──────────────────────────────
+  async function getAlertSettings() {
+    const { data } = await _sb.from('alert_settings').select('*').single();
+    return data || { debt_limit: -500 };
+  }
+
+  async function saveAlertSettings(settings) {
+    const { data: existing } = await _sb.from('alert_settings').select('id').single();
+    if (existing) {
+      const { error } = await _sb.from('alert_settings')
+        .update({ ...settings, updated_at: new Date().toISOString() }).eq('id', existing.id);
+      return !error;
+    } else {
+      const { error } = await _sb.from('alert_settings').insert(settings);
+      return !error;
+    }
+  }
+
+  async function logAction(action, details) {
+    const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    try {
+      await _sb.from('audit_log').insert({
+        action,
+        page:     window.location.pathname.split('/').pop(),
+        username: user?.user || 'system',
+        details
+      });
+    } catch(e) { /* لا نوقف التطبيق بسبب فشل السجل */ }
+  }
+
   async function findUser(username, passBase64) {
     const { data, error } = await _sb.from('users')
       .select('*').eq('username',username).eq('pass',passBase64).single();
@@ -184,9 +330,10 @@ const Storage = (() => {
 
   return {
     getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
-    getTxns, saveTxn, updateTxn, deleteTxn, getTxnById,
+    getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
     getTreasuryTotals, getUsers, saveUser, deleteUser,
     updateUserPass, updateUserPermissions, updateUserRole,
-    findUser, exportBackup
+    findUser, logAction, deleteAccount, getRecyclableId, getAlertSettings, saveAlertSettings,
+    clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns, exportBackup
   };
 })();
