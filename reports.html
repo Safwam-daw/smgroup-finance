@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — التقارير</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.report-card {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius); padding:18px 20px; margin-bottom:10px;
+}
+.report-stat { display:flex; gap:24px; flex-wrap:wrap; margin-top:12px; }
+.report-stat-item { flex:1; min-width:120px; }
+.report-stat-label { font-size:0.68rem; color:var(--text3); margin-bottom:4px; }
+.report-stat-val   { font-size:1.1rem; font-weight:700; }
+.alert-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 14px; background:var(--red-dim); border:1px solid var(--red);
+  border-radius:8px; margin-bottom:8px; flex-wrap:wrap; gap:8px;
+}
+.debt-limit-box {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:8px; padding:14px 16px; margin-bottom:16px;
+}
+@media print {
+  #sidebar,#topbar,#sidebar-overlay,#toast,#treasury-bar,
+  #treasury-placeholder,.no-print { display:none!important; }
+  *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  body { background:#fff!important; color:#111!important; }
+  #main { margin:0!important; padding:16px!important; }
+  .report-card { background:#fff!important; border:1px solid #ccc!important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>📊 التقارير</h2><p>ملخصات مالية وتنبيهات</p></div>
+    </div>
+
+    <!-- اختيار الفترة -->
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label>الفترة</label>
+          <select id="r-period" onchange="loadReport()">
+            <option value="month">هذا الشهر</option>
+            <option value="prev">الشهر السابق</option>
+            <option value="year">هذا العام</option>
+            <option value="custom">مخصص</option>
+          </select>
+        </div>
+        <div id="custom-dates" style="display:none;flex:2;display:none;gap:10px;flex-wrap:wrap;">
+          <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+            <input type="date" id="r-from" onchange="loadReport()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+            <input type="date" id="r-to" onchange="loadReport()">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-self:flex-end;" class="no-print">
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
+          <button class="btn btn-primary btn-sm" onclick="exportReport()">📊 Excel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ملخص الفترة -->
+    <div id="report-content">
+      <div class="empty-state">جاري التحميل…</div>
+    </div>
+
+    <!-- إعداد حد الدين (أدمن فقط) -->
+    <div class="card" id="debt-settings-card" style="display:none;margin-top:16px;">
+      <h3>⚙️ إعداد حد تنبيه الديون</h3>
+      <div class="debt-limit-box">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>حد الدين (القيمة السالبة)</label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="number" id="debt-limit-input" value="-500"
+                   max="0" step="50" style="flex:1;max-width:200px;">
+            <button class="btn btn-primary btn-sm" onclick="saveDebtLimit()">💾 حفظ</button>
+          </div>
+        </div>
+        <p style="font-size:0.74rem;color:var(--text3);">
+          أي حساب يتجاوز هذا الحد يظهر تنبيه في لوحة التحكم تلقائياً.
+          القيمة الافتراضية: -500
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+let _reportData = null;
+
+(async () => {
+  if (!await initApp('reports')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+
+  if (Auth.isAdmin()) {
+    document.getElementById('debt-settings-card').style.display = 'block';
+    const settings = await Storage.getAlertSettings();
+    document.getElementById('debt-limit-input').value = settings.debt_limit || -500;
+  }
+
+  document.getElementById('r-period').addEventListener('change', () => {
+    const isCustom = document.getElementById('r-period').value === 'custom';
+    document.getElementById('custom-dates').style.display = isCustom ? 'flex' : 'none';
+    if (!isCustom) loadReport();
+  });
+
+  await loadReport();
+})();
+
+function getPeriodDates() {
+  const period = document.getElementById('r-period').value;
+  if (period === 'custom') {
+    return {
+      from: document.getElementById('r-from').value,
+      to:   document.getElementById('r-to').value
+    };
+  }
+  const map = {
+    month: { from: UI.firstOfMonth(0),  to: UI.lastOfMonth(0) },
+    prev:  { from: UI.firstOfMonth(-1), to: UI.lastOfMonth(-1) },
+    year:  { from: new Date().getFullYear() + '-01-01',
+             to:   new Date().getFullYear() + '-12-31' }
+  };
+  return map[period] || map.month;
+}
+
+async function loadReport() {
+  UI.showLoading(true);
+  const { from, to } = getPeriodDates();
+  const [txns, accounts, settings] = await Promise.all([
+    Storage.getTxns({ from_date: from, to_date: to ? to + 'T23:59:59' : undefined }),
+    Accounts.getAll(),
+    Storage.getAlertSettings()
+  ]);
+  UI.showLoading(false);
+  _reportData = { txns, accounts, from, to, settings };
+  renderReport(_reportData);
+}
+
+function renderReport({ txns, accounts, from, to, settings }) {
+  const debtLimit = parseFloat(settings.debt_limit || -500);
+  let dep={usd:0,eur:0}, wit={usd:0,eur:0}, comm={usd:0,eur:0};
+  let trfCount=0;
+
+  txns.forEach(t => {
+    if (t.type==='dep') { dep[t.cur]+=parseFloat(t.amt); comm[t.cur]+=parseFloat(t.commission_amt||0); }
+    if (t.type==='wit') wit[t.cur]+=parseFloat(t.amt);
+    if (t.type==='trf') trfCount++;
+  });
+
+  const customers = accounts.filter(a=>a.type==='customer');
+  const companies = accounts.filter(a=>a.type==='company');
+  const debtors   = accounts.filter(a=>
+    parseFloat(a.bal_usd||0)<debtLimit || parseFloat(a.bal_eur||0)<debtLimit
+  );
+  const profitAcc = accounts.find(a=>a.id==='9999');
+  const profitUsd = parseFloat(profitAcc?.bal_usd||0);
+  const profitEur = parseFloat(profitAcc?.bal_eur||0);
+
+  const periodLabel = from && to
+    ? `${from} — ${to}`
+    : from ? `من ${from}` : 'كل الوقت';
+
+  document.getElementById('report-content').innerHTML = `
+    <!-- ترويسة الطباعة -->
+    <div style="display:none;" class="print-header-rep">
+      <h2 style="font-size:1.3rem;margin-bottom:4px;">SM-Group — تقرير مالي</h2>
+      <p style="font-size:0.8rem;color:#555;">${periodLabel} · طُبع بتاريخ ${UI.todayStr()}</p>
+      <hr style="border-color:#c9a84c;margin:10px 0;">
+    </div>
+
+    <!-- ملخص الإيداعات والسحوبات -->
+    <div class="report-card" style="margin-bottom:16px;">
+      <div style="font-weight:700;margin-bottom:4px;">📋 ملخص العمليات — ${periodLabel}</div>
+      <div class="report-stat">
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي الإيداعات $</div>
+          <div class="report-stat-val" style="color:var(--green);">$${dep.usd.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي الإيداعات €</div>
+          <div class="report-stat-val" style="color:var(--green);">€${dep.eur.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي السحوبات $</div>
+          <div class="report-stat-val" style="color:var(--red);">$${wit.usd.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي السحوبات €</div>
+          <div class="report-stat-val" style="color:var(--red);">€${wit.eur.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">تحويلات</div>
+          <div class="report-stat-val" style="color:var(--blue);">${trfCount}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي العمليات</div>
+          <div class="report-stat-val">${txns.length}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- العمولات والأرباح -->
+    <div class="report-card" style="margin-bottom:16px;border-right:3px solid var(--green);">
+      <div style="font-weight:700;margin-bottom:4px;">📈 العمولات والأرباح</div>
+      <div class="report-stat">
+        <div class="report-stat-item">
+          <div class="report-stat-label">عمولات الفترة $</div>
+          <div class="report-stat-val" style="color:var(--gold);">$${comm.usd.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">عمولات الفترة €</div>
+          <div class="report-stat-val" style="color:var(--gold);">€${comm.eur.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي الأرباح المتراكم $</div>
+          <div class="report-stat-val" style="color:var(--green);">$${profitUsd.toFixed(2)}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">إجمالي الأرباح المتراكم €</div>
+          <div class="report-stat-val" style="color:var(--green);">€${profitEur.toFixed(2)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الحسابات -->
+    <div class="report-card" style="margin-bottom:16px;">
+      <div style="font-weight:700;margin-bottom:4px;">👥 الحسابات</div>
+      <div class="report-stat">
+        <div class="report-stat-item">
+          <div class="report-stat-label">حسابات الزبائن</div>
+          <div class="report-stat-val" style="color:var(--gold);">${customers.length}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">حسابات الشركات</div>
+          <div class="report-stat-val" style="color:var(--euro);">${companies.length}</div>
+        </div>
+        <div class="report-stat-item">
+          <div class="report-stat-label">حسابات مدينة (تجاوز ${debtLimit})</div>
+          <div class="report-stat-val" style="color:${debtors.length?'var(--red)':'var(--green)'};">
+            ${debtors.length || '✅ لا يوجد'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- تفاصيل الحسابات المدينة -->
+    ${debtors.length ? `
+    <div class="card" style="margin-bottom:16px;">
+      <h3>⚠️ الحسابات المدينة التفصيلية</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>الكود</th><th>الاسم</th><th>النوع</th><th>رصيد $</th><th>رصيد €</th><th class="no-print">إجراء</th></tr></thead>
+          <tbody>
+            ${debtors.map(a=>`<tr class="row-debtor">
+              <td><b>${UI.escapeHtml(a.id)}</b></td>
+              <td>${UI.escapeHtml(a.name)}</td>
+              <td>${a.type==='company'?'شركة':'زبون'}</td>
+              <td style="color:var(--red);">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
+              <td style="color:var(--red);">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+              <td class="no-print">
+                <button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">عرض</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+async function saveDebtLimit() {
+  const limit = parseFloat(document.getElementById('debt-limit-input').value);
+  if (isNaN(limit) || limit > 0) { UI.toast('يجب أن يكون الحد قيمة سالبة أو صفر','error'); return; }
+  UI.showLoading(true);
+  const ok = await Storage.saveAlertSettings({
+    debt_limit:  limit,
+    updated_by:  Auth.getUser().user
+  });
+  UI.showLoading(false);
+  if (ok) UI.toast('تم حفظ حد الدين ✅');
+  else UI.toast('خطأ في الحفظ','error');
+}
+
+function exportReport() {
+  if (typeof XLSX === 'undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
+  if (!_reportData) return;
+  const { txns, from, to } = _reportData;
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['SM-Group — تقرير مالي', '', '', '', '', ''],
+    ['الفترة:', `${from} — ${to}`, '', '', '', ''],
+    [],
+    ['التاريخ', 'النوع', 'الحساب', 'العملة', 'المبلغ', 'العمولة', 'بواسطة']
+  ]);
+  const rows = txns.map(t => [
+    new Date(t.date).toLocaleString('ar-SA'),
+    {dep:'إيداع',wit:'سحب',trf:'تحويل',fee:'عمولة'}[t.type]||t.type,
+    t.acc || `${t.from} → ${t.to}`,
+    t.cur.toUpperCase(),
+    parseFloat(t.amt).toFixed(2),
+    parseFloat(t.commission_amt||0).toFixed(2),
+    t.by
+  ]);
+  XLSX.utils.sheet_add_aoa(ws, rows, { origin: -1 });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'التقرير');
+  XLSX.writeFile(wb, `SMGroup_Report_${from}_${to}.xlsx`);
+}
+</script>
+<style>
+@media print {
+  .print-header-rep { display:block!important; }
+}
+</style>
+</body>
+</html>

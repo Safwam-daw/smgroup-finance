@@ -74,24 +74,6 @@
       </button>
     </div>
 
-    <!-- إعدادات العمولة (أدمن فقط) -->
-    <div class="card settings-section" id="commission-section" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">💰 إعدادات عمولة الإيداع</h3>
-        <span style="font-size:0.73rem;color:var(--text3);">
-          تُطبق على الزبائن فقط · الشركات معفاة
-        </span>
-      </div>
-      <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;
-           padding:10px 14px;margin-bottom:14px;font-size:0.8rem;color:var(--text2);">
-        ℹ️ القيمة الافتراضية <b style="color:var(--gold);">0.00025</b> تعني
-        <b style="color:var(--gold);">0.025%</b> أي ربع سنت لكل ألف دولار
-      </div>
-      <div id="commission-list">
-        <div class="empty-state">جاري التحميل…</div>
-      </div>
-    </div>
-
     <!-- النسخ الاحتياطي -->
     <div class="card settings-section">
       <h3>💾 النسخ الاحتياطي</h3>
@@ -153,10 +135,7 @@
   const user = Auth.getUser();
   document.getElementById('current-user').value = user.user;
 
-  if (Auth.isAdmin()) {
-    document.getElementById('commission-section').style.display = 'block';
-    await loadCommissions();
-  }
+
 })();
 
 // ── إعدادات شخصية ──────────────────────────────────────
@@ -186,78 +165,6 @@ async function savePersonal() {
     UI.toast('تم الحفظ ✅ — سيتم تسجيل الخروج');
     setTimeout(() => { Auth.logout(); navTo('login.html'); }, 1500);
   } else { UI.toast('خطأ في الحفظ','error'); }
-}
-
-// ── إعدادات العمولة ─────────────────────────────────────
-async function loadCommissions() {
-  const accounts = await Accounts.getAll();
-  const customers = accounts.filter(a => a.type==='customer');
-  const list = document.getElementById('commission-list');
-
-  if (!customers.length) {
-    list.innerHTML = '<div class="empty-state">لا يوجد زبائن بعد</div>';
-    return;
-  }
-
-  list.innerHTML = customers.map(a => {
-    const rate = parseFloat(a.commission_rate ?? 0.00025);
-    const pct  = (rate * 100).toFixed(4);
-    return `<div class="commission-row">
-      <div>
-        <div class="acc-name">${UI.escapeHtml(a.name)}</div>
-        <div class="acc-type">كود: ${UI.escapeHtml(a.id)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:0.75rem;color:var(--text3);">النسبة (0 = معفى):</span>
-        <input type="number" id="comm_${a.id}" value="${rate}"
-               step="0.00001" min="0" max="0.1"
-               style="width:130px;">
-        <span style="font-size:0.75rem;color:var(--text2);" id="pct_${a.id}">${pct}%</span>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="saveCommission('${a.id}')">💾 حفظ</button>
-    </div>`;
-  }).join('');
-
-  // تحديث النسبة المئوية عند التغيير
-  customers.forEach(a => {
-    const inp = document.getElementById('comm_' + a.id);
-    if (inp) inp.addEventListener('input', () => {
-      const pctEl = document.getElementById('pct_' + a.id);
-      if (pctEl) pctEl.textContent = (parseFloat(inp.value||0)*100).toFixed(4) + '%';
-    });
-  });
-}
-
-async function saveCommission(accId) {
-  const inp = document.getElementById('comm_' + accId);
-  if (!inp) return;
-  const rate = parseFloat(inp.value);
-  if (isNaN(rate)||rate<0||rate>0.1) {
-    UI.toast('نسبة غير صحيحة (0 - 0.1)','error'); return;
-  }
-  UI.showLoading(true);
-  const { error } = await window._sb_direct
-    ? window._sb_direct.from('accounts').update({commission_rate:rate}).eq('id',accId)
-    : { error: null };
-  // نستخدم Storage مباشرة
-  const accounts = await Storage.getAccounts();
-  const acc = accounts.find(a=>a.id===accId);
-  if (acc) {
-    // نحدث مباشرة عبر supabase client في storage
-    const ok = await _updateCommission(accId, rate);
-    UI.showLoading(false);
-    if (ok) UI.toast('تم حفظ العمولة ✅');
-    else UI.toast('خطأ في الحفظ','error');
-  } else { UI.showLoading(false); }
-}
-
-async function _updateCommission(accId, rate) {
-  // نصل لـ Supabase عبر نفس الـ client في storage
-  const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_ECr_Pt2w19dBj_XPz5CYbQ_Qvj4gAQ-';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  const { error } = await sb.from('accounts').update({commission_rate:rate}).eq('id',accId);
-  return !error;
 }
 
 function handleImport(e) {

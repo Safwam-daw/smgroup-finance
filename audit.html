@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — سجل التدقيق</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.quick-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.qf-btn {
+  padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.76rem;
+  font-family:inherit; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.qf-btn:hover,.qf-btn.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold); }
+.action-badge {
+  display:inline-block; padding:2px 9px; border-radius:20px;
+  font-size:0.68rem; font-weight:600;
+}
+.act-deposit  { background:var(--green-dim); color:var(--green); }
+.act-withdraw { background:var(--red-dim);   color:var(--red); }
+.act-transfer { background:var(--blue-dim);  color:var(--blue); }
+.act-delete   { background:rgba(239,68,68,0.2); color:var(--red); }
+.act-other    { background:var(--surface3); color:var(--text2); }
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2>🔍 سجل التدقيق</h2><p>تتبع جميع الإجراءات في النظام</p></div>
+      <button class="btn btn-primary no-print" onclick="UI.exportExcel('audit-table','Audit_Log')">📊 Excel</button>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="card" style="padding:14px 16px;margin-bottom:14px;">
+      <div class="quick-filters">
+        <button class="qf-btn active" onclick="setQuick('today')">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>الإجراء</label>
+          <select id="f-action" onchange="applyFilter()">
+            <option value="all">الكل</option>
+            <option value="deposit">إيداع</option>
+            <option value="withdraw">سحب</option>
+            <option value="transfer">تحويل</option>
+            <option value="delete">حذف</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>المستخدم</label>
+          <input type="text" id="f-user" placeholder="اسم المستخدم…" oninput="applyFilter()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+          <input type="date" id="f-from" onchange="clearQuick();applyFilter()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+          <input type="date" id="f-to" onchange="clearQuick();applyFilter()">
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+        <table id="audit-table">
+          <thead>
+            <tr>
+              <th>الوقت</th><th>الإجراء</th><th>المستخدم</th>
+              <th>الصفحة</th><th>التفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr><td colspan="5" class="empty-state">جاري التحميل…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
+      <div id="audit-count" style="font-size:0.74rem;color:var(--text3);"></div>
+      <div class="pagination" id="audit-pages"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+const PAGE_SIZE = 20;
+let _allLogs  = [];
+let _filtered = [];
+let _page     = 1;
+
+const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ECr_Pt2w19dBj_XPz5CYbQ_Qvj4gAQ-';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+(async () => {
+  if (!await initApp('audit')) return;
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  setQuick('today', false);
+  await loadLogs();
+})();
+
+async function loadLogs() {
+  UI.showLoading(true);
+  const { data, error } = await _sb.from('audit_log')
+    .select('*').order('created_at', { ascending:false }).limit(500);
+  UI.showLoading(false);
+  _allLogs = data || [];
+  applyFilter();
+}
+
+function setQuick(key, apply=true) {
+  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+  const today = UI.todayStr();
+  const map = {
+    today:{ from:today,              to:today },
+    month:{ from:UI.firstOfMonth(0), to:UI.lastOfMonth(0) },
+    all:  { from:'',                 to:'' }
+  };
+  const r = map[key]||map.today;
+  document.getElementById('f-from').value = r.from;
+  document.getElementById('f-to').value   = r.to;
+  const idx={today:0,month:1,all:2}[key];
+  const btns=document.querySelectorAll('.qf-btn');
+  if(btns[idx]) btns[idx].classList.add('active');
+  if(apply) applyFilter();
+}
+function clearQuick(){ document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
+
+function applyFilter() {
+  const fAction = document.getElementById('f-action').value;
+  const fUser   = document.getElementById('f-user').value.toLowerCase().trim();
+  const fFrom   = document.getElementById('f-from').value;
+  const fTo     = document.getElementById('f-to').value;
+
+  _filtered = _allLogs.filter(l => {
+    if (fAction!=='all' && l.action!==fAction) return false;
+    if (fUser && !(l.username||'').toLowerCase().includes(fUser)) return false;
+    if (fFrom && new Date(l.created_at) < new Date(fFrom)) return false;
+    if (fTo   && new Date(l.created_at) > new Date(fTo+'T23:59:59')) return false;
+    return true;
+  });
+  _page = 1;
+  renderPage();
+}
+
+const actionLabels = {
+  deposit:'إيداع', withdraw:'سحب', transfer:'تحويل',
+  delete:'حذف', login:'دخول', logout:'خروج'
+};
+const actionClass = {
+  deposit:'act-deposit', withdraw:'act-withdraw',
+  transfer:'act-transfer', delete:'act-delete'
+};
+
+function renderPage() {
+  const total      = _filtered.length;
+  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
+  const start      = (_page-1)*PAGE_SIZE;
+  const page       = _filtered.slice(start, start+PAGE_SIZE);
+
+  document.getElementById('audit-tbody').innerHTML = page.length
+    ? page.map(l => {
+        const cls   = actionClass[l.action]||'act-other';
+        const label = actionLabels[l.action]||l.action;
+        const d     = l.details||{};
+        let details = '';
+        if (d.accountId) details += `حساب: ${d.accountId} `;
+        if (d.amount)    details += `· مبلغ: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`;
+        if (d.fromId)    details += `من: ${d.fromId} → ${d.toId}`;
+        if (d.commission && d.commission>0) details += ` · عمولة: ${parseFloat(d.commission).toFixed(2)}`;
+        if (d.txnId)     details += `عملية #${d.txnId}`;
+        return `<tr>
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(l.created_at)}</td>
+          <td><span class="action-badge ${cls}">${label}</span></td>
+          <td style="font-weight:600;font-size:0.82rem;">${UI.escapeHtml(l.username||'—')}</td>
+          <td style="font-size:0.75rem;color:var(--text3);">${UI.escapeHtml(l.page||'—')}</td>
+          <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(details||'—')}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="5" class="empty-state"><div class="empty-icon">🔍</div>لا توجد سجلات</td></tr>';
+
+  document.getElementById('audit-count').textContent =
+    `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} إجراء`;
+
+  const pg = document.getElementById('audit-pages');
+  if (totalPages<=1){pg.innerHTML='';return;}
+  let html=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp=Math.max(1,_page-2),ep=Math.min(totalPages,_page+2);
+  if(sp>1) html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if(sp>2) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for(let i=sp;i<=ep;i++)
+    html+=`<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+  if(ep<totalPages-1) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if(ep<totalPages)   html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(p){
+  const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;
+  if(p<1||p>t)return; _page=p; renderPage();
+}
+</script>
+</body>
+</html>
