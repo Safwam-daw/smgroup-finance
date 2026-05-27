@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — بوابة الزبون</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c; --gold-light:#e8c96e; --gold-dim:rgba(201,168,76,0.15);
+  --bg:#07090f; --surface:#0d1117; --surface2:#131b27;
+  --border:#1e2d42; --border2:#243550;
+  --text:#e8eaf0; --text2:#8a9bb5; --text3:#4a5a72;
+  --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+  --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
+  --euro:#a78bfa; --radius:12px; --radius-sm:8px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'IBM Plex Sans Arabic',sans-serif;
+  background:var(--bg); color:var(--text); direction:rtl; min-height:100vh;
+}
+/* ── Login Screen ── */
+#login-screen {
+  min-height:100vh; display:flex; align-items:center;
+  justify-content:center; padding:20px;
+}
+.login-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:18px; padding:40px; width:100%; max-width:400px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.logo { font-size:1.8rem; font-weight:700; color:var(--gold); }
+.logo-sub { font-size:0.72rem; color:var(--text3); margin-top:4px; }
+.divider { width:36px; height:2px; background:var(--gold); margin:18px auto; border-radius:2px; }
+.form-group { margin-bottom:14px; text-align:right; }
+.form-group label { display:block; font-size:0.72rem; color:var(--text2); margin-bottom:6px; }
+.form-group input {
+  width:100%; padding:12px 14px; background:var(--surface2);
+  border:1px solid var(--border2); color:var(--text); border-radius:10px;
+  font-family:inherit; font-size:0.9rem; outline:none; direction:rtl;
+  transition:border-color .2s;
+}
+.form-group input:focus { border-color:var(--gold); }
+.btn-login {
+  width:100%; padding:13px; background:var(--gold); color:#000;
+  border:none; border-radius:10px; font-family:inherit;
+  font-size:1rem; font-weight:700; cursor:pointer; margin-top:6px;
+  transition:background .2s;
+}
+.btn-login:hover { background:var(--gold-light); }
+.btn-login:disabled { opacity:0.6; cursor:not-allowed; }
+.error-msg {
+  background:var(--red-dim); border:1px solid var(--red);
+  border-radius:8px; padding:10px; font-size:0.8rem; color:var(--red);
+  margin-top:12px; display:none;
+}
+.error-msg.show { display:block; }
+
+/* ── Portal Screen ── */
+#portal-screen { display:none; padding:20px; max-width:800px; margin:0 auto; }
+.portal-header {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 20px; margin-bottom:16px;
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+}
+.portal-header-info h2 { font-size:1.1rem; font-weight:700; }
+.portal-header-info p  { font-size:0.73rem; color:var(--text3); margin-top:3px; }
+.bal-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.bal-box {
+  flex:1; min-width:130px; padding:12px 16px; border-radius:var(--radius-sm);
+  border:1px solid; display:flex; flex-direction:column; gap:4px;
+}
+.bal-box-label { font-size:0.67rem; color:var(--text3); }
+.bal-box-val   { font-size:1.2rem; font-weight:700; }
+.logout-btn {
+  background:transparent; border:1px solid var(--border2); color:var(--text2);
+  border-radius:var(--radius-sm); padding:7px 14px; font-family:inherit;
+  font-size:0.8rem; cursor:pointer; transition:all .15s;
+}
+.logout-btn:hover { background:var(--surface2); color:var(--text); }
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 20px; margin-bottom:14px;
+}
+.card h3 { font-size:0.9rem; font-weight:600; margin-bottom:12px; }
+.tbl-wrap { overflow-x:auto; border-radius:var(--radius-sm); border:1px solid var(--border); margin-top:8px; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:420px; }
+th { padding:9px 12px; text-align:right; background:var(--surface2); color:var(--text2); border-bottom:1px solid var(--border); font-weight:600; white-space:nowrap; }
+td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+.badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.66rem; font-weight:600; }
+.badge-dep { background:rgba(34,197,94,0.12); color:#22c55e; }
+.badge-wit { background:rgba(239,68,68,0.12); color:#ef4444; }
+.badge-trf { background:rgba(59,130,246,0.12); color:#3b82f6; }
+.badge-fee { background:var(--gold-dim); color:var(--gold); }
+.cell-credit { background:rgba(34,197,94,0.12); color:#22c55e; font-weight:700; padding:2px 7px; border-radius:5px; display:inline-block; }
+.cell-debit  { background:rgba(239,68,68,0.12); color:#ef4444; font-weight:700; padding:2px 7px; border-radius:5px; display:inline-block; }
+.pagination  { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; flex-wrap:wrap; }
+.pagination span { font-size:0.76rem; color:var(--text2); }
+.pg-btn {
+  padding:5px 11px; border-radius:6px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-family:inherit;
+  font-size:0.76rem; cursor:pointer; transition:all .15s;
+}
+.pg-btn:hover,.pg-btn.active { background:var(--gold); color:#000; border-color:var(--gold); }
+.pg-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.published-note {
+  font-size:0.72rem; color:var(--text3); text-align:center;
+  margin-top:8px; padding:8px;
+  background:var(--surface2); border-radius:6px;
+}
+#toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:10px 20px; font-size:0.8rem;
+  z-index:999; opacity:0; transition:opacity .3s; white-space:nowrap;
+}
+#toast.show { opacity:1; }
+#toast.success { border-color:var(--green); color:var(--green); }
+@media(max-width:600px){
+  .portal-header { flex-direction:column; align-items:flex-start; }
+  .bal-box { min-width:calc(50% - 5px); }
+  .bal-box-val { font-size:1rem; }
+  #portal-screen { padding:12px; }
+  .login-box { padding:28px 20px; }
+}
+@media print {
+  #login-screen { display:none!important; }
+  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  body { background:#fff!important; color:#111!important; }
+  .portal-header { background:#fff!important; border:2px solid #c9a84c!important; }
+  .bal-box { background:#fffbef!important; border-color:#c9a84c!important; }
+  .bal-box-val,.portal-header-info h2 { color:#111!important; }
+  .logout-btn,.published-note,.pagination { display:none!important; }
+  table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
+  th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; }
+  td { border-bottom:1px solid #eee!important; color:#111!important; }
+}
+</style>
+</head>
+<body>
+
+<!-- شاشة تسجيل الدخول -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">SM-Group</div>
+    <div class="logo-sub">بوابة الزبون</div>
+    <div class="divider"></div>
+    <div class="form-group">
+      <label>رقم الحساب</label>
+      <input type="text" id="c-acc" placeholder="0001" maxlength="6"
+             onkeydown="if(event.key==='Enter') document.getElementById('c-pin').focus()">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور (6 أرقام)</label>
+      <input type="password" id="c-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">دخول</button>
+    <div class="error-msg" id="login-err">رقم الحساب أو كلمة المرور غير صحيحة</div>
+    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;">
+      للحصول على كلمة المرور تواصل مع الإدارة
+    </p>
+  </div>
+</div>
+
+<!-- شاشة البوابة -->
+<div id="portal-screen">
+  <div id="toast"></div>
+
+  <!-- رأس الصفحة -->
+  <div class="portal-header">
+    <div class="portal-header-info">
+      <h2 id="p-name">—</h2>
+      <p id="p-meta">رقم الحساب: —</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" class="no-print">
+      <button class="logout-btn" onclick="window.print()">🖨️ طباعة</button>
+      <button class="logout-btn" onclick="doLogout()">🚪 خروج</button>
+    </div>
+  </div>
+
+  <!-- الأرصدة -->
+  <div class="bal-row" id="p-bals"></div>
+
+  <!-- ملاحظة آخر تحديث -->
+  <div class="published-note" id="p-pub-note"></div>
+
+  <!-- الحركات -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+      <table>
+        <thead><tr>
+          <th>التاريخ</th><th>النوع</th><th>العملة</th>
+          <th>دين</th><th>دائن</th><th>ملاحظة</th>
+        </tr></thead>
+        <tbody id="p-tbody">
+          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">جاري التحميل…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="pagination" id="p-pages"></div>
+  <div id="p-count" style="text-align:center;font-size:0.73rem;color:var(--text3);margin-top:6px;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script>
+<script>
+const PAGE_SIZE = 20;
+let _acc     = null;
+let _txns    = [];
+let _page    = 1;
+const typeLabel = { dep:'إيداع', wit:'سحب', trf:'تحويل', fee:'عمولة' };
+
+// ── Toast ──────────────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='', 3000);
+}
+
+// ── تسجيل الدخول ──────────────────────────────────────
+async function doLogin() {
+  const accId = document.getElementById('c-acc').value.trim();
+  const pin   = document.getElementById('c-pin').value.trim();
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+  if (!accId || !pin) { err.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'جاري التحقق…'; err.classList.remove('show');
+
+  const acc = await Storage.clientLogin(accId, pin);
+  if (!acc) {
+    btn.disabled = false; btn.textContent = 'دخول'; err.classList.add('show'); return;
+  }
+
+  _acc = acc;
+  // حفظ الجلسة
+  try { sessionStorage.setItem('client_session', JSON.stringify({ id:acc.id, pin })); } catch(e){}
+  await loadPortal();
+}
+
+function doLogout() {
+  try { sessionStorage.removeItem('client_session'); } catch(e){}
+  _acc = null; _txns = [];
+  document.getElementById('portal-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display  = 'flex';
+  document.getElementById('c-pin').value = '';
+}
+
+// ── تحميل البوابة ─────────────────────────────────────
+async function loadPortal() {
+  document.getElementById('login-screen').style.display  = 'none';
+  document.getElementById('portal-screen').style.display = 'block';
+
+  // ملء الترويسة
+  document.getElementById('p-name').textContent = _acc.name;
+  document.getElementById('p-meta').textContent = 'رقم الحساب: ' + _acc.id;
+
+  // الأرصدة
+  const usd = parseFloat(_acc.bal_usd || 0);
+  const eur = parseFloat(_acc.bal_eur || 0);
+  const pubAt = _acc.client_published_at;
+
+  document.getElementById('p-bals').innerHTML = `
+    <div class="bal-box" style="border-color:${usd<0?'#ef4444':'#c9a84c'};
+         background:${usd<0?'rgba(239,68,68,0.08)':'rgba(201,168,76,0.08)'};">
+      <div class="bal-box-label">🇺🇸 رصيد الدولار</div>
+      <div class="bal-box-val" style="color:${usd<0?'#ef4444':'#c9a84c'};">
+        ${usd<0?'-':''}$${Math.abs(usd).toFixed(2)}
+      </div>
+    </div>
+    <div class="bal-box" style="border-color:${eur<0?'#ef4444':'#a78bfa'};
+         background:${eur<0?'rgba(239,68,68,0.08)':'rgba(167,139,250,0.08)'};">
+      <div class="bal-box-label">🇪🇺 رصيد اليورو</div>
+      <div class="bal-box-val" style="color:${eur<0?'#ef4444':'#a78bfa'};">
+        ${eur<0?'-':''}€${Math.abs(eur).toFixed(2)}
+      </div>
+    </div>`;
+
+  // ملاحظة آخر تحديث
+  const pubNote = document.getElementById('p-pub-note');
+  if (pubAt) {
+    const d = new Date(pubAt).toLocaleString('ar-SA', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    pubNote.textContent = `آخر تحديث للكشف: ${d}`;
+  } else {
+    pubNote.textContent = 'لم يتم نشر الكشف بعد — تواصل مع الإدارة';
+  }
+
+  // جلب الحركات المنشورة فقط
+  _txns  = await Storage.getClientTxns(_acc.id, pubAt);
+  _page  = 1;
+  renderPage();
+}
+
+// ── عرض الحركات ───────────────────────────────────────
+function renderPage() {
+  const total      = _txns.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  const start      = (_page - 1) * PAGE_SIZE;
+  const page       = _txns.slice(start, start + PAGE_SIZE);
+  const accId      = _acc.id;
+
+  document.getElementById('p-tbody').innerHTML = page.length
+    ? page.map(t => {
+        const sym    = t.cur==='usd'?'$':'€';
+        const isFee  = t.type==='fee' || t.is_commission_entry;
+        const isFrom = t.type==='trf' && t.from===accId;
+        const isTo   = t.type==='trf' && t.to===accId;
+        let debit=0, credit=0;
+        if (t.type==='dep') credit = parseFloat(t.amt);
+        if (t.type==='wit') debit  = parseFloat(t.amt);
+        if (isFee)          debit  = parseFloat(t.amt);
+        if (isFrom) debit  = parseFloat(t.amt);
+        if (isTo)   credit = parseFloat(t.amt)*(parseFloat(t.rate)||1);
+        const dCell = debit>0  ? `<span class="cell-debit">-${sym}${debit.toFixed(2)}</span>`  : '—';
+        const cCell = credit>0 ? `<span class="cell-credit">+${sym}${credit.toFixed(2)}</span>` : '—';
+        const lbl   = isFee ? '💰 عمولة' : (typeLabel[t.type]||t.type);
+        const bCls  = isFee ? 'badge-fee' : `badge-${t.type}`;
+        const rSty  = isFee ? 'background:rgba(201,168,76,0.04);' : '';
+        const d     = new Date(t.date).toLocaleString('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<tr style="${rSty}">
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${d}</td>
+          <td><span class="badge ${bCls}">${lbl}</span></td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td>${dCell}</td>
+          <td>${cCell}</td>
+          <td style="font-size:0.73rem;color:var(--text2);">${t.note||'—'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">لا توجد حركات منشورة</td></tr>';
+
+  document.getElementById('p-count').textContent =
+    total ? `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة` : '';
+
+  // Pagination
+  const pg = document.getElementById('p-pages');
+  if (totalPages<=1){pg.innerHTML='';return;}
+  let html=`<button class="pg-btn" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp=Math.max(1,_page-2),ep=Math.min(totalPages,_page+2);
+  if(sp>1) html+=`<button class="pg-btn" onclick="goPage(1)">1</button>`;
+  if(sp>2) html+=`<span>…</span>`;
+  for(let i=sp;i<=ep;i++)
+    html+=`<button class="pg-btn ${i===_page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  if(ep<totalPages-1) html+=`<span>…</span>`;
+  if(ep<totalPages)   html+=`<button class="pg-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="pg-btn" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(p){
+  const t=Math.ceil(_txns.length/PAGE_SIZE)||1;
+  if(p<1||p>t)return; _page=p; renderPage();
+}
+
+// ── استعادة الجلسة ─────────────────────────────────────
+(async () => {
+  try {
+    const s = sessionStorage.getItem('client_session');
+    if (s) {
+      const { id, pin } = JSON.parse(s);
+      document.getElementById('c-acc').value = id;
+      document.getElementById('c-pin').value = pin;
+      const acc = await Storage.clientLogin(id, pin);
+      if (acc) { _acc = acc; await loadPortal(); return; }
+    }
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
