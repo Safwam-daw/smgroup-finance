@@ -358,6 +358,7 @@
              padding:10px 16px;font-size:1.1rem;font-weight:700;letter-spacing:4px;color:var(--gold);"
              id="acc-pin-display">—</div>
         <button class="btn btn-ghost btn-sm" onclick="regenPin()">🔄 PIN جديد</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyPin()" id="copy-pin-btn">📋 نسخ</button>
         <a id="client-portal-link" href="client.html" target="_blank"
            style="font-size:0.75rem;color:var(--blue);text-decoration:none;">🔗 رابط البوابة</a>
       </div>
@@ -532,7 +533,8 @@ function renderPage() {
   const totalPages = Math.ceil(total/PAGE_SIZE)||1;
   const start      = (_page-1)*PAGE_SIZE;
   const page       = _filtered.slice(start, start+PAGE_SIZE);
-  const canEdit    = Auth.isAdmin();
+  const canEdit    = Auth.can('canEdit');
+  const canDelete  = Auth.can('canDelete');
 
   // ترتيب الطباعة: قديم → حديث (عكس الشاشة)
   const printOrder = [...page].reverse();
@@ -563,10 +565,11 @@ function renderPage() {
     const cCell = credit>0 ? `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>` : '—';
     const badgeClass = isFee ? 'badge-fee' : `badge-${t.type}`;
     const badgeLabel = isFee ? '💰 عمولة' : (typeLabel[t.type]||t.type);
-    const editBtns = (!forPrint && canEdit && !isFee)
-      ? `<button class="btn btn-ghost btn-sm"
-           onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}')">✏️</button>
-         <button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>`
+    const editBtns = (!forPrint && !isFee)
+      ? [
+          canEdit  ? `<button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}')">✏️</button>` : '',
+          canDelete ? `<button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>` : ''
+        ].join('')
       : '';
     const rowStyle = isFee
       ? 'background:rgba(201,168,76,0.05);border-right:2px solid var(--gold);'
@@ -589,13 +592,14 @@ function renderPage() {
 
   tbody.innerHTML = page.length
     ? [
-        // صفوف الشاشة (حديث → قديم)
         ...page.map(t => makeRow(t, false)),
-        // صفوف الطباعة (قديم → حديث) مخفية في الشاشة
-        ...printOrder.map(t => `<tr class="print-only-row" style="display:none;">${makeRow(t,true).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'')}</tr>`)
+        ...printOrder.map(t => {
+          const inner = makeRow(t, true);
+          const stripped = inner.replace(/^<tr[^>]*>/, '').replace(/<\/tr>\s*$/, '');
+          return `<tr class="print-only-row" style="display:none;">${stripped}</tr>`;
+        })
       ].join('')
     : '<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>لا توجد حركات</td></tr>';
-  : '<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>لا توجد حركات</td></tr>';
 
   document.getElementById('mov-count').textContent =
     total ? `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة` : 'لا توجد حركات';
@@ -780,6 +784,27 @@ async function publishClient() {
     UI.toast('تم نشر الكشف ✅ — الزبون يستطيع رؤية الحركات الآن');
     _accObj.client_published_at = new Date().toISOString();
   } else { UI.toast('خطأ في النشر','error'); }
+}
+
+function copyPin() {
+  const pin = document.getElementById('acc-pin-display').textContent.trim();
+  if (!pin || pin === '—') { UI.toast('لا يوجد PIN', 'error'); return; }
+  const accId = _accId;
+  const text  = `رقم الحساب: ${accId}
+كلمة السر: ${pin}
+رابط البوابة: ${location.origin}/client.html`;
+  navigator.clipboard.writeText(text).then(() => {
+    UI.toast('تم نسخ بيانات الزبون ✅');
+    const btn = document.getElementById('copy-pin-btn');
+    if (btn) { btn.textContent = '✅ تم النسخ'; setTimeout(()=>btn.textContent='📋 نسخ', 2000); }
+  }).catch(() => {
+    // fallback for older browsers
+    const el = document.createElement('textarea');
+    el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+    document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    UI.toast('تم نسخ بيانات الزبون ✅');
+  });
 }
 
 async function regenPin() {

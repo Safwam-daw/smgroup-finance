@@ -104,6 +104,7 @@ let _reportData = null;
 
 (async () => {
   if (!await initApp('reports')) return;
+  if (!Auth.can('reports')) { navTo('accounts.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
 

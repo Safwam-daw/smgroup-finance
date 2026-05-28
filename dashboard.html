@@ -206,11 +206,26 @@ function renderDebtorPage() {
 
 async function publishAll() {
   const btn = document.getElementById('publish-all-btn');
-  if (btn) { btn.disabled=true; btn.textContent='جاري النشر…'; }
-  const ok = await Storage.publishAllClients(Auth.getUser().user);
-  if (btn) { btn.disabled=false; btn.textContent='📤 نشر كشوف الزبائن'; }
-  if (ok) UI.toast('تم نشر كشوف جميع الزبائن ✅');
-  else UI.toast('خطأ في النشر','error');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ جاري النشر…'; }
+  try {
+    // نشر مباشر لكل الزبائن
+    const now = new Date().toISOString();
+    const accounts = await Storage.getAccounts();
+    const customers = accounts.filter(a => a.type === 'customer');
+    if (!customers.length) {
+      UI.toast('لا يوجد زبائن لنشر كشوفاتهم', 'error');
+      return;
+    }
+    const ok = await Storage.publishAllClients(Auth.getUser().user);
+    if (ok) {
+      Storage.invalidate('accounts'); // إعادة تحميل الـ Cache
+      UI.toast(`✅ تم نشر كشوف ${customers.length} زبون`);
+    } else {
+      UI.toast('خطأ في النشر — حاول مرة أخرى', 'error');
+    }
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='📤 نشر كشوف الزبائن'; }
+  }
 }
 
 async function checkDebtAlerts(accounts) {

@@ -17,4 +17,5 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "allow all" ON audit_log FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow all" ON audit_log;
+CREATE POLICY "allow all" ON audit_log FOR ALL USING (true) WITH CHECK (true)

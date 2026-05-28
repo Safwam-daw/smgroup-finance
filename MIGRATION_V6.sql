@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS deleted_accounts (
   transfer_note text  -- ملاحظة تحويل الرصيد
 );
 ALTER TABLE deleted_accounts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "allow all" ON deleted_accounts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow all" ON deleted_accounts;
+CREATE POLICY "allow all" ON deleted_accounts FOR ALL USING (true) WITH CHECK (true)
 
 -- 2) جدول إعدادات التنبيهات
 CREATE TABLE IF NOT EXISTS alert_settings (
@@ -23,7 +24,8 @@ CREATE TABLE IF NOT EXISTS alert_settings (
   updated_by    text
 );
 ALTER TABLE alert_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "allow all" ON alert_settings FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "allow all" ON alert_settings;
+CREATE POLICY "allow all" ON alert_settings FOR ALL USING (true) WITH CHECK (true)
 
 -- إدراج القيمة الافتراضية
 INSERT INTO alert_settings (debt_limit) VALUES (-500)

@@ -103,6 +103,7 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 (async () => {
   if (!await initApp('audit')) return;
+  if (!Auth.can('audit')) { navTo('accounts.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   setQuick('today', false);

@@ -175,17 +175,20 @@
 <script>
 // تعريف الصلاحيات وتسمياتها
 const PERM_DEFS = [
-  { key:'dashboard',  label:'📊 لوحة التحكم' },
-  { key:'accounts',   label:'👥 إدارة الحسابات' },
-  { key:'deposit',    label:'💵 الإيداع' },
-  { key:'withdraw',   label:'💸 السحب' },
-  { key:'transfer',   label:'🔄 التحويل' },
-  { key:'ledger',     label:'📒 السجل المحاسبي' },
-  { key:'statement',  label:'📋 كشف الحساب' },
-  { key:'employees',  label:'🛡️ إدارة الموظفين' },
+  { key:'dashboard',    label:'📊 لوحة التحكم' },
+  { key:'accounts',     label:'👥 إدارة الحسابات' },
+  { key:'deposit',      label:'💵 الإيداع' },
+  { key:'withdraw',     label:'💸 السحب' },
+  { key:'transfer',     label:'🔄 التحويل' },
+  { key:'ledger',       label:'📒 السجل المحاسبي' },
+  { key:'statement',    label:'📋 كشف الحساب' },
+  { key:'employees',    label:'🛡️ إدارة الموظفين' },
+  { key:'reports',      label:'📊 التقارير' },
+  { key:'audit',        label:'🔍 سجل التدقيق' },
+  { key:'clientPortal', label:'👤 بوابة الزبون (نشر)' },
   { key:'DIVIDER' },
-  { key:'canDelete',  label:'🗑️ حذف العمليات' },
-  { key:'canEdit',    label:'✏️ تعديل الملاحظات' },
+  { key:'canDelete',    label:'🗑️ حذف العمليات' },
+  { key:'canEdit',      label:'✏️ تعديل الملاحظات' },
 ];
 
 (async () => {
