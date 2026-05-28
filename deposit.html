@@ -29,10 +29,7 @@
       <div class="grid-2">
         <div class="form-group">
           <label>العملة</label>
-          <select id="dep-cur" onchange="updatePreview()">
-            <option value="usd">🇺🇸 دولار USD</option>
-            <option value="eur">🇪🇺 يورو EUR</option>
-          </select>
+          <select id="dep-cur" class="currency-select" onchange="updatePreview()"></select>
         </div>
         <div class="form-group">
           <label>المبلغ</label>
@@ -70,7 +67,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
-<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/app.js"></script>
 <script>
 (async () => {
   if (!await initApp('deposit')) return;
@@ -78,6 +76,8 @@
   await UI.updateTreasury();
 
   // عند اختيار حساب → حدّث المعاينة تلقائياً
+  // تحميل العملات الديناميكية
+  await Currency.refreshSelects('USD');
   UI.initSearch('dep', () => setTimeout(updatePreview, 80));
   document.getElementById('dep-cur').addEventListener('change', updatePreview);
   await renderRecent();

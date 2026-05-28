@@ -74,6 +74,19 @@
       </button>
     </div>
 
+    <!-- إدارة العملات (أدمن فقط) -->
+    <div class="card settings-section" id="currency-section" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">💱 إدارة العملات</h3>
+        <span style="font-size:0.73rem;color:var(--text3);">الدولار واليورو ثابتان دائماً</span>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;
+           padding:10px 14px;margin-bottom:14px;font-size:0.79rem;color:var(--text2);">
+        ℹ️ فعّل العملات التي تحتاجها — ستظهر في حقول الإيداع والسحب والتحويل وشريط الخزينة تلقائياً
+      </div>
+      <div id="currency-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
     <!-- النسخ الاحتياطي -->
     <div class="card settings-section">
       <h3>💾 النسخ الاحتياطي</h3>
@@ -125,7 +138,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
-<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/app.js"></script>
 <script>
 (async () => {
   if (!await initApp('settings')) return;
