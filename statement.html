@@ -21,8 +21,6 @@
   padding:8px 18px; border-radius:20px; font-size:0.88rem;
   font-weight:700; border:1px solid; display:flex; align-items:center; gap:6px;
 }
-/* صف العملية بلا لون */
-.stmt-row td { background:transparent !important; }
 /* مربع دائن أخضر */
 .cell-credit { background:var(--green-dim); color:var(--green); font-weight:700;
   padding:3px 8px; border-radius:6px; display:inline-block; }
@@ -55,6 +53,7 @@
   /* ترتيب الطباعة: إخفاء صفوف الشاشة وإظهار صفوف الطباعة */
   tbody tr:not(.print-only-row) { display:none!important; }
   .print-only-row { display:table-row!important; }
+
   .acc-header { background:#fff!important; border:2px solid #c9a84c!important; }
   .acc-header-info h3 { color:#111!important; }
   .acc-header-info p  { color:#555!important; }
