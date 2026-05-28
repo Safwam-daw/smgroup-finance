@@ -41,10 +41,10 @@ function buildSidebar(activePage) {
           <span class="nav-icon">🛡️</span> إدارة الموظفين
         </button>
         <div class="nav-section-label" data-admin-only>التحليل والتدقيق</div>
-        <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" data-admin-only onclick="navTo('reports.html')">
+        <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" onclick="navTo('reports.html')">
           <span class="nav-icon">📊</span> التقارير
         </button>
-        <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" data-admin-only onclick="navTo('audit.html')">
+        <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" onclick="navTo('audit.html')">
           <span class="nav-icon">🔍</span> سجل التدقيق
         </button>
         <div class="nav-section-label">أدوات النظام</div>
@@ -124,9 +124,10 @@ async function initApp(pageId) {
     'statement': 'statement',
     'account-view': 'statement',
     'employees': 'employees',
-    'reports':   'employees',
-    'audit':     'employees',
-    'settings':  null  // متاح للجميع
+    'reports':      'reports',
+    'audit':        'audit',
+    'account-view': 'accounts',
+    'settings':     null  // متاح للجميع
   };
 
   if (permMap[pageId] !== undefined && permMap[pageId] !== null) {
@@ -142,6 +143,10 @@ async function initApp(pageId) {
   UI.fillUserInfo();
   UI.applyRoleUI();
   applyNavPermissions();
+
+  // تأكد من وجود حساب الأرباح (يُعيد إنشاءه إذا حُذف)
+  Storage.ensureProfitAccount().catch(()=>{});
+
   await UI.updateTreasury();
   return true;
 }
@@ -156,7 +161,9 @@ function applyNavPermissions() {
     'transfer':  'transfer',
     'ledger':    'ledger',
     'statement': 'statement',
-    'employees': 'employees'
+    'employees': 'employees',
+    'reports':   'reports',
+    'audit':     'audit'
   };
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const page = btn.dataset.page;

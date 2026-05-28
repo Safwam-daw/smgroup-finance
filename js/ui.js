@@ -35,35 +35,26 @@ const UI = (() => {
   }
 
   async function updateTreasury() {
-    // تحميل الخزينة والأرباح بالتوازي
-    const [totals, profitAcc] = await Promise.all([
-      Transactions.getTreasuryTotals(),
-      Storage.getAccounts().then(accs => accs.find(a => a.id === '9999') || null)
+    // جلب الخزينة والأرباح بالتوازي من الـ Cache
+    const [totals, profit] = await Promise.all([
+      Storage.getTreasuryTotals(),
+      Storage.getProfitBalance()
     ]);
 
-    const usdEl = document.getElementById('t-usd');
-    const eurEl = document.getElementById('t-eur');
-    const pusdEl = document.getElementById('t-profit-usd');
-    const peurEl = document.getElementById('t-profit-eur');
+    const set = (id, val, pos, neg='var(--red)') => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val;
+      el.style.color = parseFloat(val) < 0 ? neg : pos;
+    };
 
-    if (usdEl) {
-      usdEl.textContent = '$' + totals.usd.toFixed(2);
-      usdEl.style.color = totals.usd < 0 ? 'var(--red)' : 'var(--gold)';
-    }
-    if (eurEl) {
-      eurEl.textContent = '€' + totals.eur.toFixed(2);
-      eurEl.style.color = totals.eur < 0 ? 'var(--red)' : 'var(--euro)';
-    }
-    if (pusdEl && profitAcc) {
-      const pu = parseFloat(profitAcc.bal_usd || 0);
-      pusdEl.textContent = '$' + pu.toFixed(2);
-      pusdEl.style.color = pu < 0 ? 'var(--red)' : 'var(--green)';
-    }
-    if (peurEl && profitAcc) {
-      const pe = parseFloat(profitAcc.bal_eur || 0);
-      peurEl.textContent = '€' + pe.toFixed(2);
-      peurEl.style.color = pe < 0 ? 'var(--red)' : 'var(--green)';
-    }
+    // الخزينة الإجمالية (تشمل الأرباح)
+    const netUsd = totals.usd;
+    const netEur = totals.eur;
+    set('t-usd',        '$' + netUsd.toFixed(2),       'var(--gold)');
+    set('t-eur',        '€' + netEur.toFixed(2),       'var(--euro)');
+    set('t-profit-usd', '$' + profit.usd.toFixed(2),   'var(--green)');
+    set('t-profit-eur', '€' + profit.eur.toFixed(2),   'var(--green)');
   }
 
   function initSidebar() {
