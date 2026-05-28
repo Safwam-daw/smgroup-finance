@@ -35,26 +35,45 @@ const UI = (() => {
   }
 
   async function updateTreasury() {
-    // جلب الخزينة والأرباح بالتوازي من الـ Cache
-    const [totals, profit] = await Promise.all([
+    const [totals, profit, activeCurs] = await Promise.all([
       Storage.getTreasuryTotals(),
-      Storage.getProfitBalance()
+      Storage.getProfitBalance(),
+      (typeof Currency !== 'undefined') ? Currency.getActive() : Promise.resolve([
+        { code:'USD', symbol:'$' }, { code:'EUR', symbol:'€' }
+      ])
     ]);
 
-    const set = (id, val, pos, neg='var(--red)') => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = val;
-      el.style.color = parseFloat(val) < 0 ? neg : pos;
-    };
+    // تحديث الخزينة الرئيسية
+    const usd = totals.usd || 0;
+    const eur = totals.eur || 0;
+    const usdEl = document.getElementById('t-usd');
+    const eurEl = document.getElementById('t-eur');
+    if (usdEl) { usdEl.textContent = '$'+usd.toFixed(2); usdEl.style.color = usd<0?'var(--red)':'var(--gold)'; }
+    if (eurEl) { eurEl.textContent = '€'+eur.toFixed(2); eurEl.style.color = eur<0?'var(--red)':'var(--euro)'; }
 
-    // الخزينة الإجمالية (تشمل الأرباح)
-    const netUsd = totals.usd;
-    const netEur = totals.eur;
-    set('t-usd',        '$' + netUsd.toFixed(2),       'var(--gold)');
-    set('t-eur',        '€' + netEur.toFixed(2),       'var(--euro)');
-    set('t-profit-usd', '$' + profit.usd.toFixed(2),   'var(--green)');
-    set('t-profit-eur', '€' + profit.eur.toFixed(2),   'var(--green)');
+    // تحديث الأرباح
+    const pusd = profit.usd || 0;
+    const peur = profit.eur || 0;
+    const pusdEl = document.getElementById('t-profit-usd');
+    const peurEl = document.getElementById('t-profit-eur');
+    if (pusdEl) { pusdEl.textContent = '$'+pusd.toFixed(2); pusdEl.style.color = pusd<0?'var(--red)':'var(--green)'; }
+    if (peurEl) { peurEl.textContent = '€'+peur.toFixed(2); peurEl.style.color = peur<0?'var(--red)':'var(--green)'; }
+
+    // تحديث العملات الإضافية
+    const extraBar = document.getElementById('t-extra-currencies');
+    if (extraBar) {
+      const extraCurs = activeCurs.filter(c => c.code !== 'USD' && c.code !== 'EUR');
+      extraBar.innerHTML = extraCurs.map(c => {
+        const val = totals[c.code.toLowerCase()] || 0;
+        return `<div class="stat-card" style="flex:1;min-width:120px;padding:12px 14px;border-right:2px solid var(--border2);">
+          <div class="stat-label">${escapeHtml(c.symbol)} ${escapeHtml(c.name)}</div>
+          <div class="stat-value" style="font-size:1rem;color:${val<0?'var(--red)':'var(--text2)'};">
+            ${c.symbol}${val.toFixed(2)}
+          </div>
+        </div>`;
+      }).join('');
+      extraBar.style.display = extraCurs.length ? 'flex' : 'none';
+    }
   }
 
   function initSidebar() {

@@ -58,8 +58,12 @@ const Storage = (() => {
     return !error;
   }
 
+  function _balCol(currency) {
+    return 'bal_' + currency.toLowerCase();
+  }
+
   async function getBalance(accountId, currency) {
-    const col = currency === 'usd' ? 'bal_usd' : 'bal_eur';
+    const col = _balCol(currency);
     if (_cache.accounts.data) {
       const a = _cache.accounts.data.find(x => x.id === accountId);
       if (a) return parseFloat(a[col] || 0);
@@ -70,7 +74,7 @@ const Storage = (() => {
   }
 
   async function updateBalance(accountId, currency, delta) {
-    const col = currency === 'usd' ? 'bal_usd' : 'bal_eur';
+    const col = _balCol(currency);
     let current = 0;
     if (_cache.accounts.data) {
       const a = _cache.accounts.data.find(x => x.id === accountId);
@@ -88,25 +92,30 @@ const Storage = (() => {
     return !error;
   }
 
-  // الخزينة = مجموع كل الأرصدة (بما فيها الأرباح)
+  // الخزينة = مجموع كل الأرصدة لكل العملات
   async function getTreasuryTotals() {
     const accounts = await getAccounts();
-    let usd = 0, eur = 0;
+    const totals = {};
     accounts.forEach(a => {
-      usd += parseFloat(a.bal_usd || 0);
-      eur += parseFloat(a.bal_eur || 0);
+      Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
+        const cur = k.replace('bal_', '');
+        totals[cur] = (totals[cur] || 0) + parseFloat(a[k] || 0);
+      });
     });
-    return { usd, eur };
+    return totals; // { usd:X, eur:Y, try:Z, ... }
   }
 
   // الأرباح منفصلة
   async function getProfitBalance() {
     const accounts = await getAccounts();
     const p = accounts.find(a => a.id === '9999');
-    return {
-      usd: parseFloat(p?.bal_usd || 0),
-      eur: parseFloat(p?.bal_eur || 0)
-    };
+    if (!p) return { usd:0, eur:0 };
+    const result = {};
+    Object.keys(p).filter(k => k.startsWith('bal_')).forEach(k => {
+      const cur = k.replace('bal_','').toUpperCase();
+      result[cur.toLowerCase()] = parseFloat(p[k] || 0);
+    });
+    return result;
   }
 
   // ══ Transactions ══════════════════════════════════════

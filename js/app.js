@@ -92,11 +92,13 @@ function buildTreasuryBar() {
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
         <div class="stat-label">📈 الأرباح</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;">
-          <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1.1rem;">$0.00</span>
-          <span style="color:var(--green);font-weight:700;" id="t-profit-eur">€0.00</span>
+          <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1rem;">$0.00</span>
+          <span style="color:var(--green);font-weight:700;font-size:0.95rem;" id="t-profit-eur">€0.00</span>
         </div>
       </div>
     </div>
+    <!-- عملات إضافية مفعّلة -->
+    <div id="t-extra-currencies" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap;overflow-x:auto;"></div>
   `;
 }
 
