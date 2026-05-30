@@ -79,8 +79,12 @@ function buildSidebar(activePage) {
 }
 
 function buildTreasuryBar() {
+  const canTreasury = Auth.can('viewTreasury');
+  const canProfit   = Auth.can('viewProfit');
+  if (!canTreasury && !canProfit) return '<div id="treasury-bar" style="display:none;"></div>';
   return `
     <div id="treasury-bar">
+      ${canTreasury ? `
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--gold);">
         <div class="stat-label">💵 خزينة الدولار</div>
         <div class="stat-value" id="t-usd" style="color:var(--gold);">$0.00</div>
@@ -88,16 +92,16 @@ function buildTreasuryBar() {
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--euro);">
         <div class="stat-label">💶 خزينة اليورو</div>
         <div class="stat-value" id="t-eur" style="color:var(--euro);">€0.00</div>
-      </div>
+      </div>` : ''}
+      ${canProfit ? `
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
         <div class="stat-label">📈 الأرباح</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;">
           <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1rem;">$0.00</span>
           <span style="color:var(--green);font-weight:700;font-size:0.95rem;" id="t-profit-eur">€0.00</span>
         </div>
-      </div>
+      </div>` : ''}
     </div>
-    <!-- عملات إضافية مفعّلة -->
     <div id="t-extra-currencies" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap;overflow-x:auto;"></div>
   `;
 }

@@ -92,17 +92,33 @@ const Storage = (() => {
     return !error;
   }
 
-  // الخزينة = مجموع كل الأرصدة لكل العملات
+  // الخزينة = مجموع كل الأرصدة لكل العملات (شاملة الأرباح)
+  // حساب الأرباح حساب عادي — رصيده يُحسب ضمن الخزينة
   async function getTreasuryTotals() {
     const accounts = await getAccounts();
     const totals = {};
     accounts.forEach(a => {
       Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
         const cur = k.replace('bal_', '');
-        totals[cur] = (totals[cur] || 0) + parseFloat(a[k] || 0);
+        if (!isNaN(parseFloat(a[k])))
+          totals[cur] = (totals[cur] || 0) + parseFloat(a[k] || 0);
       });
     });
-    return totals; // { usd:X, eur:Y, try:Z, ... }
+    return totals;
+  }
+
+  // الخزينة بدون الأرباح (للعرض المنفصل)
+  async function getTreasuryWithoutProfit() {
+    const accounts = await getAccounts();
+    const totals = {};
+    accounts.filter(a => a.id !== '9999').forEach(a => {
+      Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
+        const cur = k.replace('bal_', '');
+        if (!isNaN(parseFloat(a[k])))
+          totals[cur] = (totals[cur] || 0) + parseFloat(a[k] || 0);
+      });
+    });
+    return totals;
   }
 
   // الأرباح منفصلة
@@ -217,35 +233,57 @@ const Storage = (() => {
     return { user: data.username, role: data.role, id: data.id, permissions: data.permissions || null };
   }
 
-  // ══ حذف الحساب مع تسوية الرصيد ══════════════════════
+  // ══ حذف الحساب مع تسوية الرصيد وأرشفته ═══════════════
   async function deleteAccount(accountId, deletedBy) {
     if (accountId === '9999') return { ok: false, error: 'لا يمكن حذف حساب الأرباح' };
+    if (accountId.startsWith('7')) return { ok: false, error: 'هذا حساب أرشيفي محذوف مسبقاً' };
 
     const accounts = await getAccounts();
     const acc = accounts.find(a => a.id === accountId);
     if (!acc) return { ok: false, error: 'الحساب غير موجود' };
 
-    const usd = parseFloat(acc.bal_usd || 0);
-    const eur = parseFloat(acc.bal_eur || 0);
+    // تسوية جميع العملات مع حساب الأرباح
+    const balances = {};
+    let transferNote = [];
+    const currencies = ['usd','eur','try','gbp','sar','aed','egp','jod','kwd','qar','mad','lyd'];
+    for (const cur of currencies) {
+      const val = parseFloat(acc['bal_'+cur] || 0);
+      balances[cur] = val;
+      if (val !== 0) {
+        await updateBalance('9999', cur, val);
+        transferNote.push(`${cur.toUpperCase()}:${val.toFixed(2)}`);
+      }
+    }
 
-    // تسوية الرصيد مع حساب الأرباح
-    if (usd !== 0) await updateBalance('9999', 'usd', usd);
-    if (eur !== 0) await updateBalance('9999', 'eur', eur);
+    // توليد رقم أرشيفي (7000+)
+    const { data: existing } = await _sb.from('deleted_accounts')
+      .select('archive_id').not('archive_id','is',null).order('archive_id', { ascending: false }).limit(1);
+    let nextArchive = '7001';
+    if (existing && existing.length > 0) {
+      const last = parseInt(existing[0].archive_id || '7000');
+      nextArchive = String(last + 1);
+    }
 
-    // تسجيل في المحذوفات
+    // تسجيل في المحذوفات مع الرقم الأرشيفي
     await _sb.from('deleted_accounts').insert({
-      id: acc.id, name: acc.name, type: acc.type,
-      bal_usd: usd, bal_eur: eur, deleted_by: deletedBy,
-      transfer_note: (usd !== 0 || eur !== 0)
-        ? `تم تحويل ($${usd.toFixed(2)} | €${eur.toFixed(2)}) لحساب الأرباح`
-        : 'رصيد صفري'
+      id:           acc.id,
+      name:         acc.name,
+      type:         acc.type,
+      bal_usd:      balances.usd || 0,
+      bal_eur:      balances.eur || 0,
+      deleted_by:   deletedBy,
+      archive_id:   nextArchive,
+      transfer_note: transferNote.length
+        ? `تم تحويل (${transferNote.join(' | ')}) لحساب الأرباح`
+        : 'رصيد صفري — لا تحويل'
     });
 
     const { error } = await _sb.from('accounts').delete().eq('id', accountId);
     if (error) return { ok: false, error: 'خطأ في الحذف: ' + error.message };
 
     invalidate('accounts');
-    return { ok: true, usd, eur };
+    await logAction('delete_account', { accountId, name: acc.name, archiveId: nextArchive, deletedBy });
+    return { ok: true, usd: balances.usd || 0, eur: balances.eur || 0, archiveId: nextArchive };
   }
 
   async function getRecyclableId(type) {
@@ -370,7 +408,7 @@ const Storage = (() => {
   return {
     // accounts
     getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
-    getTreasuryTotals, getProfitBalance, invalidate,
+    getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, invalidate,
     deleteAccount, getRecyclableId, ensureProfitAccount,
     // transactions
     getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,

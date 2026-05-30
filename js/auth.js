@@ -11,6 +11,7 @@ const Auth = (() => {
     dashboard:true, accounts:true, deposit:true, withdraw:true,
     transfer:true, ledger:true, statement:true, employees:true,
     reports:true, audit:true, clientPortal:true,
+    viewTreasury:true, viewProfit:true,
     canDelete:true, canEdit:true
   };
 
@@ -18,6 +19,7 @@ const Auth = (() => {
     dashboard:false, accounts:true, deposit:true, withdraw:true,
     transfer:true, ledger:true, statement:true, employees:false,
     reports:false, audit:false, clientPortal:false,
+    viewTreasury:false, viewProfit:false,
     canDelete:false, canEdit:false
   };
 
