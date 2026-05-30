@@ -78,7 +78,6 @@
             <label>الصلاحية الرئيسية</label>
             <select id="emp-role" onchange="toggleAdminPerms()">
               <option value="employee">👤 موظف</option>
-              <option value="admin">🛡️ مدير — كافة الصلاحيات</option>
             </select>
           </div>
         </div>
@@ -187,6 +186,8 @@ const PERM_DEFS = [
   { key:'audit',        label:'🔍 سجل التدقيق' },
   { key:'clientPortal', label:'👤 بوابة الزبون (نشر)' },
   { key:'DIVIDER' },
+  { key:'viewTreasury', label:'💰 عرض بطاقة الخزينة' },
+  { key:'viewProfit',   label:'📈 عرض بطاقة الأرباح' },
   { key:'canDelete',    label:'🗑️ حذف العمليات' },
   { key:'canEdit',      label:'✏️ تعديل الملاحظات' },
 ];
@@ -196,6 +197,14 @@ const PERM_DEFS = [
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   buildPermGrid('new-perm-grid', Auth.DEFAULT_PERMS);
+  // فقط صاحب المنظومة يرى خيار إنشاء مدير
+  if (Auth.getUser().user === 'admin') {
+    const roleSelect = document.getElementById('emp-role');
+    const adminOpt = document.createElement('option');
+    adminOpt.value = 'admin';
+    adminOpt.textContent = '🛡️ مدير — كافة الصلاحيات';
+    roleSelect.appendChild(adminOpt);
+  }
   await renderEmployees();
 })();
 
@@ -241,6 +250,10 @@ async function doAdd() {
   if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
   if (p!==p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
 
+  // فقط صاحب المنظومة (admin) يمكنه إنشاء أدمن جديد
+  if (r==='admin' && Auth.getUser().user !== 'admin') {
+    UI.toast('فقط صاحب المنظومة يمكنه إنشاء مدير جديد','error'); return;
+  }
   const perms = r==='admin' ? Auth.ADMIN_PERMS : getGridPerms('np');
 
   UI.showLoading(true);

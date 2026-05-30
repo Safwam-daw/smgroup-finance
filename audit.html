@@ -56,10 +56,10 @@
           <input type="text" id="f-user" placeholder="اسم المستخدم…" oninput="applyFilter()">
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
-          <input type="date" id="f-from" onchange="clearQuick();applyFilter()">
+          <input type="date" id="f-from" onchange="clearQuick();loadLogs()">
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
-          <input type="date" id="f-to" onchange="clearQuick();applyFilter()">
+          <input type="date" id="f-to" onchange="clearQuick();loadLogs()">
         </div>
       </div>
     </div>
@@ -106,20 +106,30 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   if (!Auth.can('audit')) { navTo('accounts.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-  setQuick('today', false);
+  // Set default dates without triggering filter yet
+  const today = UI.todayStr();
+  document.getElementById('f-from').value = today;
+  document.getElementById('f-to').value   = today;
+  // Mark today button active
+  document.querySelectorAll('.qf-btn')[0]?.classList.add('active');
   await loadLogs();
 })();
 
 async function loadLogs() {
   UI.showLoading(true);
-  const { data, error } = await _sb.from('audit_log')
-    .select('*').order('created_at', { ascending:false }).limit(500);
+  const fFrom = document.getElementById('f-from').value;
+  const fTo   = document.getElementById('f-to').value;
+  let q = _sb.from('audit_log').select('*').order('created_at', { ascending:false }).limit(1000);
+  if (fFrom) q = q.gte('created_at', fFrom);
+  if (fTo)   q = q.lte('created_at', fTo + 'T23:59:59');
+  const { data, error } = await q;
   UI.showLoading(false);
+  if (error) { console.error('audit_log:', error); UI.toast('خطأ في تحميل سجل التدقيق', 'error'); }
   _allLogs = data || [];
   applyFilter();
 }
 
-function setQuick(key, apply=true) {
+function setQuick(key) {
   document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
   const today = UI.todayStr();
   const map = {
@@ -127,15 +137,17 @@ function setQuick(key, apply=true) {
     month:{ from:UI.firstOfMonth(0), to:UI.lastOfMonth(0) },
     all:  { from:'',                 to:'' }
   };
-  const r = map[key]||map.today;
+  const r = map[key] || map.today;
   document.getElementById('f-from').value = r.from;
   document.getElementById('f-to').value   = r.to;
-  const idx={today:0,month:1,all:2}[key];
-  const btns=document.querySelectorAll('.qf-btn');
-  if(btns[idx]) btns[idx].classList.add('active');
-  if(apply) applyFilter();
+  const idx = {today:0, month:1, all:2}[key];
+  const btns = document.querySelectorAll('.qf-btn');
+  if (btns[idx]) btns[idx].classList.add('active');
+  applyFilter();
 }
-function clearQuick(){ document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
+function clearQuick() {
+  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+}
 
 function applyFilter() {
   const fAction = document.getElementById('f-action').value;
