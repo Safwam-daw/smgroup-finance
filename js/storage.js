@@ -371,12 +371,15 @@ const Storage = (() => {
   async function getClientTxns(accountId, publishedAt) {
     let q = _sb.from('transactions')
       .select('*')
-      .or(`acc.eq.${accountId},"from".eq.${accountId},to.eq.${accountId}`)
+      .or(`acc.eq.${accountId},to.eq.${accountId}`)
       .order('date', { ascending: false });
     if (publishedAt) q = q.lte('date', publishedAt);
     const { data, error } = await q;
     if (error) return [];
-    return data || [];
+    // Post-filter to include 'from' column
+    return (data || []).filter(t =>
+      t.acc === accountId || t.to === accountId || t.from === accountId
+    );
   }
 
   // ══ سجل التدقيق ═══════════════════════════════════════
