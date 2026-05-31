@@ -1,25 +1,52 @@
--- SM-Group — Migration V9
+-- SM-Group — Migration V9 (مصحح)
 -- أرشفة الحسابات المحذوفة برقم 7000+
 
 -- إضافة عمود الرقم الأرشيفي
 ALTER TABLE deleted_accounts
   ADD COLUMN IF NOT EXISTS archive_id text DEFAULT NULL;
 
--- دالة توليد رقم أرشيفي
-CREATE OR REPLACE FUNCTION get_next_archive_id()
-RETURNS text AS $$
+-- تحديث السجلات الموجودة بطريقة بديلة (بدون window function في UPDATE)
+DO $$
 DECLARE
-  max_id integer;
+  r RECORD;
+  counter INTEGER := 1;
 BEGIN
-  SELECT COALESCE(MAX(CAST(REPLACE(archive_id, '7', '') AS integer)), 999)
-  INTO max_id
+  FOR r IN SELECT id FROM deleted_accounts WHERE archive_id IS NULL ORDER BY deleted_at LOOP
+    UPDATE deleted_accounts
+      SET archive_id = '7' || LPAD(counter::text, 3, '0')
+      WHERE id = r.id;
+    counter := counter + 1;
+  END LOOP;
+END;
+$$;
+
+-- التحقق
+SELECT id, name, archive_id, deleted_at FROM deleted_accounts ORDER BY deleted_at;
+
+-- ══════════════════════════════════════════════════════
+-- إضافة: إصلاح الحسابات المحذوفة القديمة بدون archive_id
+-- ══════════════════════════════════════════════════════
+DO $$
+DECLARE
+  r RECORD;
+  last_num INTEGER;
+BEGIN
+  -- اجلب أعلى رقم موجود
+  SELECT COALESCE(MAX(CAST(SUBSTRING(archive_id FROM 2) AS INTEGER)), 7000)
+  INTO last_num
   FROM deleted_accounts
   WHERE archive_id IS NOT NULL AND archive_id ~ '^7[0-9]+$';
-  RETURN '7' || LPAD((max_id - 7000 + 1 + 7000)::text, 3, '0');
-END;
-$$ LANGUAGE plpgsql;
 
--- تحديث السجلات الموجودة
-UPDATE deleted_accounts
-  SET archive_id = '7' || LPAD((ROW_NUMBER() OVER (ORDER BY deleted_at))::text, 3, '0')
-  WHERE archive_id IS NULL;
+  -- أعطِ archive_id للسجلات التي ليس لها واحد
+  FOR r IN
+    SELECT id FROM deleted_accounts
+    WHERE archive_id IS NULL
+    ORDER BY deleted_at NULLS LAST
+  LOOP
+    last_num := last_num + 1;
+    UPDATE deleted_accounts
+      SET archive_id = '7' || LPAD((last_num - 7000)::text, 3, '0')
+      WHERE id = r.id AND archive_id IS NULL;
+  END LOOP;
+END;
+$$;

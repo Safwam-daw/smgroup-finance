@@ -36,17 +36,32 @@
   padding:2px 7px; border-radius:5px; display:inline-block; }
 @media(max-width:640px) { .tab-bar { gap:4px; } .tab-btn { padding:7px 11px; font-size:0.73rem; } }
 @media print {
+  /* إخفاء كل عناصر التحكم */
   #sidebar,#topbar,#sidebar-overlay,#toast,#treasury-bar,
-  #treasury-placeholder,.tab-bar,.no-print { display:none!important; }
+  #treasury-placeholder,.tab-bar,.no-print,
+  #filter-card,.qf-row,#quick-btns,
+  .page-header > div:last-child { display:none!important; }
+
+  /* إظهار التبويب النشط فقط */
+  .tab-content { display:none!important; }
+  .tab-content.active { display:block!important; }
+
   *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
   body { background:#fff!important; color:#111!important; }
   #main { margin:0!important; padding:16px!important; }
-  .tab-content { display:block!important; }
+
+  /* ترويسة الطباعة */
+  .print-report-header { display:block!important; }
+
   .card { background:#fff!important; border:1px solid #ccc!important; }
   table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
-  th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; }
-  td { border-bottom:1px solid #eee!important; color:#111!important; }
+  th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; padding:7px 9px; }
+  td { background:#fffef7!important; border-bottom:1px solid #eee!important; color:#111!important; padding:6px 9px; }
+  .stat-mini { background:#fff!important; border:1px solid #ccc!important; }
+  .cell-credit { background:#e8f8ef!important; color:#16a34a!important; }
+  .cell-debit  { background:#fef2f2!important; color:#dc2626!important; }
 }
+.print-report-header { display:none; }
 </style>
 </head>
 <body>
@@ -81,16 +96,29 @@
 
     <!-- التبويبات -->
     <div class="tab-bar no-print">
-      <button class="tab-btn active" onclick="switchTab('summary')">📋 الملخص</button>
-      <button class="tab-btn" onclick="switchTab('deposits')">💵 الإيداعات</button>
-      <button class="tab-btn" onclick="switchTab('withdrawals')">💸 السحوبات</button>
-      <button class="tab-btn" onclick="switchTab('transfers')">🔄 التحويلات</button>
-      <button class="tab-btn" onclick="switchTab('creditors')">✅ حسابات دائنة</button>
-      <button class="tab-btn" onclick="switchTab('debtors')">⚠️ حسابات مدينة</button>
-      <button class="tab-btn" onclick="switchTab('activity')">🕐 آخر نشاط</button>
-      <button class="tab-btn" onclick="switchTab('employees')">👤 حركة الموظفين</button>
-      <button class="tab-btn" onclick="switchTab('deleted')">🗑️ المحذوفات</button>
-      <button class="tab-btn" onclick="switchTab('debtLimit')">⚙️ إعداد حد الدين</button>
+      <button class="tab-btn active" onclick="switchTab('summary',this)">📋 الملخص</button>
+      <button class="tab-btn" onclick="switchTab('deposits',this)">💵 الإيداعات</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals',this)">💸 السحوبات</button>
+      <button class="tab-btn" onclick="switchTab('transfers',this)">🔄 التحويلات</button>
+      <button class="tab-btn" onclick="switchTab('creditors',this)">✅ حسابات دائنة</button>
+      <button class="tab-btn" onclick="switchTab('debtors',this)">⚠️ حسابات مدينة</button>
+      <button class="tab-btn" onclick="switchTab('activity',this)">🕐 آخر نشاط</button>
+      <button class="tab-btn" onclick="switchTab('employees',this)">👤 حركة الموظفين</button>
+      <button class="tab-btn" onclick="switchTab('deleted',this)">🗑️ المحذوفات</button>
+      <button class="tab-btn" onclick="switchTab('debtLimit',this)">⚙️ إعداد حد الدين</button>
+    </div>
+
+    <!-- ترويسة الطباعة -->
+    <div class="print-report-header" style="display:none;margin-bottom:16px;border-bottom:3px solid #c9a84c;padding-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h1 style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير مالي</h1>
+          <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
+        </div>
+        <div style="font-size:0.75rem;color:#555;text-align:left;">
+          طُبع بتاريخ: <b id="print-date-rep"></b>
+        </div>
+      </div>
     </div>
 
     <!-- ملخص -->
@@ -248,58 +276,91 @@ let _allTxns = [], _allAccounts = [], _depPage=1, _witPage=1, _trfPage=1;
   if (!Auth.can('reports')) { navTo('accounts.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
+  // تاريخ الطباعة
+  const now = new Date().toLocaleDateString('ar-SA');
+  const prEl = document.getElementById('print-date-rep');
+  if (prEl) prEl.textContent = now;
+  window.addEventListener('beforeprint', () => {
+    const from = document.getElementById('r-from').value;
+    const to   = document.getElementById('r-to').value;
+    const pp = document.getElementById('print-period');
+    if (pp) pp.textContent = (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
+  });
+
   const s = await Storage.getAlertSettings();
   document.getElementById('debt-limit-input').value = s.debt_limit || -500;
-  setQuick('today', false);
+  // تعيين اليوم كقيمة افتراضية
+  const today = UI.todayStr();
+  document.getElementById('r-from').value = today;
+  document.getElementById('r-to').value   = today;
+  document.querySelectorAll('#quick-btns .qf-btn')[0]?.classList.add('active');
   await reload();
 })();
 
 // ── Date helpers ──────────────────────────────────────
-function setQuick(key, apply=true) {
-  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+function setQuick(key) {
+  // إزالة كل التحديدات أولاً
+  document.querySelectorAll('#quick-btns .qf-btn').forEach(b => b.classList.remove('active'));
   const today = UI.todayStr();
   const map = {
-    today:{ from:today, to:today },
-    month:{ from:UI.firstOfMonth(0), to:UI.lastOfMonth(0) },
+    today:{ from:today,               to:today },
+    month:{ from:UI.firstOfMonth(0),  to:UI.lastOfMonth(0) },
     prev: { from:UI.firstOfMonth(-1), to:UI.lastOfMonth(-1) },
-    all:  { from:'', to:'' }
+    all:  { from:'',                  to:'' }
   };
   const r = map[key] || map.today;
   document.getElementById('r-from').value = r.from;
   document.getElementById('r-to').value   = r.to;
-  const idx = {today:0,month:1,prev:2,all:3}[key];
-  const btns = document.querySelectorAll('.qf-btn');
+  // تحديد الزر الصحيح فقط
+  const idx = { today:0, month:1, prev:2, all:3 }[key];
+  const btns = document.querySelectorAll('#quick-btns .qf-btn');
   if (btns[idx]) btns[idx].classList.add('active');
-  if (apply) reload();
+  reload();
 }
-function clearQuick() { document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
+function clearQuick() {
+  document.querySelectorAll('#quick-btns .qf-btn').forEach(b => b.classList.remove('active'));
+}
 
 function getDates() {
   return { from: document.getElementById('r-from').value, to: document.getElementById('r-to').value };
 }
 
 // ── Tab switching ─────────────────────────────────────
-function switchTab(name) {
+function switchTab(name, el) {
   _currentTab = name;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('tab-'+name)?.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const tabEl = document.getElementById('tab-' + name);
+  if (tabEl) tabEl.classList.add('active');
   renderCurrentTab();
 }
 
 async function reload() {
   UI.showLoading(true);
-  const { from, to } = getDates();
-  const filters = {};
-  if (from) filters.from_date = from;
-  if (to)   filters.to_date   = to + 'T23:59:59';
-  [_allTxns, _allAccounts] = await Promise.all([
-    Storage.getTxns(filters),
-    Storage.getAccounts()
-  ]);
-  UI.showLoading(false);
-  renderCurrentTab();
+  try {
+    const { from, to } = getDates();
+    const filters = {};
+    if (from) filters.from_date = from;
+    if (to)   filters.to_date   = to + 'T23:59:59';
+
+    const [txns, accounts] = await Promise.all([
+      Storage.getTxns(filters),
+      Storage.getAccounts()
+    ]);
+
+    _allTxns     = txns     || [];
+    _allAccounts = accounts || [];
+
+    // debug
+    console.log('Loaded:', _allTxns.length, 'txns,', _allAccounts.length, 'accounts');
+  } catch(e) {
+    console.error('reload error:', e);
+    UI.toast('خطأ في تحميل البيانات: ' + e.message, 'error');
+  } finally {
+    UI.showLoading(false);
+    renderCurrentTab();
+  }
 }
 
 function renderCurrentTab() {
@@ -317,6 +378,7 @@ function renderCurrentTab() {
 
 // ── Summary ───────────────────────────────────────────
 function renderSummary() {
+  if (!_allTxns) { document.getElementById('sum-stats').innerHTML='<div class="empty-state">جاري التحميل…</div>'; return; }
   const deps = _allTxns.filter(t=>t.type==='dep');
   const wits = _allTxns.filter(t=>t.type==='wit');
   const trfs = _allTxns.filter(t=>t.type==='trf');
@@ -415,7 +477,7 @@ function renderDep(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="7" class="empty-state">لا توجد إيداعات</td></tr>';
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">💵</div>لا توجد إيداعات في هذه الفترة</td></tr>`;
   buildPagination('dep-pages', rows.length, _depPage, 'renderDep');
 }
 
@@ -443,7 +505,7 @@ function renderWit(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="5" class="empty-state">لا توجد سحوبات</td></tr>';
+    : `<tr><td colspan="5" class="empty-state"><div class="empty-icon">💸</div>لا توجد سحوبات في هذه الفترة</td></tr>`;
   buildPagination('wit-pages', rows.length, _witPage, 'renderWit');
 }
 
@@ -474,7 +536,7 @@ function renderTrf(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="7" class="empty-state">لا توجد تحويلات</td></tr>';
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">🔄</div>لا توجد تحويلات في هذه الفترة</td></tr>`;
   buildPagination('trf-pages', rows.length, _trfPage, 'renderTrf');
 }
 

@@ -172,20 +172,28 @@ function renderPage() {
     return;
   }
 
+  const isAdminUser = Auth.isAdmin();
   tbody.innerHTML = pagItems.map(a => {
-    const debtor = a.usd < 0 || a.eur < 0;
+    const debtor   = a.usd < 0 || a.eur < 0;
+    const isProfit = a.id === '9999';
+    const canDel   = isAdminUser && !isProfit;
+    const typeLabel = a.type === 'company' ? 'شركة' : a.type === 'profit' ? '🏦 أرباح' : 'زبون';
+    const safeId   = a.id.replace(/'/g, '');
+    const safeName = a.name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
     return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
-              onclick="navTo('account-view.html?acc=${a.id}')">
-      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor ? ' ⚠️' : ''}</td>
+              onclick="navTo('account-view.html?acc=${safeId}')">
+      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}</td>
       <td>${UI.escapeHtml(a.name)}</td>
-      <td><span class="badge-type">${a.type === 'company' ? 'شركة' : 'زبون'}</span></td>
+      <td><span class="badge-type">${typeLabel}</span></td>
       <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${a.usd.toFixed(2)}</td>
       <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${a.eur.toFixed(2)}</td>
-      <td onclick="event.stopPropagation();" style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm"
-          onclick="navTo('account-view.html?acc=${a.id}')">👁️ حركات</button>
-        <button class="btn btn-ghost btn-sm"
-          onclick="navTo('statement.html?acc=${a.id}')">📋 كشف</button>
+      <td onclick="event.stopPropagation();" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-ghost btn-sm" title="حركات"
+          onclick="event.stopPropagation();navTo('account-view.html?acc=${safeId}')">👁️</button>
+        <button class="btn btn-ghost btn-sm" title="كشف"
+          onclick="event.stopPropagation();navTo('statement.html?acc=${safeId}')">📋</button>
+        ${canDel ? `<button class="btn btn-danger btn-sm" title="حذف الحساب"
+          onclick="event.stopPropagation();confirmDelAcc('${safeId}','${safeName}')">🗑️</button>` : ''}
       </td>
     </tr>`;
   }).join('');
