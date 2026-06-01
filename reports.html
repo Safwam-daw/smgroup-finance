@@ -641,12 +641,8 @@ function renderEmpActivity() {
 async function loadDeleted() {
   UI.showLoading(true);
   const { from, to } = getDates();
-  let q = _sb.from('deleted_accounts').select('*').order('deleted_at', { ascending:false });
-  if (from) q = q.gte('deleted_at', from);
-  if (to)   q = q.lte('deleted_at', to + 'T23:59:59');
-  const { data } = await q;
-  UI.showLoading(false);
-  const rows = data || [];
+ const rows = await Storage.getDeletedAccounts({ from, to });
+UI.showLoading(false);
   document.getElementById('del-tbody').innerHTML = rows.length
     ? rows.map(r=>`<tr>
         <td style="font-weight:700;color:var(--text3);">${UI.escapeHtml(r.archive_id||r.id)}</td>
