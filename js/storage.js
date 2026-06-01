@@ -408,6 +408,26 @@ const Storage = (() => {
     a.click();
   }
 
+  async function getAuditLogs(filters = {}) {
+  let q = _sb
+    .from('audit_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  if (filters.from) q = q.gte('created_at', filters.from);
+  if (filters.to) q = q.lte('created_at', filters.to + 'T23:59:59');
+
+  const { data, error } = await q;
+
+  if (error) {
+    console.error('audit_log:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
   return {
     // accounts
     getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
@@ -423,6 +443,7 @@ const Storage = (() => {
     // client portal
     clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
     // misc
-    logAction, exportBackup
-  };
+logAction, exportBackup,
+getAuditLogs
+};
 })();
