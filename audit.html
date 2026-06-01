@@ -97,10 +97,6 @@ let _allLogs  = [];
 let _filtered = [];
 let _page     = 1;
 
-const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_ECr_Pt2w19dBj_XPz5CYbQ_Qvj4gAQ-';
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 (async () => {
   if (!await initApp('audit')) return;
   if (!Auth.can('audit')) { navTo('accounts.html'); return; }
