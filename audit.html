@@ -113,15 +113,16 @@ let _page     = 1;
 
 async function loadLogs() {
   UI.showLoading(true);
+
   const fFrom = document.getElementById('f-from').value;
   const fTo   = document.getElementById('f-to').value;
-  let q = _sb.from('audit_log').select('*').order('created_at', { ascending:false }).limit(1000);
-  if (fFrom) q = q.gte('created_at', fFrom);
-  if (fTo)   q = q.lte('created_at', fTo + 'T23:59:59');
-  const { data, error } = await q;
+
+  _allLogs = await Storage.getAuditLogs({
+    from: fFrom,
+    to: fTo
+  });
+
   UI.showLoading(false);
-  if (error) { console.error('audit_log:', error); UI.toast('خطأ في تحميل سجل التدقيق', 'error'); }
-  _allLogs = data || [];
   applyFilter();
 }
 
