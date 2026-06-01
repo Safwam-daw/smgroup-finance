@@ -428,22 +428,42 @@ const Storage = (() => {
   return data || [];
 }
 
+  async function getDeletedAccounts(filters = {}) {
+  let q = _sb
+    .from('deleted_accounts')
+    .select('*')
+    .order('deleted_at', { ascending: false });
+
+  if (filters.from) q = q.gte('deleted_at', filters.from);
+  if (filters.to) q = q.lte('deleted_at', filters.to + 'T23:59:59');
+
+  const { data } = await q;
+  return data || [];
+  }
+  
   return {
-    // accounts
-    getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
-    getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, invalidate,
-    deleteAccount, getRecyclableId, ensureProfitAccount,
-    // transactions
-    getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
-    // users
-    getUsers, saveUser, deleteUser, updateUserPass,
-    updateUserPermissions, updateUserRole, findUser,
-    // settings
-    getAlertSettings, saveAlertSettings,
-    // client portal
-    clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
-    // misc
-logAction, exportBackup,
-getAuditLogs
+  // accounts
+  getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
+  getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, invalidate,
+  deleteAccount, getRecyclableId, ensureProfitAccount,
+
+  // transactions
+  getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
+
+  // users
+  getUsers, saveUser, deleteUser, updateUserPass,
+  updateUserPermissions, updateUserRole, findUser,
+
+  // settings
+  getAlertSettings, saveAlertSettings,
+
+  // client portal
+  clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
+
+  // misc
+  logAction,
+  exportBackup,
+  getAuditLogs,
+  getDeletedAccounts
 };
 })();
