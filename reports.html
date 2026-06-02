@@ -720,9 +720,10 @@ function exportCurrent() {
   XLSX.writeFile(wb, `SMGroup_${_currentTab}_${UI.todayStr()}.xlsx`);
 }
   function testPrint() {
-  alert('قبل الطباعة');
-  window.print();
-  alert('بعد الطباعة');
+  const w = window.open('', '_blank');
+  w.document.write('<h1>اختبار الطباعة</h1>');
+  w.document.close();
+  w.print();
   }
 </script>
 </body>
