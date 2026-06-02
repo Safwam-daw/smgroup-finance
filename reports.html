@@ -651,8 +651,8 @@ UI.showLoading(false);
         <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(r.deleted_at)}</td>
         <td class="no-print">
           <button class="btn btn-ghost btn-sm"
-            onclick="showDeletedTxns('${r.id}','${UI.escapeHtml(r.name)}','${UI.escapeHtml(r.archive_id||r.id)}')">
-            📋 حركاته
+            onclick="navTo('archived-view.html?acc=${UI.escapeHtml(r.archive_id||r.id)}')">
+            👁️ الحركات
           </button>
         </td>
       </tr>`).join('')
