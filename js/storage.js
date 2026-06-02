@@ -272,6 +272,7 @@ const Storage = (() => {
       bal_usd:      balances.usd || 0,
       bal_eur:      balances.eur || 0,
       deleted_by:   deletedBy,
+      deleted_at:   new Date().toISOString(),
       archive_id:   nextArchive,
       transfer_note: transferNote.length
         ? `تم تحويل (${transferNote.join(' | ')}) لحساب الأرباح`
@@ -435,16 +436,15 @@ const Storage = (() => {
 }
 
   async function getDeletedAccounts(filters = {}) {
-  let q = _sb
-    .from('deleted_accounts')
-    .select('*')
-    .order('deleted_at', { ascending: false });
-
-  if (filters.from) q = q.gte('deleted_at', filters.from);
-  if (filters.to) q = q.lte('deleted_at', filters.to + 'T23:59:59');
-
-  const { data } = await q;
-  return data || [];
+    let q = _sb
+      .from('deleted_accounts')
+      .select('*')
+      .order('archive_id', { ascending: false });
+    // فلترة بالتاريخ فقط إذا كان deleted_at موجوداً
+    if (filters.from) q = q.or(`deleted_at.gte.${filters.from},deleted_at.is.null`);
+    if (filters.to)   q = q.or(`deleted_at.lte.${filters.to}T23:59:59,deleted_at.is.null`);
+    const { data } = await q;
+    return data || [];
   }
   
   return {
