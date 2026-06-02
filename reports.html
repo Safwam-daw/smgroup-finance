@@ -719,12 +719,7 @@ function exportCurrent() {
   const wb = XLSX.utils.table_to_book(document.getElementById(tableId), {sheet:'التقرير'});
   XLSX.writeFile(wb, `SMGroup_${_currentTab}_${UI.todayStr()}.xlsx`);
 }
-  function testPrint() {
-  const w = window.open('', '_blank');
-  w.document.write('<h1>اختبار الطباعة</h1>');
-  w.document.close();
-  w.print();
-  }
+
 </script>
 </body>
 </html>
