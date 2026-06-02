@@ -146,7 +146,9 @@ async function doDeposit() {
 }
 
 async function renderRecent() {
-  const txns = (await Transactions.getAll({type:'dep'})).slice(0,10);
+  const txns = (await Transactions.getAll({type:'dep'}))
+    .filter(t => !String(t.acc||'').startsWith('7'))
+    .slice(0,10);
   document.getElementById('recent-dep-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
         const acc = await Accounts.getById(t.acc);

@@ -98,7 +98,7 @@ let _debtorPage = 1;
     async (txn) => {
       // حدّث الخزينة والعمليات الأخيرة
       await UI.updateTreasury();
-      const txns = await Transactions.getAll({ limit:10 });
+      const txns = await Transactions.getAll({ limit:50 });
       renderRecent(txns);
     },
     async () => {
@@ -113,7 +113,7 @@ async function loadAll() {
   // نشغّل كل الطلبات بالتوازي بدل الترتيب
   const [accounts, txns] = await Promise.all([
     Accounts.getAll(),
-    Transactions.getAll({ limit: 10 })
+    Transactions.getAll({ limit: 50 })
   ]);
 
   renderSummaryShell(accounts);
@@ -154,6 +154,12 @@ function renderSummaryShell(accounts) {
 }
 
 function renderRecent(txns) {
+  // إخفاء عمليات حسابات الأرشيف (7xxx)
+  txns = txns.filter(t =>
+    !String(t.acc||'').startsWith('7') &&
+    !String(t.from||'').startsWith('7') &&
+    !String(t.to||'').startsWith('7')
+  ).slice(0, 10);
   // حساب عمليات اليوم من البيانات المحمّلة
   const todayStr = new Date().toDateString();
   const todayCount = txns.filter(t=>new Date(t.date).toDateString()===todayStr).length;
