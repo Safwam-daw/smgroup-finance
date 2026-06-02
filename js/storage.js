@@ -278,6 +278,12 @@ const Storage = (() => {
         : 'رصيد صفري — لا تحويل'
     });
 
+    // تحديث رقم الحساب في جميع العمليات → الرقم الأرشيفي
+    await _sb.rpc('archive_account_transactions', {
+      old_id: accountId,
+      new_id: nextArchive
+    });
+
     const { error } = await _sb.from('accounts').delete().eq('id', accountId);
     if (error) return { ok: false, error: 'خطأ في الحذف: ' + error.message };
 
