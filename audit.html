@@ -28,15 +28,19 @@
 /* 🖨️ إعدادات الطباعة 🖨️ */
 @media print {
   /* إخفاء القوائم الجانبية والأزرار والفلاتر */
-/* #sidebar, #topbar, #sidebar-overlay, #toast, #treasury-bar,
+#sidebar, #topbar, #sidebar-overlay, #toast, #treasury-bar,
 #treasury-placeholder, .no-print, #filter-card, #audit-pages { display: none !important; }
-*/
-  /* نوع الإجراء الافتراضي (غير محدد) */
-/* td.action-type,
-.cell-action {
+
+  .print-report-header {
+  border-bottom: 2px solid #c9a84c !important;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  }
+
+  .cell-create {
   background:#f3f3f3 !important;
   color:#555 !important;
-} */
+  }
   
   /* ترويسة الطباعة */
   .print-report-header { display:block !important; }
