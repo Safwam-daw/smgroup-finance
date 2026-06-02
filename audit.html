@@ -24,6 +24,32 @@
 .act-transfer { background:var(--blue-dim);  color:var(--blue); }
 .act-delete   { background:rgba(239,68,68,0.2); color:var(--red); }
 .act-other    { background:var(--surface3); color:var(--text2); }
+
+/* 🖨️ إعدادات الطباعة 🖨️ */
+@media print {
+  /* إخفاء القوائم الجانبية والأزرار والفلاتر */
+  #sidebar, #topbar, #sidebar-overlay, #toast, #treasury-bar,
+  #treasury-placeholder, .no-print, #filter-card, #audit-pages { display: none !important; }
+
+  /* إعدادات ألوان الورق والخطوط */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-shadow: none !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 10pt !important; }
+  #main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+  /* تنسيق ترويسة الصفحة */
+  .page-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+  .page-header h2 { color: #000 !important; margin: 0; font-size: 1.4rem; }
+  .page-header p { color: #555 !important; margin-top: 5px; }
+
+  /* تنسيق الجدول للطباعة النظيفة */
+  .card { background: #fff !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+  table { width: 100% !important; border-collapse: collapse !important; font-size: 10pt; }
+  th, td { border: 1px solid #ccc !important; padding: 8px !important; color: #000 !important; }
+  th { background: #f5f5f5 !important; font-weight: 700; }
+  
+  /* تفريغ ألوان الشارات لتوفير الحبر وجعلها مقروءة بوضوح */
+  .action-badge { background: transparent !important; border: 1px solid #888; color: #000 !important; }
+}
 </style>
 </head>
 <body>
@@ -32,11 +58,14 @@
     <div id="treasury-placeholder"></div>
     <div class="page-header">
       <div><h2>🔍 سجل التدقيق</h2><p>تتبع جميع الإجراءات في النظام</p></div>
-      <button class="btn btn-primary no-print" onclick="UI.exportExcel('audit-table','Audit_Log')">📊 Excel</button>
+      <div style="display:flex;gap:8px;" class="no-print">
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-primary btn-sm" onclick="UI.exportExcel('audit-table','Audit_Log')">📊 Excel</button>
+      </div>
     </div>
 
     <!-- فلاتر -->
-    <div class="card" style="padding:14px 16px;margin-bottom:14px;">
+    <div class="card" id="filter-card" style="padding:14px 16px;margin-bottom:14px;">
       <div class="quick-filters">
         <button class="qf-btn active" onclick="setQuick('today')">اليوم</button>
         <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
