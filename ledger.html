@@ -10,88 +10,81 @@
 <style>
 .quick-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 .qf-btn {
-  padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
-  background:transparent; color:var(--text2); font-size:0.76rem;
-  font-family:inherit; cursor:pointer; transition:all .15s; white-space:nowrap;
+padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
+background:transparent; color:var(--text2); font-size:0.76rem;
+font-family:inherit; cursor:pointer; transition:all .15s; white-space:nowrap;
 }
 .qf-btn:hover,.qf-btn.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold); }
 </style>
 </head>
 <body>
 <div id="app">
-  <main id="main">
-    <div id="treasury-placeholder"></div>
-    <div class="page-header">
-      <div><h2>📒 السجل المحاسبي</h2><p>جميع العمليات المالية</p></div>
-      <button class="btn btn-primary" onclick="UI.exportExcel('ledger-table','Daily_Ledger')">📊 Excel</button>
-    </div>
-
-    <!-- فلاتر -->
-    <div class="card" style="margin-bottom:14px; padding:14px 16px;">
-      <!-- أزرار سريعة -->
-      <div class="quick-filters">
-        <button class="qf-btn active" id="qf-today" onclick="setQuick('today')">اليوم</button>
-        <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
-        <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>نوع العملية</label>
-          <select id="f-type" onchange="applyFilter()">
-            <option value="all">الكل</option>
-            <option value="dep">إيداع</option>
-            <option value="wit">سحب</option>
-            <option value="trf">تحويل</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>العملة</label>
-          <select id="f-cur" onchange="applyFilter()">
-            <option value="all">الكل</option>
-            <option value="usd">دولار</option>
-            <option value="eur">يورو</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label>بحث بالحساب</label>
-          <input type="text" id="f-acc" placeholder="كود أو اسم…" oninput="applyFilter()">
-        </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
-          <input type="date" id="f-from" onchange="clearQuick();applyFilter()">
-        </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
-          <input type="date" id="f-to" onchange="clearQuick();applyFilter()">
-        </div>
-      </div>
-    </div>
-
-    <!-- إحصاءات -->
-    <div id="ledger-totals" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;
-         overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
-
-    <!-- جدول -->
-    <div class="card" style="padding:0;overflow:hidden;">
-      <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
-        <table id="ledger-table">
-          <thead>
-            <tr>
-              <th>الوقت</th><th>النوع</th><th>الحساب</th>
-              <th>العملة</th><th>المبلغ</th><th>سعر الصرف</th><th>بواسطة</th>
-            </tr>
-          </thead>
-          <tbody id="ledger-tbody">
-            <tr><td colspan="7" class="empty-state">جاري التحميل…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
-      <div id="ledger-count" style="font-size:0.74rem;color:var(--text3);"></div>
-      <div class="pagination" id="ledger-pages"></div>
-    </div>
-  </main>
+<main id="main">
+<div id="treasury-placeholder"></div>
+<div class="page-header">
+<div><h2>📒 السجل المحاسبي</h2><p>جميع العمليات المالية</p></div>
+<button class="btn btn-primary" onclick="UI.exportExcel('ledger-table','Daily_Ledger')">📊 Excel</button>
 </div>
-
+<!-- فلاتر -->
+<div class="card" style="margin-bottom:14px; padding:14px 16px;">
+<div class="quick-filters">
+<button class="qf-btn active" id="qf-today" onclick="setQuick('today')">اليوم</button>
+<button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
+<button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
+<button class="qf-btn" onclick="setQuick('all')">الكل</button>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+<div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>نوع العملية</label>
+<select id="f-type" onchange="applyFilter()">
+<option value="all">الكل</option>
+<option value="dep">إيداع</option>
+<option value="wit">سحب</option>
+<option value="trf">تحويل</option>
+</select>
+</div>
+<div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>العملة</label>
+<select id="f-cur" onchange="applyFilter()">
+<option value="all">الكل</option>
+<option value="usd">دولار</option>
+<option value="eur">يورو</option>
+</select>
+</div>
+<div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label>بحث بالحساب</label>
+<input type="text" id="f-acc" placeholder="كود أو اسم…" oninput="applyFilter()">
+</div>
+<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+<input type="date" id="f-from" onchange="clearQuick();applyFilter()">
+</div>
+<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+<input type="date" id="f-to" onchange="clearQuick();applyFilter()">
+</div>
+</div>
+</div>
+<!-- إحصاءات -->
+<div id="ledger-totals" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;
+overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
+<!-- جدول -->
+<div class="card" style="padding:0;overflow:hidden;">
+<div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+<table id="ledger-table">
+<thead>
+<tr>
+<th>الوقت</th><th>النوع</th><th>الحساب</th>
+<th>العملة</th><th>المبلغ</th><th>سعر الصرف</th><th>بواسطة</th>
+</tr>
+</thead>
+<tbody id="ledger-tbody">
+<tr><td colspan="7" class="empty-state">جاري التحميل…</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
+<div id="ledger-count" style="font-size:0.74rem;color:var(--text3);"></div>
+<div class="pagination" id="ledger-pages"></div>
+</div>
+</main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
@@ -99,163 +92,152 @@
 <script src="js/currency.js"></script>
 <script src="js/app.js"></script>
 <script>
-const PAGE_SIZE   = 20;
-let _allTxns      = [];
-let _allAccounts  = [];
-let _filtered     = [];
-let _page         = 1;
-const typeLabels  = {dep:'💵 إيداع',wit:'💸 سحب',trf:'🔄 تحويل'};
+const PAGE_SIZE = 20;
+let _allTxns = [];
+let _allAccounts = [];
+let _filtered = [];
+let _page = 1;
+const typeLabels = {dep:'💵 إيداع',wit:'💸 سحب',trf:'🔄 تحويل'};
 
 (async () => {
-  if (!await initApp('ledger')) return;
-  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
-  await UI.updateTreasury();
-  _allAccounts = await Accounts.getAll();
-  // تحميل كل العمليات مرة واحدة
-  UI.showLoading(true);
-  _allTxns = await Transactions.getAll();
-  UI.showLoading(false);
-  // افتراضي = اليوم
-  setQuick('today', false);
-  applyFilter();
+if (!await initApp('ledger')) return;
+document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+await UI.updateTreasury();
+_allAccounts = await Accounts.getAll();
+UI.showLoading(true);
+const allTxns = await Transactions.getAll();
+// فلترة عمليات الأرشيف (7xxx) من السجل المحاسبي
+_allTxns = allTxns.filter(t =>
+  !String(t.acc||'').startsWith('7') &&
+  !String(t.from||'').startsWith('7') &&
+  !String(t.to||'').startsWith('7')
+);
+UI.showLoading(false);
+setQuick('today', false);
+applyFilter();
 })();
 
-// ── Quick date filters ───────────────────────────────
 function setQuick(key, apply=true) {
-  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
-  const today = UI.todayStr();
-  const map = {
-    today: { from: today,               to: today },
-    month: { from: UI.firstOfMonth(0),  to: UI.lastOfMonth(0) },
-    prev:  { from: UI.firstOfMonth(-1), to: UI.lastOfMonth(-1) },
-    all:   { from: '',                  to: '' }
-  };
-  const r = map[key] || map.today;
-  document.getElementById('f-from').value = r.from;
-  document.getElementById('f-to').value   = r.to;
-  const idx = {today:0,month:1,prev:2,all:3}[key];
-  const btns = document.querySelectorAll('.qf-btn');
-  if (btns[idx]) btns[idx].classList.add('active');
-  if (apply) applyFilter();
+document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+const today = UI.todayStr();
+const map = {
+today: { from: today, to: today },
+month: { from: UI.firstOfMonth(0), to: UI.lastOfMonth(0) },
+prev: { from: UI.firstOfMonth(-1), to: UI.lastOfMonth(-1) },
+all: { from: '', to: '' }
+};
+const r = map[key] || map.today;
+document.getElementById('f-from').value = r.from;
+document.getElementById('f-to').value = r.to;
+const idx = {today:0,month:1,prev:2,all:3}[key];
+const btns = document.querySelectorAll('.qf-btn');
+if (btns[idx]) btns[idx].classList.add('active');
+if (apply) applyFilter();
 }
 function clearQuick() { document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
 
-// ── Filter ───────────────────────────────────────────
 function applyFilter() {
-  const fType = document.getElementById('f-type').value;
-  const fCur  = document.getElementById('f-cur').value;
-  const fAcc  = document.getElementById('f-acc').value.toLowerCase().trim();
-  const fFrom = document.getElementById('f-from').value;
-  const fTo   = document.getElementById('f-to').value;
-
-  _filtered = _allTxns.filter(t => {
-    if (fType !== 'all' && t.type !== fType) return false;
-    if (fCur  !== 'all' && t.cur  !== fCur)  return false;
-    if (fFrom && new Date(t.date) < new Date(fFrom)) return false;
-    if (fTo   && new Date(t.date) > new Date(fTo + 'T23:59:59')) return false;
-    if (fAcc) {
-      const ids   = [t.acc, t.from, t.to].filter(Boolean);
-      const names = ids.map(id => { const a=_allAccounts.find(x=>x.id===id); return a?a.name.toLowerCase():''; });
-      if (!ids.some(i=>i.toLowerCase().includes(fAcc)) && !names.some(n=>n.includes(fAcc))) return false;
-    }
-    return true;
-  });
-  _page = 1;
-  renderTotals();
-  renderPage();
+const fType = document.getElementById('f-type').value;
+const fCur = document.getElementById('f-cur').value;
+const fAcc = document.getElementById('f-acc').value.toLowerCase().trim();
+const fFrom = document.getElementById('f-from').value;
+const fTo = document.getElementById('f-to').value;
+_filtered = _allTxns.filter(t => {
+if (fType !== 'all' && t.type !== fType) return false;
+if (fCur !== 'all' && t.cur !== fCur) return false;
+if (fFrom && new Date(t.date) < new Date(fFrom)) return false;
+if (fTo && new Date(t.date) > new Date(fTo + 'T23:59:59')) return false;
+if (fAcc) {
+const ids = [t.acc, t.from, t.to].filter(Boolean);
+const names = ids.map(id => { const a=_allAccounts.find(x=>x.id===id); return a?a.name.toLowerCase():''; });
+if (!ids.some(i=>i.toLowerCase().includes(fAcc)) && !names.some(n=>n.includes(fAcc))) return false;
+}
+return true;
+});
+_page = 1;
+renderTotals();
+renderPage();
 }
 
-// ── Totals ───────────────────────────────────────────
 function renderTotals() {
-  let dep={usd:0,eur:0}, wit={usd:0,eur:0};
-  _filtered.forEach(t => {
-    if (t.type==='dep') dep[t.cur]+=parseFloat(t.amt);
-    if (t.type==='wit') wit[t.cur]+=parseFloat(t.amt);
-  });
-  document.getElementById('ledger-totals').innerHTML = `
-    <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--green);">
-      <div class="stat-label">إيداعات</div>
-      <div style="font-size:0.85rem;font-weight:700;color:var(--green);margin-top:4px;">
-        $${dep.usd.toFixed(2)} | €${dep.eur.toFixed(2)}</div>
-    </div>
-    <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--red);">
-      <div class="stat-label">سحوبات</div>
-      <div style="font-size:0.85rem;font-weight:700;color:var(--red);margin-top:4px;">
-        $${wit.usd.toFixed(2)} | €${wit.eur.toFixed(2)}</div>
-    </div>
-    <div class="stat-card" style="flex:1;min-width:100px;padding:12px 16px;border-right:3px solid var(--blue);">
-      <div class="stat-label">عدد العمليات</div>
-      <div style="font-size:1.1rem;font-weight:700;color:var(--blue);margin-top:4px;">${_filtered.length}</div>
-    </div>`;
+let dep={usd:0,eur:0}, wit={usd:0,eur:0};
+_filtered.forEach(t => {
+if (t.type==='dep') dep[t.cur]+=parseFloat(t.amt);
+if (t.type==='wit') wit[t.cur]+=parseFloat(t.amt);
+});
+document.getElementById('ledger-totals').innerHTML = `
+<div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--green);">
+<div class="stat-label">إيداعات</div>
+<div style="font-size:0.85rem;font-weight:700;color:var(--green);margin-top:4px;">
+$${dep.usd.toFixed(2)} | €${dep.eur.toFixed(2)}</div>
+</div>
+<div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--red);">
+<div class="stat-label">سحوبات</div>
+<div style="font-size:0.85rem;font-weight:700;color:var(--red);margin-top:4px;">
+$${wit.usd.toFixed(2)} | €${wit.eur.toFixed(2)}</div>
+</div>
+<div class="stat-card" style="flex:1;min-width:100px;padding:12px 16px;border-right:3px solid var(--blue);">
+<div class="stat-label">عدد العمليات</div>
+<div style="font-size:1.1rem;font-weight:700;color:var(--blue);margin-top:4px;">${_filtered.length}</div>
+</div>`;
 }
 
-// ── Render page ──────────────────────────────────────
 function renderPage() {
-  const total      = _filtered.length;
-  const totalPages = Math.ceil(total/PAGE_SIZE) || 1;
-  const start      = (_page-1)*PAGE_SIZE;
-  const page       = _filtered.slice(start, start+PAGE_SIZE);
-
-  const tbody = document.getElementById('ledger-tbody');
-  tbody.innerHTML = page.length
-    ? page.map(t => {
-        const sym   = t.cur==='usd'?'$':'€';
-        const color = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'}[t.type]||'var(--text)';
-        let accStr;
-        if (t.type==='trf') {
-          const fa=_allAccounts.find(x=>x.id===t.from);
-          const ta=_allAccounts.find(x=>x.id===t.to);
-          accStr=`<span style="color:var(--text2);">${UI.escapeHtml(fa?.name||t.from)}</span>
-                  <span style="color:var(--text3);"> ← </span>
-                  <span style="color:var(--text2);">${UI.escapeHtml(ta?.name||t.to)}</span>`;
-        } else {
-          const a=_allAccounts.find(x=>x.id===t.acc);
-          accStr=`<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.72rem;"
-                    onclick="navTo('statement.html?acc=${UI.escapeHtml(t.acc||'')}')"
-                  >${UI.escapeHtml(a?.name||t.acc||'—')}</button>`;
-        }
-        return `<tr>
-          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
-          <td><span class="badge badge-${t.type}">${typeLabels[t.type]}</span></td>
-          <td>${accStr}</td>
-          <td>${t.cur.toUpperCase()}</td>
-          <td style="font-weight:700;color:${color};">${sym}${parseFloat(t.amt).toFixed(2)}</td>
-          <td style="color:var(--text3);font-size:0.75rem;">${t.rate&&parseFloat(t.rate)!==1?'×'+t.rate:'—'}</td>
-          <td style="font-size:0.73rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="7" class="empty-state"><div class="empty-icon">📒</div>لا توجد عمليات مطابقة</td></tr>';
-
-  // count
-  document.getElementById('ledger-count').textContent =
-    `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} عملية`;
-
-  // pagination
-  const pg = document.getElementById('ledger-pages');
-  if (totalPages <= 1) { pg.innerHTML=''; return; }
-
-  let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
-  // show up to 5 page buttons
-  const start_p = Math.max(1, _page-2);
-  const end_p   = Math.min(totalPages, _page+2);
-  if (start_p > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
-  if (start_p > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  for (let i=start_p; i<=end_p; i++) {
-    html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
-  }
-  if (end_p < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  if (end_p < totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
-  html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
-  pg.innerHTML = html;
+const total = _filtered.length;
+const totalPages = Math.ceil(total/PAGE_SIZE) || 1;
+const start = (_page-1)*PAGE_SIZE;
+const page = _filtered.slice(start, start+PAGE_SIZE);
+const tbody = document.getElementById('ledger-tbody');
+tbody.innerHTML = page.length
+? page.map(t => {
+const sym = t.cur==='usd'?'$':'€';
+const color = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'}[t.type]||'var(--text)';
+let accStr;
+if (t.type==='trf') {
+const fa=_allAccounts.find(x=>x.id===t.from);
+const ta=_allAccounts.find(x=>x.id===t.to);
+accStr=`<span style="color:var(--text2);">${UI.escapeHtml(fa?.name||t.from)}</span>
+<span style="color:var(--text3);"> ← </span>
+<span style="color:var(--text2);">${UI.escapeHtml(ta?.name||t.to)}</span>`;
+} else {
+const a=_allAccounts.find(x=>x.id===t.acc);
+accStr=`<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.72rem;"
+onclick="navTo('statement.html?acc=${UI.escapeHtml(t.acc||'')}')"
+>${UI.escapeHtml(a?.name||t.acc||'—')}</button>`;
 }
-
+return `<tr>
+<td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+<td><span class="badge badge-${t.type}">${typeLabels[t.type]}</span></td>
+<td>${accStr}</td>
+<td>${t.cur.toUpperCase()}</td>
+<td style="font-weight:700;color:${color};">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+<td style="color:var(--text3);font-size:0.75rem;">${t.rate&&parseFloat(t.rate)!==1?'×'+t.rate:'—'}</td>
+<td style="font-size:0.73rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+</tr>`;
+}).join('')
+: '<tr><td colspan="7" class="empty-state"><div class="empty-icon">📒</div>لا توجد عمليات مطابقة</td></tr>';
+document.getElementById('ledger-count').textContent =
+`عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} عملية`;
+const pg = document.getElementById('ledger-pages');
+if (totalPages <= 1) { pg.innerHTML=''; return; }
+let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+const start_p = Math.max(1, _page-2);
+const end_p = Math.min(totalPages, _page+2);
+if (start_p > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+if (start_p > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+for (let i=start_p; i<=end_p; i++)
+html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+if (end_p < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+if (end_p < totalPages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+pg.innerHTML = html;
+}
 function goPage(p) {
-  const totalPages = Math.ceil(_filtered.length/PAGE_SIZE)||1;
-  if (p<1||p>totalPages) return;
-  _page = p;
-  renderPage();
-  // scroll to top of table
-  document.querySelector('.card[style*="padding:0"]')?.scrollIntoView({behavior:'smooth',block:'start'});
+const totalPages = Math.ceil(_filtered.length/PAGE_SIZE)||1;
+if (p<1||p>totalPages) return;
+_page = p;
+renderPage();
+document.querySelector('.card[style*="padding:0"]')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
 </body>
