@@ -28,85 +28,62 @@
 /* 🖨️ إعدادات الطباعة 🖨️ */
 @media print {
 
-  /* إخفاء العناصر غير المطلوبة */
-  #sidebar, #topbar, #sidebar-overlay, #toast, #treasury-bar,
-  #treasury-placeholder, .no-print, #filter-card, #audit-pages {
-    display: none !important;
-  }
+  /* ترويسة الطباعة */
+  .print-report-header { display:block !important; }
 
-  /* النصوص العامة */
-  body, th, td, p, span, div {
-    color: #FFD700 !important; /* أصفر */
+  /* الكارد */
+  .card {
+    background:#fff !important;
+    border:1px solid #ccc !important;
   }
 
   /* الجدول */
   table {
-    width: 100% !important;
+    min-width:unset !important;
+    width:100% !important;
+    font-size:0.79rem;
     border-collapse: collapse !important;
-    font-size: 10pt;
   }
 
-  th, td {
-    border: 1px solid #FFD700 !important; /* حدود صفراء */
-    padding: 8px !important;
-  }
-
-  /* عناوين الجدول */
   th {
-    background: #FFF3B0 !important; /* أصفر فاتح */
-    font-weight: 700;
+    background:#f5f0e0 !important;
+    color:#333 !important;
+    border-bottom:2px solid #c9a84c !important;
+    padding:7px 9px;
   }
 
-  /* ترويسة الصفحة */
-  .page-header {
-    border-bottom: 2px solid #FFD700;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+  td {
+    background:#fffef7 !important;
+    border-bottom:1px solid #eee !important;
+    color:#111 !important;
+    padding:6px 9px;
   }
 
-  .page-header h2 {
-    color: #FFD700 !important;
-    margin: 0;
-    font-size: 1.4rem;
+  /* إظهار الألوان المالية */
+  .cell-credit {
+    background:#e8f8ef !important;
+    color:#16a34a !important; /* إيداع أخضر */
+    font-weight:600;
   }
 
-  .page-header p {
-    color: #FFD700 !important;
-    margin-top: 5px;
+  .cell-debit {
+    background:#fef2f2 !important;
+    color:#dc2626 !important; /* سحب أحمر */
+    font-weight:600;
   }
 
-  /* الكارد */
-  .card {
-    background: #fff !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  .cell-commission {
+    background:#fff7e6 !important;
+    color:#d4a017 !important; /* عمولة ذهبي خفيف */
+    font-weight:600;
   }
 
-  /* الحالات المالية */
-  .deposit {
-    color: #00A000 !important; /* أخضر */
-    font-weight: bold;
+  /* عناصر صغيرة */
+  .stat-mini {
+    background:#fff !important;
+    border:1px solid #ccc !important;
   }
-
-  .withdrawal {
-    color: #FF0000 !important; /* أحمر */
-    font-weight: bold;
-  }
-
-  .commission {
-    color: #FFD700 !important; /* أصفر */
-    font-weight: bold;
-  }
-
-  /* الشارات */
-  .action-badge {
-    background: transparent !important;
-    border: 1px solid #FFD700 !important;
-    color: #FFD700 !important;
-  }
-}
-</style>
+}</style>
 </head>
 <body>
 <div id="app">
