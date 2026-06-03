@@ -198,7 +198,7 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
 })();
 
 async function loadCurrencies() {
-  const { data } = await Currency.getAll();
+  const data = await Currency.getAll(); Currency.invalidate();
   const list = document.getElementById('currency-list');
   if (!data || !data.length) {
     list.innerHTML = '<p style="color:var(--text3);font-size:0.8rem;">لا توجد عملات في قاعدة البيانات</p>';
@@ -218,8 +218,9 @@ async function loadCurrencies() {
 }
 
 async function toggleCurrency(code, active) {
-  const { error } = await window._sb.from('currencies').update({ is_active: active }).eq('code', code);
-  if (error) { UI.toast('خطأ في التحديث','error'); return; }
+  const ok = await Currency.toggle(code, active);
+  if (!ok) { UI.toast('خطأ في التحديث','error'); return; }
+  Currency.invalidate();
   UI.toast(active ? 'تم تفعيل ' + code + ' ✅' : 'تم تعطيل ' + code);
   await loadCurrencies();
 }
