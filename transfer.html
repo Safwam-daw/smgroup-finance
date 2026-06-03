@@ -240,7 +240,9 @@ async function renderRecent() {
         const [fromAcc, toAcc] = await Promise.all([
           Accounts.getById(t.from), Accounts.getById(t.to)
         ]);
-        const sym = t.cur==='usd'?'$':'€';
+        const curs = await Currency.getActive();
+const curObj = curs.find(c => c.code.toLowerCase() === (t.cur||'').toLowerCase());
+const sym = curObj ? curObj.symbol : (t.cur||'').toUpperCase();
         return `<tr>
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(fromAcc?fromAcc.name:t.from)}</td>
