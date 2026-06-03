@@ -243,11 +243,15 @@ async function doReset() {
 
   try {
     // مسح بالترتيب: عمليات، حسابات (ما عدا 9999)، محذوفات، تدقيق
-    await window._sb.from('transactions').delete().neq('id', 0);
-    await window._sb.from('accounts').delete().neq('id', '9999');
-    await window._sb.from('deleted_accounts').delete().neq('id', '');
-    await window._sb.from('audit_log').delete().neq('id', 0);
-
+    const sb = supabase.createClient(
+  'https://jmmikuprhitwundsuplt.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0'
+);
+await sb.from('transactions').delete().neq('id', 0);
+await sb.from('accounts').delete().neq('id', '9999');
+await sb.from('deleted_accounts').delete().neq('id', '');
+await sb.from('audit_log').delete().neq('id', 0);
+    
     // إعادة إنشاء حساب الأرباح
     await Storage.ensureProfitAccount();
     Storage.invalidate();
