@@ -436,16 +436,12 @@ const Storage = (() => {
 }
 
   async function getDeletedAccounts(filters = {}) {
-    let q = _sb
-      .from('deleted_accounts')
-      .select('*')
-      .order('archive_id', { ascending: false });
-    // فلترة بالتاريخ فقط إذا كان deleted_at موجوداً
-    if (filters.from) q = q.or(`deleted_at.gte.${filters.from},deleted_at.is.null`);
-    if (filters.to)   q = q.or(`deleted_at.lte.${filters.to}T23:59:59,deleted_at.is.null`);
-    const { data } = await q;
-    return data || [];
-  }
+  const { data } = await _sb
+    .from('deleted_accounts')
+    .select('*')
+    .order('archive_id', { ascending: false });
+  return data || [];
+}
   
   return {
   // accounts
