@@ -249,6 +249,8 @@ async function doReset() {
 );
 await sb.from('transactions').delete().neq('id', 0);
 await sb.from('accounts').delete().neq('id', '9999');
+await sb.from('accounts').delete().eq('id', '9999');
+await Storage.ensureProfitAccount();
 await sb.from('deleted_accounts').delete().neq('id', '');
 await sb.from('audit_log').delete().neq('id', 0);
     
