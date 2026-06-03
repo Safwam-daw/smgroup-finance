@@ -367,50 +367,73 @@ tr:hover td { background:var(--gold-dim2); }
   .modal-box h3 { font-size:0.95rem; }
 }
 
+/* ══ LIGHT MODE ════════════════════════════════════════════ */
+[data-theme="light"] {
+  --gold: #b8860b; --gold-light: #d4a017;
+  --gold-dim: rgba(184,134,11,0.12); --gold-dim2: rgba(184,134,11,0.06);
+  --bg: #f4f6fa; --surface: #ffffff; --surface2: #f0f2f7; --surface3: #e8ebf2;
+  --border: #d8dde8; --border2: #c8cdd8;
+  --text: #1a2035; --text2: #4a5568; --text3: #8a9bb5;
+  --green: #16a34a; --green-dim: rgba(22,163,74,0.1);
+  --red: #dc2626;   --red-dim: rgba(220,38,38,0.1);
+  --blue: #2563eb;  --blue-dim: rgba(37,99,235,0.1);
+  --euro: #7c3aed;  --euro-dim: rgba(124,58,237,0.1);
+}
+
+[data-theme="light"] body { background:var(--bg); }
+[data-theme="light"] #sidebar { border-left-color:var(--border); }
+[data-theme="light"] #topbar { border-bottom-color:var(--border); }
+[data-theme="light"] .nav-btn { color:var(--text2); }
+[data-theme="light"] .nav-btn:hover { background:var(--surface2); }
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group select { background:var(--surface2); color:var(--text); }
+[data-theme="light"] select option { background:var(--surface); color:var(--text); }
+[data-theme="light"] .search-dropdown { background:var(--surface); }
+[data-theme="light"] #toast { background:var(--surface); }
+[data-theme="light"] th { background:var(--surface2); color:var(--text2); }
+[data-theme="light"] td { color:var(--text); }
+[data-theme="light"] tr:hover td { background:var(--gold-dim2); }
+[data-theme="light"] .badge-type { background:var(--surface3); color:var(--text2); }
+
+/* زر التبديل */
+#theme-toggle {
+  background:none; border:1px solid var(--border2);
+  color:var(--text2); cursor:pointer; border-radius:20px;
+  padding:5px 12px; font-size:0.78rem; font-family:inherit;
+  display:flex; align-items:center; gap:6px;
+  transition:all var(--transition); white-space:nowrap;
+}
+#theme-toggle:hover { border-color:var(--gold); color:var(--gold); }
+
 /* ══ MOBILE ENHANCEMENTS ≤ 640px ══════════════════════════ */
 @media (max-width:640px) {
 
-  /* btn-group في acc-hero — تفاف بدل خروج عن الشاشة */
   .btn-group { flex-wrap:wrap !important; gap:6px !important; }
   .btn-group .btn { flex:1; min-width:80px; }
 
-  /* ops-bar — أزرار العمليات السريعة */
   .ops-bar { gap:8px !important; }
   .ops-bar .btn { font-size:0.82rem; padding:12px 8px; }
 
-  /* page-header — أزرار كاملة العرض */
   .page-header > div:last-child {
     display:flex; flex-direction:column; gap:8px; width:100%;
   }
   .page-header > div:last-child .btn { width:100%; }
-  .page-header > div:last-child > .btn { width:100%; }
 
-  /* Modal — ارتفاع آمن على الهاتف */
   .modal-box {
     max-height:88vh !important;
     overflow-y:auto !important;
   }
 
-  /* جداول — تصغير أكثر على شاشات ضيقة جداً */
-  @media (max-width:380px) {
-    table { font-size:0.68rem; min-width:380px; }
-    th, td { padding:6px 7px; }
-  }
-
-  /* Pagination — أصغر على الهاتف */
   .pagination { gap:4px; margin-top:10px; }
   .pagination .btn { padding:6px 10px; font-size:0.72rem; min-height:34px; }
 
-  /* بطاقة الخزينة — padding أقل */
   .stat-card { padding:11px 12px; }
   .stat-value { font-size:1rem; }
 
-  /* acc-hero bal-row — عمودان متساويان */
   .bal-row { gap:8px; }
   .bal-box { min-width:calc(50% - 4px); padding:10px 12px; }
   .bal-box-val { font-size:1rem; }
 
-  /* quick-filters — تمرير أفقي بدل التفاف */
   .quick-filters {
     flex-wrap:nowrap !important;
     overflow-x:auto;
@@ -422,37 +445,20 @@ tr:hover td { background:var(--gold-dim2); }
   .quick-filters::-webkit-scrollbar { display:none; }
   .qf-btn { flex-shrink:0; }
 
-  /* stat-mini في التقارير */
   .stat-mini { min-width:calc(50% - 6px) !important; }
 
-  /* filter-card — padding أقل */
-  .card[id="filter-card"],
   .filter-card { padding:10px 10px !important; }
 
-  /* search-dropdown — عرض كامل */
-  .search-dropdown { font-size:0.85rem; }
-
-  /* عنوان الصفحة */
-  .page-header h2 { font-size:1rem; }
-  .page-header p  { font-size:0.72rem; }
-
-  /* حل مشكلة btn-group في acc-hero-top */
   .acc-hero-top { flex-direction:column; align-items:stretch; }
-  .acc-hero-top .btn-group {
-    justify-content:flex-start;
-    flex-wrap:wrap;
-  }
+  .acc-hero-top .btn-group { justify-content:flex-start; flex-wrap:wrap; }
   .acc-hero-top .btn-group .btn {
     flex:1; min-width:calc(50% - 3px); max-width:calc(50% - 3px);
   }
 }
 
-/* ══ VERY SMALL SCREENS ≤ 360px ════════════════════════════ */
 @media (max-width:360px) {
   #main { padding:8px 8px 28px; }
   .card { padding:12px 10px; }
   .btn { padding:11px 12px; font-size:0.84rem; }
-  .acc-hero-top .btn-group .btn {
-    min-width:100%; max-width:100%;
-  }
+  .acc-hero-top .btn-group .btn { min-width:100%; max-width:100%; }
 }
