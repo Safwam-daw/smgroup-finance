@@ -101,6 +101,9 @@ function buildSidebar(activePage) {
         <button class="nav-btn" onclick="Storage.exportBackup()">
           <span class="nav-icon">📥</span> تصدير نسخة احتياطية
         </button>
+        <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
+          <span class="nav-icon">🚪</span> تسجيل الخروج
+        </button>
       </div>
       <div style="padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -110,12 +113,6 @@ function buildSidebar(activePage) {
             <div class="user-role" id="nav-role"></div>
           </div>
         </div>
-        <button onclick="doLogout()"
-          style="width:100%;padding:9px;background:var(--red-dim);color:var(--red);
-          border:1px solid var(--red);border-radius:8px;cursor:pointer;
-          font-family:inherit;font-size:0.82rem;font-weight:600;">
-          🚪 تسجيل الخروج
-        </button>
       </div>
     </nav>
     <div id="sidebar-overlay"></div>
