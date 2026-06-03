@@ -32,11 +32,6 @@ function buildSidebar(activePage) {
         <p>نظام إدارة الخزينة المزدوجة</p>
       </div>
       <div class="sidebar-nav">
-        <button id="theme-toggle" onclick="toggleTheme()"
-          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
-          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;margin-bottom:10px;
-          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
-          transition:all 0.2s;">☀️ فاتح</button>
         <div class="nav-section-label">الرئيسية</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
@@ -168,7 +163,6 @@ async function initApp(pageId) {
   }
 
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
-  initTheme();
   UI.initSidebar();
   UI.closeSidebarOnNav();
   UI.fillUserInfo();
