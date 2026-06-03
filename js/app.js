@@ -32,6 +32,11 @@ function buildSidebar(activePage) {
         <p>نظام إدارة الخزينة المزدوجة</p>
       </div>
       <div class="sidebar-nav">
+        <button id="theme-toggle" onclick="toggleTheme()"
+          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
+          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;margin-bottom:10px;
+          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
+          transition:all 0.2s;">☀️ فاتح</button>
         <div class="nav-section-label">الرئيسية</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
@@ -79,13 +84,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
           <span class="nav-icon">🚪</span> تسجيل الخروج
         </button>
-      </div>
-      <div style="padding:8px 10px 0;border-top:1px solid var(--border);">
-        <button id="theme-toggle" onclick="toggleTheme()"
-          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
-          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;
-          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
-          transition:all 0.2s;">☀️ فاتح</button>
       </div>
       <div class="sidebar-user">
         <div class="user-avatar" id="nav-avatar"></div>
