@@ -138,7 +138,6 @@ function doLogout() {
 }
 
 async function initApp(pageId) {
-  initTheme();
   if (!Auth.restoreSession()) {
     window.location.href = 'login.html';
     return false;
@@ -169,8 +168,8 @@ async function initApp(pageId) {
   }
 
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
+  initTheme();
   UI.initSidebar();
-  applyTheme(localStorage.getItem('smg_theme') || 'dark');
   UI.closeSidebarOnNav();
   UI.fillUserInfo();
   UI.applyRoleUI();
