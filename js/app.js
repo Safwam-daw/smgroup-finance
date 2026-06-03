@@ -98,9 +98,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
           <span class="nav-icon">⚙️</span> الإعدادات
         </button>
-        <button class="nav-btn" onclick="Storage.exportBackup()">
-          <span class="nav-icon">📥</span> تصدير نسخة احتياطية
-        </button>
         <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
           <span class="nav-icon">🚪</span> تسجيل الخروج
         </button>
