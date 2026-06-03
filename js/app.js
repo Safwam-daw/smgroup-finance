@@ -1,3 +1,23 @@
+// ══ Theme (Dark/Light) ═══════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('smg_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : '');
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.innerHTML = saved === 'light' ? '🌙 داكن' : '☀️ فاتح';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+  localStorage.setItem('smg_theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.innerHTML = theme === 'light' ? '🌙 داكن' : '☀️ فاتح';
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('smg_theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
 
 // ══ Theme (Dark/Light) ═══════════════════════════════════
 function initTheme() {
@@ -32,6 +52,11 @@ function buildSidebar(activePage) {
         <p>نظام إدارة الخزينة المزدوجة</p>
       </div>
       <div class="sidebar-nav">
+        <button id="theme-toggle" onclick="toggleTheme()"
+          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
+          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;margin-bottom:10px;
+          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
+          ☀️ فاتح</button>
         <div class="nav-section-label">الرئيسية</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
@@ -163,6 +188,7 @@ async function initApp(pageId) {
   }
 
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
+  initTheme();
   UI.initSidebar();
   UI.closeSidebarOnNav();
   UI.fillUserInfo();
