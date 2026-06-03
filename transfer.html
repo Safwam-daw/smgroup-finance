@@ -161,7 +161,9 @@ async function updatePreview() {
   const rate   = parseFloat(document.getElementById('trf-rate').value) || 1;
   const box    = document.getElementById('trf-preview');
   if (!fromId || !toId || amt <= 0) { box.style.display='none'; return; }
-  const sym         = cur==='usd'?'$':'€';
+  const activeCurs  = await Currency.getActive();
+  const curObj      = activeCurs.find(c => c.code.toLowerCase() === cur.toLowerCase());
+  const sym         = curObj ? curObj.symbol : cur.toUpperCase();
   const fromBal     = await Storage.getBalance(fromId, cur);
   const newFrom     = fromBal - amt;
   const gross       = parseFloat((amt * rate).toFixed(2));

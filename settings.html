@@ -186,11 +186,43 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
   const user = Auth.getUser();
   document.getElementById('current-user').value = user.user;
 
-  // منطقة الخطر — للأدمن الرئيسي فقط (username === 'admin')
+  // إدارة العملات — للأدمن
+  if (Auth.isAdmin()) {
+    document.getElementById('currency-section').style.display = 'block';
+    await loadCurrencies();
+  }
+  // منطقة الخطر — للأدمن الرئيسي فقط
   if (user.user === 'admin') {
     document.getElementById('danger-zone-section').style.display = 'block';
   }
 })();
+
+async function loadCurrencies() {
+  const { data } = await window._sb.from('currencies').select('*').order('sort_order');
+  const list = document.getElementById('currency-list');
+  if (!data || !data.length) {
+    list.innerHTML = '<p style="color:var(--text3);font-size:0.8rem;">لا توجد عملات في قاعدة البيانات</p>';
+    return;
+  }
+  const fixed = ['USD','EUR'];
+  list.innerHTML = data.map(c => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+      background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);">
+      <span style="font-size:1.1rem;min-width:28px;">${c.symbol}</span>
+      <span style="flex:1;font-weight:600;font-size:0.85rem;">${c.name} (${c.code})</span>
+      ${fixed.includes(c.code)
+        ? '<span style="font-size:0.72rem;color:var(--text3);">ثابت</span>'
+        : '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;"><input type="checkbox" ' + (c.is_active?'checked':'') + ' onchange="toggleCurrency(' + "'" + c.code + "'" + ',this.checked)" style="width:16px;height:16px;cursor:pointer;">' + (c.is_active ? '<span style="color:var(--green);">مفعّل</span>' : '<span style="color:var(--text3);">معطّل</span>') + '</label>'
+      }
+    </div>`).join('');
+}
+
+async function toggleCurrency(code, active) {
+  const { error } = await window._sb.from('currencies').update({ is_active: active }).eq('code', code);
+  if (error) { UI.toast('خطأ في التحديث','error'); return; }
+  UI.toast(active ? 'تم تفعيل ' + code + ' ✅' : 'تم تعطيل ' + code);
+  await loadCurrencies();
+}
 
 async function savePersonal() {
   const currentPass = document.getElementById('current-pass').value;
