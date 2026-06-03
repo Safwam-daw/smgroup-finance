@@ -108,6 +108,7 @@
           <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)">📋 كشف كامل</button>
           <button class="btn btn-danger btn-sm" id="del-acc-btn" onclick="openDelAcc()" style="display:none;">🗑️ حذف الحساب</button>
           <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;">📤 نشر الكشف</button>
+          <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;">🔍 فحص الرصيد</button>
           <button class="btn btn-ghost btn-sm" onclick="history.back()">← رجوع</button>
         </div>
       </div>
@@ -443,10 +444,12 @@ const typeLabel  = {dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحوي
 
   // إظهار أزرار الأدمن
   if (Auth.isAdmin()) {
-    const editBtn  = document.getElementById('edit-acc-btn');
-    const delAccBtn = document.getElementById('del-acc-btn');
+    const editBtn    = document.getElementById('edit-acc-btn');
+    const delAccBtn  = document.getElementById('del-acc-btn');
+    const checkBtn   = document.getElementById('check-bal-btn');
     if (editBtn)   editBtn.style.display   = 'inline-flex';
     if (delAccBtn) delAccBtn.style.display = 'inline-flex';
+    if (checkBtn)  checkBtn.style.display  = 'inline-flex';
     if (_accObj.type === 'customer') {
       const pubBtn = document.getElementById('publish-btn');
       if (pubBtn) pubBtn.style.display = 'inline-flex';
@@ -981,6 +984,102 @@ function exportMovements() {
   const wb = XLSX.utils.table_to_book(document.getElementById('mov-table'),{sheet:'الحركات'});
   XLSX.writeFile(wb, 'حركات_'+_accObj.name+'_'+UI.todayStr()+'.xlsx');
 }
+
+// ── فحص تطابق الأرصدة ──────────────────────────────────
+async function checkBalance() {
+  document.getElementById('check-modal').classList.add('open');
+  document.getElementById('check-result').innerHTML = '⏳ جاري الفحص…';
+
+  // جلب جميع العمليات بدون فلتر
+  const allTxns = await Storage.getTxns({ acc: _accId });
+  const currencies = ['usd','eur','try','gbp','sar','aed','egp','jod','kwd','qar','mad','lyd'];
+  const calculated = {};
+  currencies.forEach(c => calculated[c] = 0);
+
+  allTxns.forEach(t => {
+    if (t.is_commission_entry) return; // تجاهل حركات العمولة (هي انعكاس فقط)
+    const cur = (t.cur||'usd').toLowerCase();
+    const amt = parseFloat(t.amt||0);
+    const commission = parseFloat(t.commission_amt||0);
+    const rate = parseFloat(t.rate||1);
+
+    if (t.type === 'dep') {
+      // الزبون يستلم الصافي = amt - commission
+      calculated[cur] = (calculated[cur]||0) + (amt - commission);
+    } else if (t.type === 'wit') {
+      calculated[cur] = (calculated[cur]||0) - amt;
+    } else if (t.type === 'trf') {
+      if (t.from === _accId) {
+        // المرسل يخسر amt
+        calculated[cur] = (calculated[cur]||0) - amt;
+      } else if (t.to === _accId) {
+        // المستقبل يكسب gross - commission
+        const gross = parseFloat((amt * rate).toFixed(6));
+        calculated[cur] = (calculated[cur]||0) + (gross - commission);
+      }
+    }
+  });
+
+  // مقارنة مع الأرصدة المخزّنة
+  const acc = await Accounts.getById(_accId);
+  let html = '';
+  let hasIssue = false;
+
+  currencies.forEach(cur => {
+    const stored = parseFloat(acc['bal_'+cur]||0);
+    const calc   = parseFloat(calculated[cur].toFixed(6));
+    const diff   = parseFloat((stored - calc).toFixed(6));
+    if (stored === 0 && calc === 0) return; // تجاهل العملات الفارغة
+
+    const ok = Math.abs(diff) < 0.01;
+    if (!ok) hasIssue = true;
+    const sym = cur.toUpperCase();
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;
+      padding:8px 12px;border-radius:8px;margin-bottom:6px;
+      background:${ok?'var(--green-dim)':'var(--red-dim)'};
+      border:1px solid ${ok?'var(--green)':'var(--red)'};">
+      <span style="font-weight:700;">${sym}</span>
+      <span style="font-size:0.78rem;color:var(--text2);">محسوب: <b>${calc.toFixed(2)}</b></span>
+      <span style="font-size:0.78rem;color:var(--text2);">مخزّن: <b>${stored.toFixed(2)}</b></span>
+      <span style="font-weight:700;color:${ok?'var(--green)':'var(--red)'};">
+        ${ok ? '✅ متطابق' : '⚠️ فرق: ' + diff.toFixed(2)}
+      </span>
+    </div>`;
+  });
+
+  if (!html) html = '<p style="color:var(--text3);">لا توجد عمليات لهذا الحساب</p>';
+
+  const summary = hasIssue
+    ? '<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--red);font-weight:700;">⚠️ يوجد فرق في الأرصدة — يُنصح بمراجعة العمليات</div>'
+    : '<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--green);font-weight:700;">✅ جميع الأرصدة متطابقة</div>';
+
+  document.getElementById('check-result').innerHTML = summary + html;
+
+  // تسجيل في التدقيق إذا وجد فرق
+  if (hasIssue) {
+    await Storage.logAction('balance_check_mismatch', {
+      accountId: _accId,
+      name: acc.name,
+      calculated,
+      stored: currencies.reduce((o,c)=>({...o,[c]:parseFloat(acc['bal_'+c]||0)}),{})
+    });
+  }
+}
 </script>
+
+<!-- Modal فحص تطابق الأرصدة -->
+<div id="check-modal" class="modal-back">
+  <div class="modal-box" style="max-width:500px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin-bottom:0;">🔍 فحص تطابق الأرصدة</h3>
+      <button onclick="document.getElementById('check-modal').classList.remove('open')"
+        style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="check-result" style="font-size:0.85rem;line-height:2;">
+      جاري الفحص…
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
