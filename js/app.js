@@ -1,3 +1,22 @@
+
+// ══ Theme (Dark/Light) ═══════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('smg_theme') || 'dark';
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+  localStorage.setItem('smg_theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.innerHTML = theme === 'light' ? '🌙 داكن' : '☀️ فاتح';
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('smg_theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
 /**
  * app.js — SM-Group App Shell (Supabase version)
  */
