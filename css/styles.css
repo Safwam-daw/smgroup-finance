@@ -43,7 +43,7 @@ body {
 .sidebar-logo { padding:22px 18px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .sidebar-logo h1 { font-size:1.2rem; font-weight:700; color:var(--gold); }
 .sidebar-logo p  { font-size:0.65rem; color:var(--text3); margin-top:3px; }
-.sidebar-nav { flex:1; padding:12px 8px; overflow-y:auto; overflow-x:hidden; }
+.sidebar-nav { flex:1; padding:12px 8px; overflow-y:auto; overflow-x:hidden; min-height:0; }
 .nav-section-label { font-size:0.62rem; color:var(--text3); padding:10px 10px 5px; letter-spacing:0.05em; text-transform:uppercase; }
 .nav-btn {
   display:flex; align-items:center; gap:9px; width:100%;
@@ -58,7 +58,10 @@ body {
 
 .sidebar-user {
   padding:12px 14px; border-top:1px solid var(--border);
-  display:flex; align-items:center; gap:10px; flex-shrink:0;
+  display:flex; align-items:center; gap:10px;
+  flex-shrink:0; flex-grow:0;
+  background:var(--surface);
+  position:sticky; bottom:0;
 }
 .user-avatar {
   width:32px; height:32px; border-radius:50%;
