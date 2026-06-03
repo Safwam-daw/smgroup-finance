@@ -80,6 +80,13 @@ function buildSidebar(activePage) {
           <span class="nav-icon">🚪</span> تسجيل الخروج
         </button>
       </div>
+      <div style="padding:8px 10px 0;border-top:1px solid var(--border);">
+        <button id="theme-toggle" onclick="toggleTheme()"
+          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
+          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;
+          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
+          transition:all 0.2s;">☀️ فاتح</button>
+      </div>
       <div class="sidebar-user">
         <div class="user-avatar" id="nav-avatar"></div>
         <div class="user-info">
@@ -133,6 +140,7 @@ function doLogout() {
 }
 
 async function initApp(pageId) {
+  initTheme();
   if (!Auth.restoreSession()) {
     window.location.href = 'login.html';
     return false;
@@ -164,6 +172,7 @@ async function initApp(pageId) {
 
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
   UI.initSidebar();
+  applyTheme(localStorage.getItem('smg_theme') || 'dark');
   UI.closeSidebarOnNav();
   UI.fillUserInfo();
   UI.applyRoleUI();
