@@ -153,6 +153,27 @@ onchange="handleImport(event)">
 </main>
 </div>
 
+<!-- Modal تأكيد الاستعادة -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin-bottom:0;">📤 استعادة النسخة الاحتياطية</h3>
+      <button onclick="closeImport()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="import-preview" style="background:var(--surface2);border:1px solid var(--border2);
+      border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.82rem;line-height:1.8;"></div>
+    <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;
+      padding:10px 14px;margin-bottom:14px;font-size:0.8rem;color:var(--red);">
+      ⚠️ الاستعادة ستمسح البيانات الحالية وتستبدلها بالنسخة الاحتياطية. لا يمكن التراجع.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeImport()">إلغاء</button>
+      <button class="btn btn-danger" onclick="doImport()">📤 استعادة الآن</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal تأكيد المسح -->
 <div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
 z-index:2000;align-items:center;justify-content:center;padding:16px;">
@@ -251,16 +272,88 @@ async function savePersonal() {
   } else { UI.toast('خطأ في الحفظ','error'); }
 }
 
+let _importData = null;
+
 function handleImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async ev => {
     try {
-      UI.toast('الاستعادة الكاملة تتطلب إعادة رفع البيانات يدوياً عبر Supabase','error');
-    } catch(err) { UI.toast('ملف غير صالح','error'); }
+      const data = JSON.parse(ev.target.result);
+      if (!data.accounts || !data.txns) {
+        UI.toast('ملف غير صالح — تأكد أنه نسخة احتياطية من SM-Group', 'error');
+        return;
+      }
+      _importData = data;
+      // عرض معلومات النسخة
+      document.getElementById('import-preview').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div>📅 <b>تاريخ النسخة:</b> ${data.exportedAt ? new Date(data.exportedAt).toLocaleString('ar-SA') : 'غير محدد'}</div>
+          <div>👥 <b>عدد الحسابات:</b> ${data.accounts?.length || 0}</div>
+          <div>💳 <b>عدد العمليات:</b> ${data.txns?.length || 0}</div>
+          <div>👤 <b>عدد المستخدمين:</b> ${data.users?.length || 0}</div>
+          <div>🔖 <b>إصدار النسخة:</b> ${data.version || 'قديم'}</div>
+        </div>`;
+      document.getElementById('import-modal').style.display = 'flex';
+    } catch(err) {
+      UI.toast('ملف غير صالح أو تالف', 'error');
+    }
   };
   reader.readAsText(file);
+  // إعادة تعيين input لإمكانية اختيار نفس الملف مجدداً
+  e.target.value = '';
+}
+
+function closeImport() {
+  _importData = null;
+  document.getElementById('import-modal').style.display = 'none';
+}
+
+async function doImport() {
+  if (!_importData) return;
+  closeImport();
+  UI.showLoading(true);
+
+  try {
+    const sb = supabase.createClient(
+      'https://jmmikuprhitwundsuplt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0'
+    );
+
+    // 1. مسح البيانات الحالية
+    await sb.from('transactions').delete().neq('id', 0);
+    await sb.from('accounts').delete().neq('id', '');
+    await sb.from('deleted_accounts').delete().neq('id', '');
+
+    // 2. استعادة الحسابات
+    if (_importData.accounts?.length) {
+      const chunks = [];
+      for (let i = 0; i < _importData.accounts.length; i += 50)
+        chunks.push(_importData.accounts.slice(i, i + 50));
+      for (const chunk of chunks)
+        await sb.from('accounts').insert(chunk);
+    }
+
+    // 3. استعادة العمليات
+    if (_importData.txns?.length) {
+      const chunks = [];
+      for (let i = 0; i < _importData.txns.length; i += 50)
+        chunks.push(_importData.txns.slice(i, i + 50));
+      for (const chunk of chunks)
+        await sb.from('transactions').insert(chunk);
+    }
+
+    Storage.invalidate();
+    UI.showLoading(false);
+    UI.toast('✅ تم استعادة النسخة الاحتياطية بنجاح — سيتم تسجيل الخروج');
+    await Storage.logAction('restore_backup', { version: _importData.version, exportedAt: _importData.exportedAt });
+    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
+
+  } catch(err) {
+    UI.showLoading(false);
+    UI.toast('خطأ في الاستعادة: ' + err.message, 'error');
+  }
 }
 
 function confirmReset() {
