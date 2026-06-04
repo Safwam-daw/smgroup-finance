@@ -75,7 +75,7 @@ function buildSidebar(activePage) {
           <span class="nav-icon">🔍</span> سجل التدقيق
         </button>
         <div class="nav-section-label">أدوات النظام</div>
-        <button class="nav-btn" onclick="window.open('client.html','_blank')">
+        <button class="nav-btn" data-page="clientPortal" onclick="window.open('client.html','_blank')">
           <span class="nav-icon">👤</span> بوابة الزبون
         </button>
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
