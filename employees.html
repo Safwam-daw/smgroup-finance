@@ -203,7 +203,7 @@ const PERM_DEFS = [
     const roleSelect = document.getElementById('emp-role');
     const adminOpt = document.createElement('option');
     adminOpt.value = 'admin';
-    adminOpt.textContent = '🛡️ مدير مصغر — صلاحيات محددة';
+    adminOpt.textContent = '🛡️ مدير';
     roleSelect.appendChild(adminOpt);
   }
   await renderEmployees();
@@ -310,7 +310,7 @@ async function renderEmployees() {
             ${isMe?'<span style="font-size:0.68rem;color:var(--gold);margin-right:6px;">(أنت)</span>':''}
           </div>
           <div class="emp-meta">
-            <span style="color:${isRoot?'var(--gold)':isAdmin?'var(--euro)':'var(--blue)'};">${isRoot?'👑 مالك':isAdmin?'🛡️ مدير مصغر':'👤 موظف'}</span>
+            <span style="color:${isRoot?'var(--gold)':isAdmin?'var(--euro)':'var(--blue)'};">${isRoot?'👑 مالك':isAdmin?'🛡️ مدير ':'👤 موظف'}</span>
             <span style="margin-right:8px;color:var(--text3);">·</span>
             <span style="color:var(--text3);">${permCount}</span>
           </div>
