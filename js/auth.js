@@ -52,14 +52,24 @@ const Auth = (() => {
 
   function logout() { _activeUser=null; _clearSession(); }
 
-  function getUser()    { return _activeUser; }
-  function isAdmin()    { return _activeUser?.role==='admin'; }
-  function isLoggedIn() { return !!_activeUser; }
+  function getUser()      { return _activeUser; }
+  function isAdmin()      { return _activeUser?.role==='admin'; }
+  function isLoggedIn()   { return !!_activeUser; }
+  // مالك المنظومة (الأدمن الرئيسي)
+  function isSuperAdmin() { return _activeUser?.username==='admin' || _activeUser?.user==='admin'; }
+  // أدمن مصغر (role=admin لكن ليس مالك المنظومة)
+  function isSubAdmin()   { return _activeUser?.role==='admin' && !isSuperAdmin(); }
 
   // التحقق من صلاحية معينة
   function can(perm) {
     if (!_activeUser) return false;
-    if (_activeUser.role==='admin') return true;
+    // مالك المنظومة: كل الصلاحيات
+    if (isSuperAdmin()) return true;
+    // أدمن مصغر: صلاحياته المحددة فقط
+    if (_activeUser.role==='admin') {
+      const perms = _activeUser.permissions || ADMIN_PERMS;
+      return !!perms[perm];
+    }
     const perms = _activeUser.permissions || DEFAULT_PERMS;
     return !!perms[perm];
   }
@@ -84,6 +94,7 @@ const Auth = (() => {
 
   return {
     login, logout, getUser, isAdmin, isLoggedIn,
+    isSuperAdmin, isSubAdmin,
     restoreSession, requireLogin, requirePerm, can,
     getPermissions, DEFAULT_PERMS, ADMIN_PERMS
   };
