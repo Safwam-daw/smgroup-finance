@@ -7,8 +7,10 @@ function initTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
   localStorage.setItem('smg_theme', theme);
-  const btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = theme === 'light' ? '🌙 وضع داكن' : '☀️ وضع فاتح';
+  const checkbox = document.getElementById('theme-toggle-checkbox');
+  if (checkbox) {
+    checkbox.checked = (theme === 'light');
+  }
 }
 
 function toggleTheme() {
@@ -26,11 +28,18 @@ function buildSidebar(activePage) {
         <h1>SM-Group</h1>
         <p>نظام إدارة الخزينة المزدوجة</p>
       </div>
+      
       <div class="sidebar-nav">
-        <button id="theme-toggle" onclick="toggleTheme()"
-          style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
-          cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;margin-bottom:10px;
-          font-family:inherit;">☀️ وضع فاتح</button>
+        <!-- زر تبديل الوضع المطور (سويتش متحرك) -->
+        <div class="theme-switch-container">
+          <span class="theme-switch-label">🌙 مظهر داكن</span>
+          <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle-checkbox" onclick="toggleTheme()">
+            <span class="slider"></span>
+          </label>
+          <span class="theme-switch-label">☀️ مظهر فاتح</span>
+        </div>
+
         <div class="nav-section-label">الرئيسية</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
@@ -72,18 +81,19 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
           <span class="nav-icon">⚙️</span> الإعدادات
         </button>
-        <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-          <div style="display:flex;align-items:center;gap:10px;padding:6px 8px;margin-bottom:6px;">
-            <div class="user-avatar" id="nav-avatar"></div>
-            <div class="user-info">
-              <div class="user-name" id="nav-username"></div>
-              <div class="user-role" id="nav-role"></div>
-            </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user-box">
+          <div class="user-avatar" id="nav-avatar"></div>
+          <div class="user-info">
+            <div class="user-name" id="nav-username"></div>
+            <div class="user-role" id="nav-role"></div>
           </div>
-          <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
-            <span class="nav-icon">🚪</span> تسجيل الخروج
-          </button>
         </div>
+        <button class="nav-btn logout-btn" onclick="doLogout()">
+          <span class="nav-icon">🚪</span> تسجيل الخروج
+        </button>
       </div>
     </nav>
     <div id="sidebar-overlay"></div>
@@ -145,7 +155,6 @@ async function initApp(pageId) {
     'transfer':  'transfer',
     'ledger':    'ledger',
     'statement': 'statement',
-    'account-view': 'statement',
     'employees': 'employees',
     'reports':      'reports',
     'audit':        'audit',
