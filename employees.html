@@ -198,12 +198,12 @@ const PERM_DEFS = [
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   buildPermGrid('new-perm-grid', Auth.DEFAULT_PERMS);
-  // فقط صاحب المنظومة يرى خيار إنشاء مدير
-  if (Auth.getUser().user === 'admin') {
+  // فقط صاحب المنظومة يرى خيار إنشاء مدير مصغر
+  if (Auth.isSuperAdmin()) {
     const roleSelect = document.getElementById('emp-role');
     const adminOpt = document.createElement('option');
     adminOpt.value = 'admin';
-    adminOpt.textContent = '🛡️ مدير — كافة الصلاحيات';
+    adminOpt.textContent = '🛡️ مدير مصغر — صلاحيات محددة';
     roleSelect.appendChild(adminOpt);
   }
   await renderEmployees();
@@ -237,8 +237,8 @@ function getGridPerms(prefix) {
 }
 
 function toggleAdminPerms() {
-  const isAdmin = document.getElementById('emp-role').value === 'admin';
-  document.getElementById('new-perms-box').style.display = isAdmin ? 'none' : 'block';
+  // الصلاحيات تظهر دائماً — حتى للأدمن المصغر
+  document.getElementById('new-perms-box').style.display = 'block';
 }
 
 // ── إضافة موظف ────────────────────────────────────────
@@ -255,7 +255,7 @@ async function doAdd() {
   if (r==='admin' && Auth.getUser().user !== 'admin') {
     UI.toast('فقط صاحب المنظومة يمكنه إنشاء مدير جديد','error'); return;
   }
-  const perms = r==='admin' ? Auth.ADMIN_PERMS : getGridPerms('np');
+  const perms = getGridPerms('np'); // الصلاحيات دائماً محددة يدوياً
 
   UI.showLoading(true);
   const users = await Storage.getUsers();
@@ -288,7 +288,14 @@ async function renderEmployees() {
     const permCount = isAdmin ? 'كافة الصلاحيات' :
       Object.values(perms).filter(Boolean).length + ' صلاحية';
 
+    // الأدمن الرئيسي محمي من الجميع
+    // الأدمن المصغر لا يمكنه تعديل/حذف أدمن آخر
+    const currentIsSuperAdmin = Auth.isSuperAdmin();
+    const targetIsAdmin = u.role === 'admin';
+    const canManage = !isRoot && (currentIsSuperAdmin || !targetIsAdmin);
     const actions = isRoot
+      ? `<span style="font-size:0.74rem;color:var(--gold);padding:6px 10px;">👑 مالك المنظومة</span>`
+      : !canManage
       ? `<span style="font-size:0.74rem;color:var(--text3);padding:6px 10px;">محمي</span>`
       : `<button class="btn btn-ghost btn-sm" onclick="openPermModal(${u.id},'${UI.escapeHtml(u.username)}')">🔧 الصلاحيات</button>
          <button class="btn btn-ghost btn-sm" onclick="openPass(${u.id})">🔑 كلمة المرور</button>
@@ -303,7 +310,7 @@ async function renderEmployees() {
             ${isMe?'<span style="font-size:0.68rem;color:var(--gold);margin-right:6px;">(أنت)</span>':''}
           </div>
           <div class="emp-meta">
-            <span style="color:${isAdmin?'var(--gold)':'var(--blue)'};">${isAdmin?'🛡️ مدير':'👤 موظف'}</span>
+            <span style="color:${isRoot?'var(--gold)':isAdmin?'var(--euro)':'var(--blue)'};">${isRoot?'👑 مالك':isAdmin?'🛡️ مدير مصغر':'👤 موظف'}</span>
             <span style="margin-right:8px;color:var(--text3);">·</span>
             <span style="color:var(--text3);">${permCount}</span>
           </div>
