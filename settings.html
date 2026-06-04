@@ -95,7 +95,7 @@ padding:10px 14px;margin-bottom:14px;font-size:0.79rem;color:var(--text2);">
 </div>
 
 <!-- النسخ الاحتياطي -->
-<div class="card settings-section">
+<div class="card settings-section" id="backup-section" style="display:none;">
 <h3>💾 النسخ الاحتياطي</h3>
 <div style="display:flex;gap:12px;flex-wrap:wrap;">
 <button class="btn btn-primary" onclick="Storage.exportBackup()">
@@ -190,6 +190,10 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
   if (Auth.isAdmin()) {
     document.getElementById('currency-section').style.display = 'block';
     await loadCurrencies();
+  }
+  // النسخ الاحتياطي — بالصلاحية
+  if (Auth.isAdmin() || Auth.can('exportBackup')) {
+    document.getElementById('backup-section').style.display = 'block';
   }
   // منطقة الخطر — للأدمن الرئيسي فقط
   if (user.user === 'admin') {
