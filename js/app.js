@@ -1,27 +1,6 @@
 // ══ Theme (Dark/Light) ═══════════════════════════════════
 function initTheme() {
   const saved = localStorage.getItem('smg_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : '');
-  const btn = document.getElementById('theme-toggle');
-  if (btn) btn.innerHTML = saved === 'light' ? '🌙 داكن' : '☀️ فاتح';
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
-  localStorage.setItem('smg_theme', theme);
-  const btn = document.getElementById('theme-toggle');
-  if (btn) btn.innerHTML = theme === 'light' ? '🌙 داكن' : '☀️ فاتح';
-}
-
-function toggleTheme() {
-  const current = localStorage.getItem('smg_theme') || 'dark';
-  applyTheme(current === 'dark' ? 'light' : 'dark');
-}
-
-
-// ══ Theme (Dark/Light) ═══════════════════════════════════
-function initTheme() {
-  const saved = localStorage.getItem('smg_theme') || 'dark';
   applyTheme(saved);
 }
 
@@ -29,17 +8,13 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
   localStorage.setItem('smg_theme', theme);
   const btn = document.getElementById('theme-toggle');
-  if (btn) btn.innerHTML = theme === 'light' ? '🌙 داكن' : '☀️ فاتح';
+  if (btn) btn.textContent = theme === 'light' ? '🌙 وضع داكن' : '☀️ وضع فاتح';
 }
 
 function toggleTheme() {
   const current = localStorage.getItem('smg_theme') || 'dark';
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
-
-/**
- * app.js — SM-Group App Shell (Supabase version)
- */
 
 // مكتبة Supabase CDN
 const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
@@ -55,8 +30,7 @@ function buildSidebar(activePage) {
         <button id="theme-toggle" onclick="toggleTheme()"
           style="width:100%;background:none;border:1px solid var(--border2);color:var(--text2);
           cursor:pointer;border-radius:20px;padding:7px 12px;font-size:0.78rem;margin-bottom:10px;
-          font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
-          ☀️ فاتح</button>
+          font-family:inherit;">☀️ وضع فاتح</button>
         <div class="nav-section-label">الرئيسية</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
@@ -98,17 +72,17 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
           <span class="nav-icon">⚙️</span> الإعدادات
         </button>
-        <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
-          <span class="nav-icon">🚪</span> تسجيل الخروج
-        </button>
-      </div>
-      <div style="padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div class="user-avatar" id="nav-avatar"></div>
-          <div class="user-info">
-            <div class="user-name" id="nav-username"></div>
-            <div class="user-role" id="nav-role"></div>
+        <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 8px;margin-bottom:6px;">
+            <div class="user-avatar" id="nav-avatar"></div>
+            <div class="user-info">
+              <div class="user-name" id="nav-username"></div>
+              <div class="user-role" id="nav-role"></div>
+            </div>
           </div>
+          <button class="nav-btn" style="color:var(--red);" onclick="doLogout()">
+            <span class="nav-icon">🚪</span> تسجيل الخروج
+          </button>
         </div>
       </div>
     </nav>
