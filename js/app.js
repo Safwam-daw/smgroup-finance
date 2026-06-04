@@ -196,7 +196,8 @@ function applyNavPermissions() {
     'statement': 'statement',
     'employees': 'employees',
     'reports':   'reports',
-    'audit':     'audit'
+    'audit':        'audit',
+    'clientPortal': 'clientPortal'
   };
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const page = btn.dataset.page;
