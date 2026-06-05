@@ -63,12 +63,75 @@
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
   .chart-wrap { height:160px; }
 }
+
+/* ترويسة الطباعة */
+.print-header { display:none; }
+
+@media print {
+  #sidebar,#topbar,#sidebar-overlay,#toast,
+  #treasury-bar,#treasury-placeholder,
+  .no-print,.period-btns { display:none !important; }
+
+  .print-header {
+    display:block !important;
+    border-bottom:3px solid #c9a84c;
+    padding-bottom:12px;
+    margin-bottom:16px;
+  }
+
+  body { background:#fff !important; color:#111 !important; }
+  #main { margin:0 !important; padding:16px !important; }
+
+  .analytics-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
+  .kpi-grid { grid-template-columns:repeat(4,1fr) !important; gap:8px !important; }
+
+  .chart-card {
+    background:#fff !important;
+    border:1px solid #ccc !important;
+    break-inside:avoid;
+    padding:12px !important;
+  }
+  .chart-card h3 { color:#333 !important; font-size:0.8rem !important; }
+  .chart-wrap { height:150px !important; }
+
+  .kpi-card {
+    background:#fffbef !important;
+    border:1px solid #c9a84c !important;
+    break-inside:avoid;
+    padding:10px !important;
+  }
+  .kpi-label { color:#666 !important; }
+  .kpi-value { font-size:1.1rem !important; }
+
+  .top-item {
+    background:#fffbef !important;
+    border:1px solid #eee !important;
+    padding:7px 10px !important;
+  }
+  .top-rank { background:#f5f0e0 !important; color:#b8860b !important; }
+  .top-name { color:#111 !important; }
+
+  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+}
 </style>
 </head>
 <body>
 <div id="app">
 <main id="main">
 <div id="treasury-placeholder"></div>
+<!-- ترويسة الطباعة -->
+<div class="print-header">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h1 style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير الإحصائيات</h1>
+      <p id="print-period-label" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
+    </div>
+    <div style="font-size:0.75rem;color:#555;text-align:left;">
+      طُبع بتاريخ: <b id="print-date-analytics"></b>
+    </div>
+  </div>
+</div>
+
 <div class="page-header">
   <div><h2>📈 الإحصائيات</h2><p>تحليل أداء المنظومة المالية</p></div>
   <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ طباعة</button>
@@ -167,6 +230,16 @@ let _charts    = {};
   UI.showLoading(false);
 
   render();
+
+  // إعداد الطباعة
+  document.getElementById('print-date-analytics').textContent =
+    new Date().toLocaleDateString('ar-SA');
+
+  window.addEventListener('beforeprint', () => {
+    const periodMap = { 7:'آخر 7 أيام', 30:'آخر 30 يوم', 90:'آخر 3 أشهر', 365:'السنة كاملة' };
+    document.getElementById('print-period-label').textContent =
+      'الفترة: ' + (periodMap[_days] || _days + ' يوم');
+  });
 })();
 
 function setPeriod(days, btn) {
