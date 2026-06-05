@@ -263,6 +263,7 @@ async function initApp(pageId) {
     'reports':      'reports',
     'audit':        'audit',
     'account-view': 'accounts',
+    'analytics': 'viewAnalytics',
     'settings':     null  // متاح للجميع
   };
 
