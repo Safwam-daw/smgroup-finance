@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — الإحصائيات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.analytics-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:14px; margin-bottom:14px;
+}
+.chart-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px;
+}
+.chart-card h3 {
+  font-size:0.88rem; color:var(--text2);
+  margin-bottom:14px; font-weight:600;
+}
+.chart-wrap { position:relative; height:200px; }
+.kpi-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:12px; margin-bottom:14px;
+}
+.kpi-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+  text-align:center;
+}
+.kpi-label { font-size:0.7rem; color:var(--text3); margin-bottom:6px; }
+.kpi-value { font-size:1.3rem; font-weight:700; }
+.kpi-sub   { font-size:0.72rem; color:var(--text3); margin-top:4px; }
+.top-list { display:flex; flex-direction:column; gap:8px; }
+.top-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; background:var(--surface2);
+  border:1px solid var(--border2); border-radius:var(--radius-sm);
+}
+.top-rank {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--gold-dim); color:var(--gold);
+  font-size:0.72rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.top-name { flex:1; font-size:0.82rem; font-weight:600; }
+.top-val  { font-size:0.82rem; font-weight:700; }
+.period-btns { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.period-btn {
+  padding:6px 16px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.76rem;
+  font-family:inherit; cursor:pointer; transition:all .15s;
+}
+.period-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:700; }
+.no-data {
+  text-align:center; padding:40px; color:var(--text3); font-size:0.82rem;
+}
+@media(max-width:640px) {
+  .analytics-grid { grid-template-columns:1fr; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+  .chart-wrap { height:160px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+<main id="main">
+<div id="treasury-placeholder"></div>
+<div class="page-header">
+  <div><h2>📈 الإحصائيات</h2><p>تحليل أداء المنظومة المالية</p></div>
+  <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ طباعة</button>
+</div>
+
+<!-- فلتر الفترة -->
+<div class="period-btns">
+  <button class="period-btn active" onclick="setPeriod(7,this)">آخر 7 أيام</button>
+  <button class="period-btn" onclick="setPeriod(30,this)">آخر 30 يوم</button>
+  <button class="period-btn" onclick="setPeriod(90,this)">آخر 3 أشهر</button>
+  <button class="period-btn" onclick="setPeriod(365,this)">السنة كاملة</button>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid" id="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">إجمالي الحسابات</div>
+    <div class="kpi-value" id="kpi-accounts" style="color:var(--gold);">—</div>
+    <div class="kpi-sub" id="kpi-accounts-sub"></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">خزينة الدولار</div>
+    <div class="kpi-value" id="kpi-usd" style="color:var(--green);">—</div>
+    <div class="kpi-sub" id="kpi-usd-sub"></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">إجمالي الأرباح $</div>
+    <div class="kpi-value" id="kpi-profit" style="color:var(--euro);">—</div>
+    <div class="kpi-sub" id="kpi-profit-sub"></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">حسابات مدينة</div>
+    <div class="kpi-value" id="kpi-debtors" style="color:var(--red);">—</div>
+    <div class="kpi-sub" id="kpi-debtors-sub"></div>
+  </div>
+</div>
+
+<!-- الرسوم البيانية -->
+<div class="analytics-grid">
+  <div class="chart-card">
+    <h3>💰 نمو الخزينة (دولار)</h3>
+    <div class="chart-wrap"><canvas id="chart-treasury"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>📈 الأرباح التراكمية</h3>
+    <div class="chart-wrap"><canvas id="chart-profit"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>👥 نمو الحسابات</h3>
+    <div class="chart-wrap"><canvas id="chart-accounts"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>⚠️ الحسابات المدينة</h3>
+    <div class="chart-wrap"><canvas id="chart-debtors"></canvas></div>
+  </div>
+</div>
+
+<!-- أكبر العملاء + أنشط الموظفين -->
+<div class="analytics-grid">
+  <div class="chart-card">
+    <h3>🏆 أكبر العملاء (رصيد $)</h3>
+    <div class="top-list" id="top-customers"></div>
+  </div>
+  <div class="chart-card">
+    <h3>👤 أنشط الموظفين</h3>
+    <div class="top-list" id="top-employees"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/app.js"></script>
+<script>
+let _snapshots = [];
+let _accounts  = [];
+let _txns      = [];
+let _days      = 7;
+let _charts    = {};
+
+(async () => {
+  if (!await initApp('reports')) return;
+  if (!Auth.isAdmin()) { navTo('dashboard.html'); return; }
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+
+  UI.showLoading(true);
+  [_snapshots, _accounts, _txns] = await Promise.all([
+    Storage.getSnapshots(365),
+    Storage.getAccounts(),
+    Storage.getTxns()
+  ]);
+  UI.showLoading(false);
+
+  render();
+})();
+
+function setPeriod(days, btn) {
+  _days = days;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - _days);
+  const filtered = _snapshots.filter(s => new Date(s.snapshot_date) >= cutoff)
+    .sort((a,b) => a.snapshot_date.localeCompare(b.snapshot_date));
+
+  renderKPIs(filtered);
+  renderCharts(filtered);
+  renderTopCustomers();
+  renderTopEmployees();
+}
+
+function renderKPIs(data) {
+  if (!data.length) return;
+  const latest = data[data.length - 1];
+  const oldest = data[0];
+
+  // حسابات
+  document.getElementById('kpi-accounts').textContent = latest.total_accounts;
+  const accDiff = latest.total_accounts - oldest.total_accounts;
+  document.getElementById('kpi-accounts-sub').textContent =
+    accDiff >= 0 ? `▲ ${accDiff} خلال الفترة` : `▼ ${Math.abs(accDiff)} خلال الفترة`;
+
+  // خزينة
+  document.getElementById('kpi-usd').textContent = '$' + latest.treasury_usd.toFixed(0);
+  const usdDiff = latest.treasury_usd - oldest.treasury_usd;
+  document.getElementById('kpi-usd-sub').textContent =
+    (usdDiff >= 0 ? '▲ +' : '▼ ') + '$' + Math.abs(usdDiff).toFixed(0);
+  document.getElementById('kpi-usd-sub').style.color = usdDiff >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // أرباح
+  document.getElementById('kpi-profit').textContent = '$' + latest.profit_usd.toFixed(0);
+  const pDiff = latest.profit_usd - oldest.profit_usd;
+  document.getElementById('kpi-profit-sub').textContent =
+    (pDiff >= 0 ? '▲ +' : '▼ ') + '$' + Math.abs(pDiff).toFixed(0) + ' خلال الفترة';
+  document.getElementById('kpi-profit-sub').style.color = pDiff >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // مدينون
+  document.getElementById('kpi-debtors').textContent = latest.total_debtors;
+  document.getElementById('kpi-debtors-sub').textContent =
+    `من ${latest.total_accounts} حساب إجمالي`;
+}
+
+function makeChart(id, labels, datasets, type='line') {
+  if (_charts[id]) _charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  _charts[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: datasets.length > 1, labels: { color:'#8a9bb5', font:{ size:11 } } } },
+      scales: {
+        x: { ticks:{ color:'#4a5a72', font:{size:10}, maxTicksLimit:6 }, grid:{ color:'#1e2d42' } },
+        y: { ticks:{ color:'#4a5a72', font:{size:10} }, grid:{ color:'#1e2d42' } }
+      }
+    }
+  });
+}
+
+function renderCharts(data) {
+  if (!data.length) {
+    ['chart-treasury','chart-profit','chart-accounts','chart-debtors'].forEach(id => {
+      const ctx = document.getElementById(id);
+      if (ctx) ctx.parentElement.innerHTML = '<div class="no-data">لا توجد بيانات — افتح لوحة التحكم يومياً لتراكم البيانات</div>';
+    });
+    return;
+  }
+
+  const labels = data.map(s => s.snapshot_date.slice(5)); // MM-DD
+
+  // خزينة
+  makeChart('chart-treasury', labels, [{
+    label:'$ دولار', data: data.map(s=>s.treasury_usd),
+    borderColor:'#c9a84c', backgroundColor:'rgba(201,168,76,0.08)',
+    fill:true, tension:0.4, pointRadius:2
+  },{
+    label:'€ يورو', data: data.map(s=>s.treasury_eur),
+    borderColor:'#a78bfa', backgroundColor:'rgba(167,139,250,0.08)',
+    fill:true, tension:0.4, pointRadius:2
+  }]);
+
+  // أرباح
+  makeChart('chart-profit', labels, [{
+    label:'$ ربح', data: data.map(s=>s.profit_usd),
+    borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.08)',
+    fill:true, tension:0.4, pointRadius:2
+  }]);
+
+  // حسابات
+  makeChart('chart-accounts', labels, [{
+    label:'زبائن', data: data.map(s=>s.total_customers),
+    borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)',
+    fill:true, tension:0.3, pointRadius:2
+  },{
+    label:'شركات', data: data.map(s=>s.total_companies),
+    borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.08)',
+    fill:true, tension:0.3, pointRadius:2
+  }]);
+
+  // مدينون
+  makeChart('chart-debtors', labels, [{
+    label:'مدينون', data: data.map(s=>s.total_debtors),
+    borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.08)',
+    fill:true, tension:0.3, pointRadius:2
+  }]);
+}
+
+function renderTopCustomers() {
+  const customers = _accounts
+    .filter(a => a.type === 'customer' && parseFloat(a.bal_usd||0) > 0)
+    .sort((a,b) => parseFloat(b.bal_usd||0) - parseFloat(a.bal_usd||0))
+    .slice(0, 7);
+
+  const el = document.getElementById('top-customers');
+  if (!customers.length) {
+    el.innerHTML = '<div class="no-data">لا توجد حسابات دائنة</div>'; return;
+  }
+  el.innerHTML = customers.map((a, i) => `
+    <div class="top-item">
+      <div class="top-rank">${i+1}</div>
+      <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
+      <div class="top-val" style="color:var(--green);">$${parseFloat(a.bal_usd).toFixed(2)}</div>
+    </div>`).join('');
+}
+
+function renderTopEmployees() {
+  // إحصاء العمليات لكل موظف
+  const stats = {};
+  _txns.forEach(t => {
+    const by = t.by || 'غير محدد';
+    if (!stats[by]) stats[by] = { dep:0, wit:0, trf:0, total:0 };
+    if (t.type==='dep') stats[by].dep++;
+    else if (t.type==='wit') stats[by].wit++;
+    else if (t.type==='trf') stats[by].trf++;
+    stats[by].total++;
+  });
+
+  const sorted = Object.entries(stats)
+    .sort((a,b) => b[1].total - a[1].total)
+    .slice(0, 7);
+
+  const el = document.getElementById('top-employees');
+  if (!sorted.length) {
+    el.innerHTML = '<div class="no-data">لا توجد عمليات مسجّلة</div>'; return;
+  }
+  el.innerHTML = sorted.map(([name, s], i) => `
+    <div class="top-item">
+      <div class="top-rank">${i+1}</div>
+      <div class="top-name">${UI.escapeHtml(name)}</div>
+      <div style="font-size:0.72rem;color:var(--text3);">
+        إيداع ${s.dep} · سحب ${s.wit} · تحويل ${s.trf}
+      </div>
+      <div class="top-val" style="color:var(--gold);">${s.total}</div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
