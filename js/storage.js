@@ -289,6 +289,7 @@ const Storage = (() => {
     if (error) return { ok: false, error: 'خطأ في الحذف: ' + error.message };
 
     invalidate('accounts');
+    await addNotification('delete', '🗑️ حذف حساب', `تم حذف حساب ${acc.name} (${accountId}) وأرشفته برقم ${nextArchive}`, '🗑️');
     await logAction('delete_account', { accountId, name: acc.name, archiveId: nextArchive, deletedBy });
     return { ok: true, usd: balances.usd || 0, eur: balances.eur || 0, archiveId: nextArchive };
   }
@@ -447,6 +448,36 @@ const Storage = (() => {
     return data || [];
   }
 
+
+  // ══ الإشعارات ══════════════════════════════════════════
+  async function addNotification(type, title, body, icon='🔔') {
+    const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    try {
+      await _sb.from('notifications').insert({
+        type, title, body, icon,
+        is_read: false,
+        created_by: user?.user || 'system'
+      });
+    } catch(e) { console.error('notification:', e); }
+  }
+
+  async function getNotifications(limit=30) {
+    const { data } = await _sb
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return data || [];
+  }
+
+  async function markNotifRead(id) {
+    await _sb.from('notifications').update({ is_read: true }).eq('id', id);
+  }
+
+  async function markAllNotifsRead() {
+    await _sb.from('notifications').update({ is_read: true }).eq('is_read', false);
+  }
+
   // ══ سجل التدقيق ═══════════════════════════════════════
   async function logAction(action, details) {
     const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
@@ -522,6 +553,9 @@ const Storage = (() => {
 
   // daily snapshots
   saveDailySnapshot, getSnapshots,
+
+  // notifications
+  addNotification, getNotifications, markNotifRead, markAllNotifsRead,
 
   // misc
   logAction,
