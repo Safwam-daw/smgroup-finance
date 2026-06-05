@@ -100,21 +100,27 @@ function buildSidebar(activePage) {
       </div>
     </nav>
     <div id="sidebar-overlay"></div>
-    <div id="topbar">
-      <h1>SM-Group</h1>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button id="notif-btn" onclick="toggleNotifPanel()"
-          style="background:none;border:none;cursor:pointer;position:relative;
-          font-size:1.2rem;padding:4px 8px;color:var(--text2);">
-          🔔
-          <span id="notif-badge" style="display:none;position:absolute;top:0;right:0;
-            background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;
-            font-size:0.6rem;font-weight:700;display:flex;align-items:center;
-            justify-content:center;line-height:1;">0</span>
-        </button>
-        <button id="menu-toggle" aria-label="القائمة">☰</button>
-      </div>
-    </div>
+    <div id="topbar" style="display:flex; align-items:center; justify-content:space-between; direction:rtl; padding:10px 15px;">
+  
+  <!-- 1. زر القائمة أصبح في أقصى اليمين -->
+  <button id="menu-toggle" aria-label="القائمة">☰</button>
+  
+  <!-- 2. عنوان المنظومة في المنتصف -->
+  <h1 style="margin:0;">SM-Group</h1>
+  
+  <!-- 3. زر جرس الإشعارات أصبح في أقصى اليسار -->
+  <button id="notif-btn" onclick="toggleNotifPanel()"
+    style="background:none; border:none; cursor:pointer; position:relative;
+    font-size:1.2rem; padding:4px 8px; color:var(--text2);">
+    🔔
+    <span id="notif-badge" style="display:none; position:absolute; top:0; right:0;
+      background:var(--red); color:#fff; border-radius:50%; width:16px; height:16px;
+      font-size:0.6rem; font-weight:700; display:flex; align-items:center;
+      justify-content:center; line-height:1;">0</span>
+  </button>
+
+</div>
+
     <!-- لوحة الإشعارات -->
     <div id="notif-panel" style="display:none;position:fixed;top:60px;left:0;
       width:320px;max-height:400px;background:var(--surface);
