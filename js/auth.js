@@ -12,7 +12,8 @@ const Auth = (() => {
     transfer:true, ledger:true, statement:true, employees:true,
     reports:true, audit:true, clientPortal:true,
     viewTreasury:true, viewProfit:true,
-    canDelete:true, canEdit:true, exportBackup:true
+    canDelete:true, canEdit:true, exportBackup:true,
+    viewAnalytics:true, viewNotifications:true, viewHistory:true
   };
 
   const DEFAULT_PERMS = {
@@ -20,7 +21,8 @@ const Auth = (() => {
     transfer:true, ledger:true, statement:true, employees:false,
     reports:false, audit:false, clientPortal:false,
     viewTreasury:false, viewProfit:false,
-    canDelete:false, canEdit:false, exportBackup:false
+    canDelete:false, canEdit:false, exportBackup:false,
+viewAnalytics:false, viewNotifications:false, viewHistory:false
   };
   
   function _saveSession(user) {
