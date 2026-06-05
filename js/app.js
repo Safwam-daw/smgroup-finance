@@ -44,6 +44,9 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
           <span class="nav-icon">📊</span> لوحة التحكم
         </button>
+        <button class="nav-btn ${activePage==='analytics'?'active':''}" data-admin-only onclick="navTo('analytics.html')">
+          <span class="nav-icon">📈</span> الإحصائيات
+        </button>
         <div class="nav-section-label">العمليات اليومية</div>
         <button class="nav-btn ${activePage==='accounts'?'active':''}" data-page="accounts" onclick="navTo('accounts.html')">
           <span class="nav-icon">👥</span> إدارة الحسابات
