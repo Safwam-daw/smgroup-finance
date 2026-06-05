@@ -84,6 +84,9 @@ let _debtorPage = 1;
     loadAll()
   ]);
 
+  // حفظ السجل اليومي (مرة واحدة في اليوم)
+  Storage.saveDailySnapshot().catch(e => console.log('snapshot:', e));
+
   // إظهار زر نشر الكل للأدمن
   if (Auth.isAdmin()) {
     const pb = document.getElementById('publish-all-btn');
