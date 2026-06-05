@@ -389,6 +389,64 @@ const Storage = (() => {
     );
   }
 
+
+  // ══ السجل الإحصائي اليومي ══════════════════════════════
+  async function saveDailySnapshot() {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // تحقق إذا حُفظ اليوم مسبقاً
+    const { data: existing } = await _sb
+      .from('daily_snapshots')
+      .select('id')
+      .eq('snapshot_date', today)
+      .single();
+    if (existing) return; // حُفظ مسبقاً اليوم
+
+    const [accounts, txns] = await Promise.all([
+      getAccounts(),
+      getTxns()
+    ]);
+
+    const profit = accounts.find(a => a.id === '9999');
+    const customers = accounts.filter(a => a.type === 'customer');
+    const companies = accounts.filter(a => a.type === 'company');
+
+    // حساب الخزينة بدون الأرباح
+    let tUsd = 0, tEur = 0;
+    accounts.filter(a => a.id !== '9999').forEach(a => {
+      tUsd += parseFloat(a.bal_usd || 0);
+      tEur += parseFloat(a.bal_eur || 0);
+    });
+
+    const debtors   = accounts.filter(a => parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0).length;
+    const creditors = accounts.filter(a => parseFloat(a.bal_usd||0) > 0 || parseFloat(a.bal_eur||0) > 0).length;
+
+    await _sb.from('daily_snapshots').insert({
+      snapshot_date:   today,
+      treasury_usd:    parseFloat(tUsd.toFixed(2)),
+      treasury_eur:    parseFloat(tEur.toFixed(2)),
+      profit_usd:      parseFloat(profit?.bal_usd || 0),
+      profit_eur:      parseFloat(profit?.bal_eur || 0),
+      total_accounts:  accounts.filter(a => a.id !== '9999').length,
+      total_customers: customers.length,
+      total_companies: companies.length,
+      total_txns:      txns.length,
+      total_debtors:   debtors,
+      total_creditors: creditors
+    });
+
+    console.log('✅ تم حفظ السجل اليومي:', today);
+  }
+
+  async function getSnapshots(limit = 30) {
+    const { data } = await _sb
+      .from('daily_snapshots')
+      .select('*')
+      .order('snapshot_date', { ascending: false })
+      .limit(limit);
+    return data || [];
+  }
+
   // ══ سجل التدقيق ═══════════════════════════════════════
   async function logAction(action, details) {
     const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
@@ -461,6 +519,9 @@ const Storage = (() => {
 
   // client portal
   clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
+
+  // daily snapshots
+  saveDailySnapshot, getSnapshots,
 
   // misc
   logAction,
