@@ -3,8 +3,8 @@
  * Cache مركزي قوي + طلبات متوازية = أسرع تحميل ممكن
  */
 
-const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0';
+const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const Storage = (() => {
