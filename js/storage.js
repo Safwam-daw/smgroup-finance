@@ -377,17 +377,31 @@ const Storage = (() => {
   }
 
   async function getClientTxns(accountId, publishedAt) {
+    // جلب جميع العمليات المرتبطة: إيداع/سحب/عمولة + تحويلات (مرسل أو مستقبل)
     let q = _sb.from('transactions')
       .select('*')
       .or(`acc.eq.${accountId},to.eq.${accountId}`)
       .order('date', { ascending: false });
     if (publishedAt) q = q.lte('date', publishedAt);
-    const { data, error } = await q;
-    if (error) return [];
-    // Post-filter to include 'from' column
-    return (data || []).filter(t =>
-      t.acc === accountId || t.to === accountId || t.from === accountId
-    );
+    const { data: data1, error: e1 } = await q;
+
+    // جلب التحويلات التي هذا الحساب هو المرسل
+    let q2 = _sb.from('transactions')
+      .select('*')
+      .eq('type', 'trf')
+      .order('date', { ascending: false });
+    if (publishedAt) q2 = q2.lte('date', publishedAt);
+    const { data: data2 } = await q2;
+
+    const all = [...(data1||[]), ...(data2||[])];
+    // دمج وإزالة التكرار
+    const seen = new Set();
+    const merged = all.filter(t => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return t.acc===accountId || t.to===accountId || t.from===accountId;
+    });
+    return merged.sort((a,b) => new Date(b.date)-new Date(a.date));
   }
 
 
