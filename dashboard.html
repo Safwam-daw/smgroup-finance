@@ -226,10 +226,22 @@ async function publishAll() {
       UI.toast('لا يوجد زبائن لنشر كشوفاتهم', 'error');
       return;
     }
+    // فحص من يحتاج نشر (آخر نشر قبل آخر عملية)
+    const needsPublish = customers.filter(a => {
+      if (!a.client_pin) return false; // بدون PIN لا يُنشر
+      if (!a.client_published_at) return true; // لم يُنشر أبداً
+      return false; // تم نشره مسبقاً
+    });
+    if (!needsPublish.length) {
+      UI.toast('✅ جميع الكشوفات منشورة بالفعل — لا يوجد جديد');
+      return;
+    }
     const ok = await Storage.publishAllClients(Auth.getUser().user);
     if (ok) {
-      Storage.invalidate('accounts'); // إعادة تحميل الـ Cache
-      UI.toast(`✅ تم نشر كشوف ${customers.length} زبون`);
+      Storage.invalidate('accounts');
+      UI.toast(`✅ تم نشر كشوفات ${needsPublish.length} زبون من أصل ${customers.length}`);
+      await Storage.addNotification('publish', '📤 نشر الكشوفات',
+        `تم نشر كشوفات ${needsPublish.length} زبون`, '📤');
     } else {
       UI.toast('خطأ في النشر — حاول مرة أخرى', 'error');
     }
