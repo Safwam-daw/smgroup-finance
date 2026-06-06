@@ -348,6 +348,7 @@ async function loadPortal() {
   }
 
   // جلب الحركات المنشورة
+  // جلب الحركات: إيداع/سحب/عمولة + تحويلات (مرسل أو مستقبل)
   _allTxns = await Storage.getClientTxns(_acc.id, pubAt);
   setQuick('month', false);
   filterRows();
@@ -399,7 +400,8 @@ function renderPage() {
 
   document.getElementById('p-tbody').innerHTML = page.length
     ? page.map(t => {
-        const sym    = t.cur==='usd'?'$':'€';
+        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
         const isFee  = t.type==='fee'||t.is_commission_entry;
         const isFrom = t.type==='trf'&&t.from===accId;
         const isTo   = t.type==='trf'&&t.to===accId;
