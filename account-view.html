@@ -547,8 +547,7 @@ function renderPage() {
 
   // نبني صفّين: واحد للشاشة، واحد للطباعة (مخفي)
   const makeRow = (t, forPrint=false) => {
-    const _curMap = {'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
-    const sym    = _curMap[(t.cur||'usd').toLowerCase()] || (t.cur||'').toUpperCase();
+    const sym    = t.cur==='usd'?'$':'€';
     const isFee  = t.type==='fee' || t.is_commission_entry;
     const isFrom = t.type==='trf' && t.from===_accId;
     const isTo   = t.type==='trf' && t.to===_accId;
