@@ -77,6 +77,9 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" onclick="navTo('audit.html')">
           <span class="nav-icon">🔍</span> سجل التدقيق
         </button>
+        <button class="nav-btn ${activePage==='history'?'active':''}" data-page="history" onclick="navTo('history.html')">
+          <span class="nav-icon">📝</span> سجل التعديلات
+        </button>
         <div class="nav-section-label">أدوات النظام</div>
         <button class="nav-btn" data-page="clientPortal" onclick="window.open('client.html','_blank')">
           <span class="nav-icon">👤</span> بوابة الزبون
@@ -179,7 +182,10 @@ function doLogout() {
 let _notifOpen = false;
 
 async function loadNotifications() {
-  const notifs = await Storage.getNotifications();
+  const notifs = Auth.can('viewNotifications') || Auth.isAdmin()
+    ? await Storage.getNotifications()
+    : [];
+  // الجرس يبقى دائماً — فقط القائمة فارغة إذا لم تكن الصلاحية
   const unread = notifs.filter(n => !n.is_read).length;
   const badge = document.getElementById('notif-badge');
   if (badge) {
