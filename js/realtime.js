@@ -4,8 +4,8 @@
  */
 
 const Realtime = (() => {
-  const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+  const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_ECr_Pt2w19dBj_XPz5CYbQ_Qvj4gAQ-';
   let _channel = null;
   let _onTxn   = null;
   let _onAcc   = null;

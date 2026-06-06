@@ -3,8 +3,8 @@
  * Cache مركزي قوي + طلبات متوازية = أسرع تحميل ممكن
  */
 
-const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const Storage = (() => {
@@ -377,31 +377,17 @@ const Storage = (() => {
   }
 
   async function getClientTxns(accountId, publishedAt) {
-    // جلب جميع العمليات المرتبطة: إيداع/سحب/عمولة + تحويلات (مرسل أو مستقبل)
     let q = _sb.from('transactions')
       .select('*')
       .or(`acc.eq.${accountId},to.eq.${accountId}`)
       .order('date', { ascending: false });
     if (publishedAt) q = q.lte('date', publishedAt);
-    const { data: data1, error: e1 } = await q;
-
-    // جلب التحويلات التي هذا الحساب هو المرسل
-    let q2 = _sb.from('transactions')
-      .select('*')
-      .eq('type', 'trf')
-      .order('date', { ascending: false });
-    if (publishedAt) q2 = q2.lte('date', publishedAt);
-    const { data: data2 } = await q2;
-
-    const all = [...(data1||[]), ...(data2||[])];
-    // دمج وإزالة التكرار
-    const seen = new Set();
-    const merged = all.filter(t => {
-      if (seen.has(t.id)) return false;
-      seen.add(t.id);
-      return t.acc===accountId || t.to===accountId || t.from===accountId;
-    });
-    return merged.sort((a,b) => new Date(b.date)-new Date(a.date));
+    const { data, error } = await q;
+    if (error) return [];
+    // Post-filter to include 'from' column
+    return (data || []).filter(t =>
+      t.acc === accountId || t.to === accountId || t.from === accountId
+    );
   }
 
 

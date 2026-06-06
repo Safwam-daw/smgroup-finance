@@ -77,9 +77,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" onclick="navTo('audit.html')">
           <span class="nav-icon">🔍</span> سجل التدقيق
         </button>
-        <button class="nav-btn ${activePage==='history'?'active':''}" data-page="history" onclick="navTo('history.html')">
-          <span class="nav-icon">📝</span> سجل التعديلات
-        </button>
         <div class="nav-section-label">أدوات النظام</div>
         <button class="nav-btn" data-page="clientPortal" onclick="window.open('client.html','_blank')">
           <span class="nav-icon">👤</span> بوابة الزبون
@@ -307,8 +304,7 @@ function applyNavPermissions() {
     'employees': 'employees',
     'reports':   'reports',
     'audit':        'audit',
-    'clientPortal': 'clientPortal',
-    'history':      'viewHistory'
+    'clientPortal': 'clientPortal'
   };
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const page = btn.dataset.page;

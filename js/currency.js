@@ -10,8 +10,8 @@ const Currency = (() => {
   // ── جلب العملات ─────────────────────────────────────
   async function getAll() {
     if (_currencies) return _currencies;
-    const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+    const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data, error } = await sb.from('currencies')
       .select('*').order('sort_order');
@@ -35,8 +35,8 @@ const Currency = (() => {
 
   // تفعيل/تعطيل عملة
   async function toggle(code, active) {
-    const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+    const SUPABASE_URL = 'https://jmmikuprhitwundsuplt.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptbWlrdXByaGl0d3VuZHN1cGx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NDQ2MjgsImV4cCI6MjA5NTIyMDYyOH0.wcvQZfQUwratKCOWXiBeK3lWHGgbMycJiS4GS-I0eZ0';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { error } = await sb.from('currencies')
       .update({ is_active: active }).eq('code', code);
