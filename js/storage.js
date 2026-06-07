@@ -266,7 +266,7 @@ const Storage = (() => {
 
     // تسجيل في المحذوفات مع الرقم الأرشيفي
     await _sb.from('deleted_accounts').insert({
-      id:           acc.id,
+      id:           nextArchive,
       name:         acc.name,
       type:         acc.type,
       bal_usd:      balances.usd || 0,
