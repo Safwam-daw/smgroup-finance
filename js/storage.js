@@ -140,14 +140,20 @@ const Storage = (() => {
     if (filters.type)      q = q.eq('type', filters.type);
     if (filters.cur)       q = q.eq('cur', filters.cur);
     if (filters.acc) {
-      q = q.or(`acc.eq.${filters.acc},"from".eq.${filters.acc},to.eq.${filters.acc}`);
+      q = q.or(`acc.eq.${filters.acc},to.eq.${filters.acc}`);
     }
     if (filters.from_date) q = q.gte('date', filters.from_date);
     if (filters.to_date)   q = q.lte('date', filters.to_date);
     if (filters.limit)     q = q.limit(filters.limit);
     const { data, error } = await q;
     if (error) { console.error('getTxns:', error); return []; }
-    return data || [];
+    let result = data || [];
+    if (filters.acc) {
+      result = result.filter(t =>
+        t.acc === filters.acc || t.to === filters.acc || t.from === filters.acc
+      );
+    }
+    return result;
   }
 
   async function saveTxn(txn) {
