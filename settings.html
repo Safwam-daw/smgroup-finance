@@ -340,6 +340,48 @@ await sb.from('audit_log').delete().neq('id', 0);
     UI.toast('خطأ أثناء المسح: ' + e.message, 'error');
   }
 }
-  </script>
+  
+function confirmReset() {
+  if (confirm('هل تريد أخذ نسخة احتياطية قبل المسح؟\nاضغط موافق لأخذ نسخة، أو إلغاء للمتابعة بدون نسخة.')) {
+    Storage.exportBackup();
+  }
+  document.getElementById('reset-confirm-input').value = '';
+  document.getElementById('reset-modal').style.display = 'flex';
+}
+function closeReset() {
+  document.getElementById('reset-modal').style.display = 'none';
+}
+
+async function doReset() {
+  const val = document.getElementById('reset-confirm-input').value.trim();
+  if (val !== 'RESET') { UI.toast('اكتب RESET بالأحرف الكبيرة للتأكيد','error'); return; }
+  closeReset();
+  UI.showLoading(true);
+  try {
+    const sb = supabase.createClient(
+      'https://qrdasgkegudvnobjwafc.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU'
+    );
+    await sb.from('transactions').delete().neq('id', 0);
+    await sb.from('accounts').delete().neq('id', 'x');
+    await sb.from('deleted_accounts').delete().neq('id', 'x');
+    await sb.from('audit_log').delete().neq('id', 0);
+    await sb.from('notifications').delete().neq('id', 0);
+    await sb.from('daily_snapshots').delete().neq('id', 0);
+    await sb.from('alert_settings').delete().neq('id', 0);
+    await sb.from('alert_settings').insert({ debt_limit: -500 });
+    await Storage.ensureProfitAccount();
+    await Storage.addNotification('system', '🗑️ تم مسح قاعدة البيانات',
+      'تم إعادة ضبط النظام لوضع المصنع بتاريخ ' + new Date().toLocaleDateString('ar-SA'), '🗑️');
+    Storage.invalidate();
+    UI.showLoading(false);
+    UI.toast('تم مسح جميع البيانات — سيتم تسجيل الخروج');
+    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
+  } catch(e) {
+    UI.showLoading(false);
+    UI.toast('خطأ أثناء المسح: ' + e.message, 'error');
+  }
+}
+</script>
 </body>
 </html>
