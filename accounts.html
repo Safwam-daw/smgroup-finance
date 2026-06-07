@@ -244,6 +244,7 @@ async function doDelAcc() {
   const result = await Storage.deleteAccount(_delAccId, Auth.getUser().user);
   UI.showLoading(false);
   closeDelAcc();
+  console.log('delete result:', JSON.stringify(result));
   if (result.ok) {
     let msg = 'تم حذف الحساب ✅';
     if (result.usd !== 0 || result.eur !== 0)
