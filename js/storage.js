@@ -265,7 +265,7 @@ const Storage = (() => {
     }
 
     // تسجيل في المحذوفات مع الرقم الأرشيفي
-    const { error: archiveErr } = await _sb.from('deleted_accounts').insert({
+    await _sb.from('deleted_accounts').insert({
       id:           acc.id,
       name:         acc.name,
       type:         acc.type,
@@ -278,7 +278,6 @@ const Storage = (() => {
         ? `تم تحويل (${transferNote.join(' | ')}) لحساب الأرباح`
         : 'رصيد صفري — لا تحويل'
     });
-    if (archiveErr) return { ok: false, error: 'خطأ في الأرشفة: ' + archiveErr.message };
 
     // تحديث رقم الحساب في جميع العمليات → الرقم الأرشيفي
     await _sb.rpc('archive_account_transactions', {
@@ -296,17 +295,9 @@ const Storage = (() => {
   }
 
   async function getRecyclableId(type) {
-    const { data } = await _sb.from('deleted_accounts')
-      .select('id').order('deleted_at', { ascending: true });
-    if (!data || !data.length) return null;
-    const match = data.find(r =>
-      type === 'customer'
-        ? !r.id.startsWith('4') && !r.id.startsWith('9')
-        : r.id.startsWith('4')
-    );
-    if (!match) return null;
-    await _sb.from('deleted_accounts').delete().eq('id', match.id);
-    return match.id;
+    // نبحث فقط في السجلات التي ليس لها archive_id (أي أرقام قابلة لإعادة الاستخدام)
+    // السجلات ذات archive_id هي أرشيف محذوفات — لا نعيد استخدامها
+    return null; // معطّل — نولّد أرقاماً جديدة دائماً
   }
 
   // ══ إعادة إنشاء حساب الأرباح إذا حُذف ══════════════
