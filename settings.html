@@ -316,127 +316,30 @@ async function doImport() {
   UI.showLoading(true);
 
   try {
+    // مسح بالترتيب: عمليات، حسابات (ما عدا 9999)، محذوفات، تدقيق
     const sb = supabase.createClient(
   'https://qrdasgkegudvnobjwafc.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU'
 );
-
-    // 1. مسح البيانات الحالية
-    await sb.from('transactions').delete().neq('id', 0);
-    await sb.from('accounts').delete().neq('id', '');
-    await sb.from('deleted_accounts').delete().neq('id', '');
-
-    // 2. استعادة الحسابات
-    if (_importData.accounts?.length) {
-      const chunks = [];
-      for (let i = 0; i < _importData.accounts.length; i += 50)
-        chunks.push(_importData.accounts.slice(i, i + 50));
-      for (const chunk of chunks)
-        await sb.from('accounts').insert(chunk);
-    }
-
-    // 3. استعادة العمليات
-    if (_importData.txns?.length) {
-      const chunks = [];
-      for (let i = 0; i < _importData.txns.length; i += 50)
-        chunks.push(_importData.txns.slice(i, i + 50));
-      for (const chunk of chunks)
-        await sb.from('transactions').insert(chunk);
-    }
-
+await sb.from('transactions').delete().neq('id', 0);
+await sb.from('accounts').delete().neq('id', '9999');
+await sb.from('accounts').delete().eq('id', '9999');
+await Storage.ensureProfitAccount();
+await sb.from('deleted_accounts').delete().neq('id', '');
+await sb.from('audit_log').delete().neq('id', 0);
+    
+    // إعادة إنشاء حساب الأرباح
+    await Storage.ensureProfitAccount();
     Storage.invalidate();
+
     UI.showLoading(false);
-    UI.toast('✅ تم استعادة النسخة الاحتياطية بنجاح — سيتم تسجيل الخروج');
-    await Storage.logAction('restore_backup', { version: _importData.version, exportedAt: _importData.exportedAt });
+    UI.toast('✅ تم مسح جميع البيانات — سيتم تسجيل الخروج');
     setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
-
-  } catch(err) {
+  } catch(e) {
     UI.showLoading(false);
-    UI.toast('خطأ في الاستعادة: ' + err.message, 'error');
+    UI.toast('خطأ أثناء المسح: ' + e.message, 'error');
   }
 }
-
-function confirmReset() {
-  document.getElementById('reset-confirm-input').value = '';
-  document.getElementById('reset-modal').style.display = 'flex';
-}
-function closeReset() {
-  document.getElementById('reset-modal').style.display = 'none';
-}
-
-async function doReset() {
-  const val = document.getElementById('reset-confirm-input').value.trim();
-  if (val !== 'RESET') { UI.toast('اكتب RESET بالأحرف الكبيرة للتأكيد','error'); return; }
-
-  closeReset();
-  UI.showLoading(true);
-
-  try {
-  UI.showLoading(true);
-
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // العمليات
-  let r = await sb.from('transactions').delete().neq('id', 0);
-  if (r.error) throw r.error;
-
-  // الإشعارات
-  r = await sb.from('notifications').delete().neq('id', 0);
-  if (r.error) throw r.error;
-
-  // السجل التدقيقي
-  r = await sb.from('audit_log').delete().neq('id', 0);
-  if (r.error) throw r.error;
-
-  // الحسابات المحذوفة
-  r = await sb.from('deleted_accounts').delete().neq('id', '');
-  if (r.error) throw r.error;
-
-  // اللقطات اليومية
-  r = await sb.from('daily_snapshots').delete().neq('id', 0);
-  if (r.error) throw r.error;
-
-  // حذف جميع الحسابات
-  r = await sb.from('accounts').delete().neq('id', '');
-  if (r.error) throw r.error;
-
-  // إنشاء حساب الأرباح
-  r = await sb.from('accounts').insert({
-    id: '9999',
-    name: 'حساب الأرباح',
-    type: 'profit',
-    bal_usd: 0,
-    bal_eur: 0,
-    bal_try: 0,
-    bal_gbp: 0,
-    bal_sar: 0,
-    bal_aed: 0,
-    bal_egp: 0,
-    bal_jod: 0,
-    bal_kwd: 0,
-    bal_qar: 0,
-    bal_mad: 0,
-    bal_lyd: 0,
-    commission_rate: 0
-  });
-
-  if (r.error) throw r.error;
-
-  Storage.invalidate();
-
-  UI.showLoading(false);
-  UI.toast('✅ تم تنظيف قاعدة البيانات بالكامل');
-
-  setTimeout(() => {
-    Auth.logout();
-    navTo('login.html');
-  }, 2000);
-
-} catch (e) {
-  UI.showLoading(false);
-  console.error(e);
-  UI.toast('❌ ' + e.message, 'error');
-  }
   </script>
 </body>
 </html>
