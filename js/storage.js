@@ -265,7 +265,7 @@ const Storage = (() => {
     }
 
     // تسجيل في المحذوفات مع الرقم الأرشيفي
-    await _sb.from('deleted_accounts').insert({
+    const { error: archiveErr } = await _sb.from('deleted_accounts').insert({
       id:           acc.id,
       name:         acc.name,
       type:         acc.type,
@@ -278,6 +278,7 @@ const Storage = (() => {
         ? `تم تحويل (${transferNote.join(' | ')}) لحساب الأرباح`
         : 'رصيد صفري — لا تحويل'
     });
+    if (archiveErr) return { ok: false, error: 'خطأ في الأرشفة: ' + archiveErr.message };
 
     // تحديث رقم الحساب في جميع العمليات → الرقم الأرشيفي
     await _sb.rpc('archive_account_transactions', {
