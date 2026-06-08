@@ -27,20 +27,37 @@ const Transactions = (() => {
   // تسجيل العمولة كحركة مرئية في الحساب
   async function _saveCommissionEntry(accountId, currency, commission, parentId) {
     if (commission <= 0) return;
+    const now = new Date().toISOString();
+    const feeId = Date.now() + 1;
+    // حركة fee في حساب الزبون (خصم)
     await Storage.saveTxn({
-      id:                 Date.now() + 1, // +1 لتجنب تكرار ID
-      type:               'fee',          // نوع جديد: رسوم
-      acc:                accountId,
-      cur:                currency,
-      amt:                commission,
-      commission_amt:     0,
+      id:                  feeId,
+      type:                'fee',
+      acc:                 accountId,
+      cur:                 currency,
+      amt:                 commission,
+      commission_amt:      0,
       is_commission_entry: true,
-      parent_id:          parentId,
-      by:                 'system',
-      date:               new Date().toISOString(),
-      note:               'عمولة إيداع تلقائية'
+      parent_id:           parentId,
+      by:                  'system',
+      date:                now,
+      note:                'عمولة إيداع تلقائية'
     });
-    // العمولة تذهب لحساب الأرباح
+    // حركة dep في حساب الأرباح (إضافة)
+    await Storage.saveTxn({
+      id:                  feeId + 1,
+      type:                'dep',
+      acc:                 '9999',
+      cur:                 currency,
+      amt:                 commission,
+      commission_amt:      0,
+      is_commission_entry: false,
+      parent_id:           parentId,
+      by:                  'system',
+      date:                now,
+      note:                `عمولة من حساب ${accountId}`
+    });
+    // تحديث رصيد حساب الأرباح
     await Storage.updateBalance('9999', currency, commission);
   }
 

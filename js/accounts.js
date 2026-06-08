@@ -6,22 +6,32 @@
 const Accounts = (() => {
 
   async function generateCode(type) {
-    // أولاً: هل يوجد رقم محذوف قابل لإعادة الاستخدام؟
-    const recycled = await Storage.getRecyclableId(type);
-    if (recycled) return recycled;
-
-    // ثانياً: أنشئ رقماً جديداً
+    // البحث عن أول فجوة في الأرقام (رقم محذوف)
     const accounts = await Storage.getAccounts();
+
     if (type === 'customer') {
-      const custs = accounts.filter(a => !a.id.startsWith('4') && !a.id.startsWith('9'));
-      if (!custs.length) return '0001';
-      const nums  = custs.map(c => parseInt(c.id)).filter(n => !isNaN(n));
-      return String(Math.max(...nums) + 1).padStart(4, '0');
+      // الأرقام الموجودة للزبائن (بدون 4xxx و 9xxx و 7xxx)
+      const existing = new Set(
+        accounts
+          .filter(a => !a.id.startsWith('4') && !a.id.startsWith('9') && !a.id.startsWith('7'))
+          .map(a => parseInt(a.id))
+          .filter(n => !isNaN(n))
+      );
+      // ابحث عن أول رقم مفقود من 1
+      for (let i = 1; i <= 999; i++) {
+        if (!existing.has(i)) return String(i).padStart(4, '0');
+      }
+      return '0999';
     } else {
-      const comps = accounts.filter(a => a.id.startsWith('4'));
-      if (!comps.length) return '4000';
-      const nums  = comps.map(c => parseInt(c.id)).filter(n => !isNaN(n));
-      return String(Math.max(...nums) + 1);
+      const existing = new Set(
+        accounts.filter(a => a.id.startsWith('4'))
+          .map(a => parseInt(a.id))
+          .filter(n => !isNaN(n))
+      );
+      for (let i = 4000; i <= 4999; i++) {
+        if (!existing.has(i)) return String(i);
+      }
+      return '4999';
     }
   }
 

@@ -149,6 +149,7 @@ const Storage = (() => {
     const { data, error } = await q;
     if (error) { console.error('getTxns:', error); return []; }
     let result = data || [];
+    // فلترة from محلياً (reserved word في PostgreSQL)
     if (filters.acc) {
       result = result.filter(t =>
         t.acc === filters.acc || t.to === filters.acc || t.from === filters.acc
@@ -286,11 +287,20 @@ const Storage = (() => {
         : 'رصيد صفري — لا تحويل'
     });
 
-    // تحديث رقم الحساب في جميع العمليات → الرقم الأرشيفي
-    await _sb.rpc('archive_account_transactions', {
-      old_id: accountId,
-      new_id: nextArchive
-    });
+    // تحديث رقم الحساب في العمليات المباشرة فقط (إيداع/سحب)
+    // التحويلات تبقى كما هي في حسابات الأطراف الأخرى
+    await _sb.from('transactions')
+      .update({ acc: nextArchive })
+      .eq('acc', accountId);
+    // تحديث from وto فقط في حالة التحويلات بين نفس الحسابات
+    await _sb.from('transactions')
+      .update({ from: nextArchive })
+      .eq('type', 'trf')
+      .eq('from', accountId);
+    await _sb.from('transactions')
+      .update({ to: nextArchive })
+      .eq('type', 'trf')
+      .eq('to', accountId);
 
     const { error } = await _sb.from('accounts').delete().eq('id', accountId);
     if (error) return { ok: false, error: 'خطأ في الحذف: ' + error.message };
