@@ -547,7 +547,8 @@ function renderPage() {
 
   // نبني صفّين: واحد للشاشة، واحد للطباعة (مخفي)
   const makeRow = (t, forPrint=false) => {
-    const sym    = t.cur==='usd'?'$':'€';
+    const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+    const sym    = _cm[(t.cur||'usd').toLowerCase()] || (t.cur||'').toUpperCase();
     const isFee  = t.type==='fee' || t.is_commission_entry;
     const isFrom = t.type==='trf' && t.from===_accId;
     const isTo   = t.type==='trf' && t.to===_accId;
@@ -569,6 +570,7 @@ function renderPage() {
     const cCell = credit>0 ? `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>` : '—';
     const badgeClass = isFee ? 'badge-fee' : `badge-${t.type}`;
     const badgeLabel = isFee ? '💰 عمولة' : (typeLabel[t.type]||t.type);
+    // إضافة حدود ذهبية للعمولة
     const editBtns = (!forPrint && !isFee)
       ? [
           canEdit  ? `<button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}')">✏️</button>` : '',
@@ -741,7 +743,7 @@ async function confirmOp(forceOverdraft=false) {
     let msg = 'تمت العملية بنجاح ✅';
     if (result.commission > 0) {
       const sym = _opType==='trf'
-        ? document.getElementById('op-trf-cur').value==='usd'?'$':'€'
+        ? ({'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'}[document.getElementById('op-trf-cur').value]||document.getElementById('op-trf-cur').value)
         : document.getElementById('op-cur').value==='usd'?'$':'€';
       msg += ` · عمولة: ${sym}${result.commission.toFixed(2)}`;
     }

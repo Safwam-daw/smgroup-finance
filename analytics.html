@@ -358,21 +358,37 @@ function renderCharts(data) {
 }
 
 function renderTopCustomers() {
-  const customers = _accounts
+  // دولار
+  const custsUsd = _accounts
     .filter(a => a.type === 'customer' && parseFloat(a.bal_usd||0) > 0)
     .sort((a,b) => parseFloat(b.bal_usd||0) - parseFloat(a.bal_usd||0))
     .slice(0, 7);
+  const elUsd = document.getElementById('top-customers');
+  elUsd.innerHTML = custsUsd.length
+    ? custsUsd.map((a, i) => `
+      <div class="top-item">
+        <div class="top-rank">${i+1}</div>
+        <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
+        <div class="top-val" style="color:var(--green);">$${parseFloat(a.bal_usd).toFixed(2)}</div>
+      </div>`).join('')
+    : '<div class="no-data">لا توجد حسابات دائنة بالدولار</div>';
 
-  const el = document.getElementById('top-customers');
-  if (!customers.length) {
-    el.innerHTML = '<div class="no-data">لا توجد حسابات دائنة</div>'; return;
+  // يورو
+  const custsEur = _accounts
+    .filter(a => a.type === 'customer' && parseFloat(a.bal_eur||0) > 0)
+    .sort((a,b) => parseFloat(b.bal_eur||0) - parseFloat(a.bal_eur||0))
+    .slice(0, 7);
+  const elEur = document.getElementById('top-customers-eur');
+  if (elEur) {
+    elEur.innerHTML = custsEur.length
+      ? custsEur.map((a, i) => `
+        <div class="top-item">
+          <div class="top-rank">${i+1}</div>
+          <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
+          <div class="top-val" style="color:var(--euro);">€${parseFloat(a.bal_eur).toFixed(2)}</div>
+        </div>`).join('')
+      : '<div class="no-data">لا توجد حسابات دائنة باليورو</div>';
   }
-  el.innerHTML = customers.map((a, i) => `
-    <div class="top-item">
-      <div class="top-rank">${i+1}</div>
-      <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
-      <div class="top-val" style="color:var(--green);">$${parseFloat(a.bal_usd).toFixed(2)}</div>
-    </div>`).join('');
 }
 
 function renderTopEmployees() {
