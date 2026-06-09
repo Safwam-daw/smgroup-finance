@@ -65,6 +65,7 @@
   .badge-dep { background:#e8f8ef!important; color:#16a34a!important; }
   .badge-wit { background:#fef2f2!important; color:#dc2626!important; }
   .badge-trf { background:#eff6ff!important; color:#2563eb!important; }
+  .badge-fee { background:#fffbef!important; color:#a16207!important; border:1px solid #c9a84c!important; }
   .print-footer { display:block!important; }
 }
 .print-header, .print-footer { display:none; }
@@ -236,7 +237,7 @@
 let _currentAccId = null;
 let _allTxns      = [];
 let _allAccounts  = [];
-const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل' };
+const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل', fee:'💰 عمولة' };
 
 (async () => {
   if (!await initApp('statement')) return;
@@ -372,7 +373,7 @@ function renderRows() {
         ` : '—';
         return `<tr class="stmt-row">
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
-          <td><span class="badge badge-${t.type}">${typeLabel[t.type]}</span></td>
+          <td><span class="badge badge-${t.type||'fee'}">${typeLabel[t.type]||'💰 عمولة'}</span></td>
           <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
           <td>${t.cur.toUpperCase()}</td>
           <td>${debitCell}</td>

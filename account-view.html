@@ -115,11 +115,11 @@
 
       <!-- أرصدة -->
       <div class="bal-row" id="bal-row">
-        <div class="bal-box" id="box-usd" style="border-color:var(--gold);background:var(--gold-dim2);">
+        <div class="bal-box" id="box-usd" style="border-color:var(--gold);background:var(--gold-dim2);cursor:pointer;" onclick="filterByCur('usd')">
           <div class="bal-box-label">🇺🇸 رصيد الدولار</div>
           <div class="bal-box-val" id="bal-usd" style="color:var(--gold);">—</div>
         </div>
-        <div class="bal-box" id="box-eur" style="border-color:var(--euro);background:var(--euro-dim);">
+        <div class="bal-box" id="box-eur" style="border-color:var(--euro);background:var(--euro-dim);cursor:pointer;" onclick="filterByCur('eur')">
           <div class="bal-box-label">🇪🇺 رصيد اليورو</div>
           <div class="bal-box-val" id="bal-eur" style="color:var(--euro);">—</div>
         </div>
@@ -495,6 +495,26 @@ function updateBalBoxes(usd, eur) {
 }
 
 // ── Quick Filters ─────────────────────────────────────
+function filterByCur(cur) {
+  const sel = document.getElementById('f-cur');
+  if (!sel) return;
+  // toggle: إذا كان محدداً بالفعل ارجع للكل
+  if (sel.value === cur) {
+    sel.value = 'all';
+  } else {
+    sel.value = cur;
+  }
+  // تحديث مظهر البطاقات
+  document.querySelectorAll('.bal-box').forEach(b => b.style.opacity = '0.6');
+  if (sel.value !== 'all') {
+    const activeBox = document.getElementById('box-' + sel.value);
+    if (activeBox) activeBox.style.opacity = '1';
+  } else {
+    document.querySelectorAll('.bal-box').forEach(b => b.style.opacity = '1');
+  }
+  renderRows();
+}
+
 function setQuick(key, apply=true) {
   document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
   const today = UI.todayStr();
