@@ -245,6 +245,11 @@ async function loadCurrencies() {
 async function toggleCurrency(code, active) {
   const ok = await Currency.toggle(code, active);
   if (!ok) { UI.toast('خطأ في التحديث','error'); return; }
+  await Storage.logAction('toggle_currency',
+    { currency: code },
+    { is_active: !active },
+    { is_active: active }
+  );
   Currency.invalidate();
   UI.toast(active ? 'تم تفعيل ' + code + ' ✅' : 'تم تعطيل ' + code);
   await loadCurrencies();
@@ -267,6 +272,9 @@ async function savePersonal() {
   if (newPass) ok = await Storage.updateUserPass(user.id, btoa(newPass));
   UI.showLoading(false);
   if (ok) {
+    await Storage.logAction('change_own_password',
+      { username: user.user }
+    );
     UI.toast('تم الحفظ ✅ — سيتم تسجيل الخروج');
     setTimeout(() => { Auth.logout(); navTo('login.html'); }, 1500);
   } else { UI.toast('خطأ في الحفظ','error'); }

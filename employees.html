@@ -268,6 +268,11 @@ async function doAdd() {
   const ok = await Storage.saveUser({ user:u, pass:btoa(p), role:r, permissions:perms });
   UI.showLoading(false);
   if (ok) {
+    await Storage.logAction('add_employee',
+      { username: u, role: r },
+      null,
+      { username: u, role: r, permissions: perms }
+    );
     ['emp-user','emp-pass','emp-pass2'].forEach(id=>document.getElementById(id).value='');
     buildPermGrid('new-perm-grid', Auth.DEFAULT_PERMS);
     UI.toast('تم إضافة الموظف ✅');
@@ -340,10 +345,18 @@ function closePermModal() { document.getElementById('perm-modal').classList.remo
 
 async function savePerms() {
   const perms = getGridPerms('ep');
+  const users = await Storage.getUsers();
+  const targetUser = users.find(x => x.id === _permUid);
+  const oldPerms = targetUser?.permissions || Auth.DEFAULT_PERMS;
   UI.showLoading(true);
   const ok = await Storage.updateUserPermissions(_permUid, perms);
   UI.showLoading(false);
   if (ok) {
+    await Storage.logAction('change_permissions',
+      { target_user: targetUser?.username || _permUid },
+      { permissions: oldPerms },
+      { permissions: perms }
+    );
     closePermModal(); UI.toast('تم حفظ الصلاحيات ✅');
     await renderEmployees();
   } else { UI.toast('خطأ في الحفظ','error'); }
@@ -363,10 +376,17 @@ async function savePass() {
   const p2 = document.getElementById('pass-new2').value;
   if (!p) { UI.toast('أدخل كلمة المرور','error'); return; }
   if (p!==p2) { UI.toast('كلمتا المرور غير متطابقتين','error'); return; }
+  const users = await Storage.getUsers();
+  const targetUser = users.find(x => x.id === _passUid);
   UI.showLoading(true);
   const ok = await Storage.updateUserPass(_passUid, btoa(p));
   UI.showLoading(false);
-  if (ok) { closePass(); UI.toast('تم تغيير كلمة المرور ✅'); }
+  if (ok) {
+    await Storage.logAction('change_password',
+      { target_user: targetUser?.username || _passUid, changed_by: Auth.getUser()?.user }
+    );
+    closePass(); UI.toast('تم تغيير كلمة المرور ✅');
+  }
   else { UI.toast('خطأ في الحفظ','error'); }
 }
 
@@ -379,9 +399,16 @@ function confirmDel(id, username) {
 }
 function closeDel() { document.getElementById('del-modal').classList.remove('open'); }
 async function doDelete() {
+  const users = await Storage.getUsers();
+  const targetUser = users.find(x => x.id === _delId);
   UI.showLoading(true);
   await Storage.deleteUser(_delId);
   UI.showLoading(false);
+  await Storage.logAction('delete_employee',
+    { target_user: targetUser?.username || _delId, role: targetUser?.role },
+    { username: targetUser?.username, role: targetUser?.role },
+    null
+  );
   closeDel(); UI.toast('تم الحذف');
   await renderEmployees();
 }

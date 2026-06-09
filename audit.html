@@ -231,12 +231,55 @@ function applyFilter() {
 
 const actionLabels = {
   deposit:'إيداع', withdraw:'سحب', transfer:'تحويل',
-  delete:'حذف', login:'دخول', logout:'خروج'
+  delete:'حذف عملية', login:'دخول', logout:'خروج',
+  create_account:'إنشاء حساب', delete_account:'حذف حساب',
+  add_employee:'إضافة موظف', delete_employee:'حذف موظف',
+  change_permissions:'تغيير صلاحيات', change_password:'تغيير كلمة مرور',
+  change_own_password:'تغيير كلمة المرور الذاتية',
+  toggle_currency:'تغيير حالة عملة',
+  balance_check_mismatch:'تعارض في الرصيد'
 };
 const actionClass = {
   deposit:'act-deposit', withdraw:'act-withdraw',
-  transfer:'act-transfer', delete:'act-delete'
+  transfer:'act-transfer', delete:'act-delete',
+  delete_account:'act-delete', delete_employee:'act-delete',
+  add_employee:'act-deposit', create_account:'act-deposit',
+  change_permissions:'act-other', change_password:'act-other',
+  change_own_password:'act-other', toggle_currency:'act-other'
 };
+
+function _buildDetails(l) {
+  const d = l.details || {};
+  let parts = [];
+  if (d.accountId)   parts.push(`حساب: ${d.accountId}`);
+  if (d.name)        parts.push(`الاسم: ${d.name}`);
+  if (d.amount)      parts.push(`مبلغ: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`);
+  if (d.fromId)      parts.push(`من: ${d.fromId} → ${d.toId}`);
+  if (d.commission && d.commission > 0) parts.push(`عمولة: ${parseFloat(d.commission).toFixed(2)}`);
+  if (d.txnId)       parts.push(`عملية #${d.txnId}`);
+  if (d.username)    parts.push(`المستخدم: ${d.username}`);
+  if (d.target_user) parts.push(`المستهدف: ${d.target_user}`);
+  if (d.role)        parts.push(`الدور: ${d.role}`);
+  if (d.currency)    parts.push(`العملة: ${d.currency}`);
+  if (d.archiveId)   parts.push(`رقم الأرشيف: ${d.archiveId}`);
+  if (d.changed_by)  parts.push(`بواسطة: ${d.changed_by}`);
+
+  let html = parts.length ? `<div>${UI.escapeHtml(parts.join(' · '))}</div>` : '';
+
+  if (l.old_value || l.new_value) {
+    if (l.action === 'change_permissions') {
+      html += `<div style="font-size:0.68rem;color:var(--text3);margin-top:3px;">تم تعديل الصلاحيات</div>`;
+    } else if (l.old_value && l.new_value) {
+      const oldStr = JSON.stringify(l.old_value).slice(0, 80);
+      const newStr = JSON.stringify(l.new_value).slice(0, 80);
+      html += `<div style="font-size:0.68rem;margin-top:3px;"><span style="color:var(--red);">قبل: ${UI.escapeHtml(oldStr)}</span><br><span style="color:var(--green);">بعد: ${UI.escapeHtml(newStr)}</span></div>`;
+    } else if (l.new_value) {
+      const newStr = JSON.stringify(l.new_value).slice(0, 80);
+      html += `<div style="font-size:0.68rem;color:var(--green);margin-top:3px;">جديد: ${UI.escapeHtml(newStr)}</div>`;
+    }
+  }
+  return html || '—';
+}
 
 function renderPage() {
   const total      = _filtered.length;
@@ -248,19 +291,12 @@ function renderPage() {
     ? page.map(l => {
         const cls   = actionClass[l.action]||'act-other';
         const label = actionLabels[l.action]||l.action;
-        const d     = l.details||{};
-        let details = '';
-        if (d.accountId) details += `حساب: ${d.accountId} `;
-        if (d.amount)    details += `· مبلغ: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`;
-        if (d.fromId)    details += `من: ${d.fromId} → ${d.toId}`;
-        if (d.commission && d.commission>0) details += ` · عمولة: ${parseFloat(d.commission).toFixed(2)}`;
-        if (d.txnId)     details += `عملية #${d.txnId}`;
         return `<tr>
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(l.created_at)}</td>
           <td><span class="action-badge ${cls}">${label}</span></td>
           <td style="font-weight:600;font-size:0.82rem;">${UI.escapeHtml(l.username||'—')}</td>
           <td style="font-size:0.75rem;color:var(--text3);">${UI.escapeHtml(l.page||'—')}</td>
-          <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(details||'—')}</td>
+          <td style="font-size:0.75rem;color:var(--text2);">${_buildDetails(l)}</td>
         </tr>`;
       }).join('')
     : '<tr><td colspan="5" class="empty-state"><div class="empty-icon">🔍</div>لا توجد سجلات</td></tr>';
