@@ -63,6 +63,17 @@ const Storage = (() => {
     return 'bal_' + currency.toLowerCase();
   }
 
+  // ══ تشفير كلمة المرور بـ SHA-256 ══════════════════════
+  // يستبدل btoa() تماماً — لا يمكن عكسه
+  async function hashPassword(plainText) {
+    const encoder = new TextEncoder();
+    const data    = encoder.encode(plainText.trim());
+    const hashBuf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuf))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
   async function getBalance(accountId, currency) {
     const col = _balCol(currency);
     if (_cache.accounts.data) {
@@ -76,21 +87,19 @@ const Storage = (() => {
 
   async function updateBalance(accountId, currency, delta) {
     const col = _balCol(currency);
-    let current = 0;
+    // استدعاء الدالة الذرية في PostgreSQL — تمنع race condition تماماً
+    const { data, error } = await _sb.rpc('update_balance', {
+      p_account_id: accountId,
+      p_currency:   currency,
+      p_delta:      delta
+    });
+    if (error) { console.error('updateBalance:', error); return false; }
+    // تحديث الـ Cache المحلي بالقيمة الجديدة الفعلية من قاعدة البيانات
     if (_cache.accounts.data) {
       const a = _cache.accounts.data.find(x => x.id === accountId);
-      if (a) current = parseFloat(a[col] || 0);
-    } else {
-      const { data } = await _sb.from('accounts').select(col).eq('id', accountId).single();
-      if (data) current = parseFloat(data[col] || 0);
+      if (a) a[col] = data;
     }
-    const newBal = parseFloat((current + delta).toFixed(6));
-    const { error } = await _sb.from('accounts').update({ [col]: newBal }).eq('id', accountId);
-    if (!error && _cache.accounts.data) {
-      const a = _cache.accounts.data.find(x => x.id === accountId);
-      if (a) a[col] = newBal;
-    }
-    return !error;
+    return true;
   }
 
   // الخزينة = مجموع كل الأرصدة لكل العملات (شاملة الأرباح)
@@ -196,8 +205,11 @@ const Storage = (() => {
   }
 
   async function saveUser(user) {
+    // كلمة المرور تصل إما كـ plaintext (من employees.html الجديد)
+    // أو مشفرة مسبقاً — نتحقق من الطول لتجنب التشفير المزدوج
+    const pass = user.pass.length === 64 ? user.pass : await hashPassword(user.pass);
     const { error } = await _sb.from('users').insert({
-      username: user.user, pass: user.pass,
+      username: user.user, pass,
       role: user.role, permissions: user.permissions || null
     });
     if (!error) invalidate('users');
@@ -210,8 +222,9 @@ const Storage = (() => {
     return !error;
   }
 
-  async function updateUserPass(id, passBase64) {
-    const { error } = await _sb.from('users').update({ pass: passBase64 }).eq('id', id);
+  async function updateUserPass(id, plainText) {
+    const pass = await hashPassword(plainText);
+    const { error } = await _sb.from('users').update({ pass }).eq('id', id);
     if (!error) invalidate('users');
     return !error;
   }
@@ -228,15 +241,15 @@ const Storage = (() => {
     return !error;
   }
 
-  async function findUser(username, passBase64) {
-    // البحث عن المستخدم من الـ Cache أولاً
+  async function findUser(username, plainText) {
+    const pass = await hashPassword(plainText);
     if (_fresh('users')) {
-      const u = _cache.users.data.find(x => x.username === username && x.pass === passBase64);
+      const u = _cache.users.data.find(x => x.username === username && x.pass === pass);
       if (u) return { user: u.username, role: u.role, id: u.id, permissions: u.permissions || null };
       return null;
     }
     const { data, error } = await _sb.from('users')
-      .select('*').eq('username', username).eq('pass', passBase64).single();
+      .select('*').eq('username', username).eq('pass', pass).single();
     if (error || !data) return null;
     return { user: data.username, role: data.role, id: data.id, permissions: data.permissions || null };
   }
@@ -554,7 +567,7 @@ const Storage = (() => {
 
   // users
   getUsers, saveUser, deleteUser, updateUserPass,
-  updateUserPermissions, updateUserRole, findUser,
+  updateUserPermissions, updateUserRole, findUser, hashPassword,
 
   // settings
   getAlertSettings, saveAlertSettings,

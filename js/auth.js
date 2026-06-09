@@ -42,8 +42,7 @@ viewAnalytics:false, viewNotifications:false, viewHistory:false
   }
 
   async function login(username, password) {
-    const p    = btoa(password.trim());
-    const user = await Storage.findUser(username.trim(), p);
+    const user = await Storage.findUser(username.trim(), password.trim());
     if (user) {
       _activeUser = user;
       _saveSession(user);
