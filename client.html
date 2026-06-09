@@ -109,7 +109,9 @@ tr:last-child td{border-bottom:none;}
 }
 @media print{
   #login-screen,#toast{display:none!important;}
-  .btn,.qf-row,.pagination,.pub-note{display:none!important;}
+  .btn,.qf-row,.pagination,.pub-note,
+  .card:has(#p-from){display:none!important;}
+  #print-header,#print-footer{display:block!important;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:#fff!important;color:#111!important;}
   #portal-screen{padding:16px!important;max-width:none!important;}
@@ -118,13 +120,14 @@ tr:last-child td{border-bottom:none;}
   .bal-box{background:#fffbef!important;border-color:#c9a84c!important;}
   .bal-val,.bal-label{color:#111!important;}
   .card{background:#fff!important;border:1px solid #ccc!important;}
+  .tbl-wrap{border:1px solid #ccc!important;overflow:visible!important;}
   table{min-width:unset!important;width:100%!important;font-size:0.79rem;}
-  th{background:#f5f0e0!important;color:#333!important;border-bottom:2px solid #c9a84c!important;}
+  th{background:#f5f0e0!important;color:#333!important;border-bottom:2px solid #c9a84c!important;padding:7px 9px;}
   td{background:#fffef7!important;border-bottom:1px solid #eee!important;color:#111!important;padding:6px 9px;}
   .badge-dep{background:#e8f8ef!important;color:#16a34a!important;}
   .badge-wit{background:#fef2f2!important;color:#dc2626!important;}
   .badge-trf{background:#eff6ff!important;color:#2563eb!important;}
-  .badge-fee{background:#fffbef!important;color:#a16207!important;}
+  .badge-fee{background:#fffbef!important;color:#a16207!important;border:1px solid #c9a84c!important;}
   .cell-credit{background:#e8f8ef!important;color:#16a34a!important;}
   .cell-debit{background:#fef2f2!important;color:#dc2626!important;}
 }
@@ -202,17 +205,9 @@ tr:last-child td{border-bottom:none;}
       <button class="qf-btn" onclick="setQuick('all')">الكل</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
-      <div style="flex:1;min-width:130px;">
-        <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;">من تاريخ</label>
-        <input type="date" id="p-from" onchange="clearQ();filterRows()"
-               style="width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);
-                      color:var(--text);border-radius:8px;font-family:inherit;outline:none;">
-      </div>
-      <div style="flex:1;min-width:130px;">
-        <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;">إلى تاريخ</label>
-        <input type="date" id="p-to" onchange="clearQ();filterRows()"
-               style="width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);
-                      color:var(--text);border-radius:8px;font-family:inherit;outline:none;">
+      <div style="display:none;">
+        <input type="date" id="p-from">
+        <input type="date" id="p-to">
       </div>
       <div style="display:none;">
         <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;">النوع</label>
