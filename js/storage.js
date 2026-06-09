@@ -488,14 +488,16 @@ const Storage = (() => {
   }
 
   // ══ سجل التدقيق ═══════════════════════════════════════
-  async function logAction(action, details) {
+  async function logAction(action, details, oldValue = null, newValue = null) {
     const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
     try {
       await _sb.from('audit_log').insert({
         action,
-        page: window.location.pathname.split('/').pop(),
-        username: user?.user || 'system',
-        details
+        page:      window.location.pathname.split('/').pop(),
+        username:  user?.user || 'system',
+        details,
+        old_value: oldValue,
+        new_value: newValue
       });
     } catch(e) {}
   }
