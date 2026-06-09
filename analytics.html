@@ -362,7 +362,7 @@ function renderTopCustomers() {
   const custsUsd = _accounts
     .filter(a => a.type === 'customer' && parseFloat(a.bal_usd||0) > 0)
     .sort((a,b) => parseFloat(b.bal_usd||0) - parseFloat(a.bal_usd||0))
-    .slice(0, 7);
+    .slice(0, 3);
   const elUsd = document.getElementById('top-customers');
   elUsd.innerHTML = custsUsd.length
     ? custsUsd.map((a, i) => `
@@ -377,7 +377,7 @@ function renderTopCustomers() {
   const custsEur = _accounts
     .filter(a => a.type === 'customer' && parseFloat(a.bal_eur||0) > 0)
     .sort((a,b) => parseFloat(b.bal_eur||0) - parseFloat(a.bal_eur||0))
-    .slice(0, 7);
+    .slice(0, 3);
   const elEur = document.getElementById('top-customers-eur');
   if (elEur) {
     elEur.innerHTML = custsEur.length

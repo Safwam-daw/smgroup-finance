@@ -352,9 +352,11 @@ function renderRows() {
         const sym    = t.cur==='usd'?'$':'€';
         const isFrom = t.type==='trf' && t.from===_currentAccId;
         const isTo   = t.type==='trf' && t.to===_currentAccId;
+        const isFee = t.type==='fee' || t.is_commission_entry;
         let debit=0, credit=0;
         if (t.type==='dep') credit = parseFloat(t.amt);
         if (t.type==='wit') debit  = parseFloat(t.amt);
+        if (isFee)          debit  = parseFloat(t.amt);
         if (isFrom) debit  = parseFloat(t.amt);
         if (isTo)   credit = parseFloat(t.amt) * (parseFloat(t.rate)||1);
         // الطرف الآخر
