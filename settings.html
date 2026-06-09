@@ -262,14 +262,14 @@ async function savePersonal() {
   const newPass2 = document.getElementById('new-pass2').value;
   if (!currentPass) { UI.toast('أدخل كلمة المرور الحالية للتحقق','error'); return; }
   const user = Auth.getUser();
-  const verified = await Storage.findUser(user.user, btoa(currentPass));
+  const verified = await Storage.findUser(user.user, currentPass);
   if (!verified) { UI.toast('كلمة المرور الحالية خاطئة','error'); return; }
   if (newPass && newPass !== newPass2) {
     UI.toast('كلمتا المرور الجديدتان غير متطابقتين','error'); return;
   }
   UI.showLoading(true);
   let ok = true;
-  if (newPass) ok = await Storage.updateUserPass(user.id, btoa(newPass));
+  if (newPass) ok = await Storage.updateUserPass(user.id, newPass);
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('change_own_password',

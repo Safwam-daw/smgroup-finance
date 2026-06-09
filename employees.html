@@ -265,7 +265,7 @@ async function doAdd() {
   if (users.find(x=>x.username===u)) {
     UI.showLoading(false); UI.toast('اسم المستخدم موجود بالفعل','error'); return;
   }
-  const ok = await Storage.saveUser({ user:u, pass:btoa(p), role:r, permissions:perms });
+  const ok = await Storage.saveUser({ user:u, pass:p, role:r, permissions:perms });
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('add_employee',
@@ -379,7 +379,7 @@ async function savePass() {
   const users = await Storage.getUsers();
   const targetUser = users.find(x => x.id === _passUid);
   UI.showLoading(true);
-  const ok = await Storage.updateUserPass(_passUid, btoa(p));
+  const ok = await Storage.updateUserPass(_passUid, p);
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('change_password',
