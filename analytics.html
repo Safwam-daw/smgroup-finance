@@ -220,7 +220,7 @@ let _days      = 7;
 let _charts    = {};
 
 (async () => {
-  if (!await initApp('reports')) return;
+  if (!await initApp('analytics')) return;
   if (!Auth.isAdmin()) { navTo('dashboard.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();

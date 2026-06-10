@@ -268,20 +268,46 @@ function showToast(msg, type='success') {
   clearTimeout(el._t); el._t = setTimeout(()=>el.className='', 3000);
 }
 
+// ── Rate Limiting ─────────────────────────────────────
+const _CRL = { attempts: 0, lockedUntil: 0, MAX: 5, LOCKOUT: 120000 };
+
 // ── Login ─────────────────────────────────────────────
 async function doLogin() {
   const accId = document.getElementById('c-acc').value.trim();
   const pin   = document.getElementById('c-pin').value.trim();
   const btn   = document.getElementById('login-btn');
   const err   = document.getElementById('login-err');
-  if (!accId||!pin){err.classList.add('show');return;}
+
+  // تحقق من القفل
+  if (Date.now() < _CRL.lockedUntil) {
+    const secs = Math.ceil((_CRL.lockedUntil - Date.now()) / 1000);
+    err.textContent = `تم تعليق الدخول. حاول بعد ${secs} ثانية.`;
+    err.classList.add('show'); return;
+  }
+
+  if (!accId || !pin) { err.textContent = 'رقم الحساب أو كلمة المرور غير صحيحة'; err.classList.add('show'); return; }
   btn.disabled=true; btn.textContent='جاري التحقق…'; err.classList.remove('show');
+
   const acc = await Storage.clientLogin(accId, pin);
   if (!acc) {
-    btn.disabled=false; btn.textContent='دخول'; err.classList.add('show'); return;
+    _CRL.attempts++;
+    if (_CRL.attempts >= _CRL.MAX) {
+      _CRL.lockedUntil = Date.now() + _CRL.LOCKOUT;
+      _CRL.attempts = 0;
+      err.textContent = 'محاولات كثيرة. تم تعليق الدخول لمدة دقيقتين.';
+    } else {
+      err.textContent = 'رقم الحساب أو كلمة المرور غير صحيحة';
+    }
+    err.classList.add('show');
+    btn.disabled=false; btn.textContent='دخول';
+    document.getElementById('c-pin').value='';
+    return;
   }
+
+  _CRL.attempts = 0;
   _acc = acc;
-  try { sessionStorage.setItem('client_session', JSON.stringify({id:acc.id,pin})); } catch(e){}
+  // نحفظ id فقط — لا نحفظ PIN في sessionStorage أبداً
+  try { sessionStorage.setItem('client_session', JSON.stringify({ id: acc.id })); } catch(e){}
   await loadPortal();
 }
 
@@ -455,9 +481,11 @@ window.addEventListener('afterprint', () => {
   try {
     const s = sessionStorage.getItem('client_session');
     if (s) {
-      const { id, pin } = JSON.parse(s);
-      const acc = await Storage.clientLogin(id, pin);
-      if (acc) { _acc=acc; await loadPortal(); return; }
+      const { id } = JSON.parse(s);
+      // نجلب بيانات الحساب مباشرة بدون PIN
+      const accounts = await Storage.getAccounts();
+      const acc = accounts.find(a => a.id === id && a.type === 'customer');
+      if (acc) { _acc = acc; await loadPortal(); return; }
     }
   } catch(e){}
 })();
