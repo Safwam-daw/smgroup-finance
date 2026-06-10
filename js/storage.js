@@ -147,6 +147,8 @@ const Storage = (() => {
   // ══ Transactions ══════════════════════════════════════
   async function getTxns(filters = {}) {
     let q = _sb.from('transactions').select('*').order('date', { ascending: false });
+    // استثناء المحذوفات دائماً — ما لم يُطلب عرضها صراحةً
+    if (!filters.include_deleted) q = q.eq('is_deleted', false);
     if (filters.type)      q = q.eq('type', filters.type);
     if (filters.cur)       q = q.eq('cur', filters.cur);
     if (filters.acc) {
@@ -168,7 +170,7 @@ const Storage = (() => {
   }
 
   async function saveTxn(txn) {
-    const { error } = await _sb.from('transactions').insert(txn);
+    const { error } = await _sb.from('transactions').insert({ ...txn, is_deleted: false });
     return !error;
   }
 
@@ -177,8 +179,14 @@ const Storage = (() => {
     return !error;
   }
 
+  // soft delete — لا حذف نهائي أبداً
   async function deleteTxn(id) {
-    const { error } = await _sb.from('transactions').delete().eq('id', id);
+    const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+    const { error } = await _sb.from('transactions').update({
+      is_deleted:  true,
+      deleted_by:  user?.user || 'system',
+      deleted_at:  new Date().toISOString()
+    }).eq('id', id);
     return !error;
   }
 
