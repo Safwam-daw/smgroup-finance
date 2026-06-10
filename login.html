@@ -75,7 +75,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
              autocomplete="current-password"
              onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn"></button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()"></button>
     <div class="error-msg" id="login-error"></div>
     <div class="login-footer">V3.0 — SM-Group · Supabase Cloud</div>
   </div>
@@ -119,6 +119,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   })();
 
   if (Auth.restoreSession()) window.location.href = 'dashboard.html';
+
+  // تعيين نص الزر بعد تحميل i18n
+  document.getElementById('login-btn').textContent = t('login_btn');
 
   // ══ Rate Limiting ══
   const _RL = { attempts:0, lockedUntil:0, MAX:5, LOCKOUT:120000 };
