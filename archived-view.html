@@ -273,13 +273,13 @@ function renderRows() {
     } else if (t.type === 'trf') {
       if (isFrom) {
         debit = `<span class="cell-debit">−${amt.toFixed(2)} ${cur}</span>`;
-        other = t.to || '—';
+        other = UI.escapeHtml(t.to || '—');
       } else {
         const received = (t.rate && t.rate !== 1)
           ? (amt * t.rate).toFixed(2)
           : amt.toFixed(2);
         credit = `<span class="cell-credit">+${received} ${cur}</span>`;
-        other = t.from || '—';
+        other = UI.escapeHtml(t.from || '—');
       }
     }
 
