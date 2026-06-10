@@ -59,18 +59,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
     </div>
     <div class="login-logo">
       <h1>SM-Group</h1>
-      <p data-i18n="app_subtitle"></p>
+      <p id="app-subtitle"></p>
     </div>
     <div class="login-divider"></div>
-    <div class="conn-status" id="conn-status" data-i18n="db_connecting"></div>
+    <div class="conn-status" id="conn-status"></div>
     <div class="form-group">
-      <label data-i18n="username"></label>
-      <input type="text" id="login-username"
-             data-i18n-placeholder="username_placeholder"
-             autocomplete="username">
+      <label id="lbl-username"></label>
+      <input type="text" id="login-username" autocomplete="username">
     </div>
     <div class="form-group">
-      <label data-i18n="password"></label>
+      <label id="lbl-password"></label>
       <input type="password" id="login-pass" placeholder="••••••••"
              autocomplete="current-password"
              onkeydown="if(event.key==='Enter') doLogin()">
@@ -86,29 +84,47 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
 <script>
-  // تحديث زر اللغة النشط
-  function _updateLangBtns() {
-    const lang = I18n.getLang();
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.trim() === (
-        lang === 'ar' ? 'العربية' : lang === 'en' ? 'English' : 'Türkçe'
-      ));
-    });
-    // اتجاه حقل الإدخال
-    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  // ══ تطبيق الترجمة على عناصر الصفحة ══
+  function applyTexts() {
+    document.getElementById('app-subtitle').textContent  = t('app_subtitle');
+    document.getElementById('conn-status').textContent   = t('db_connecting');
+    document.getElementById('lbl-username').textContent  = t('username');
+    document.getElementById('lbl-password').textContent  = t('password');
+    document.getElementById('login-btn').textContent     = t('login_btn');
+    document.getElementById('login-username').placeholder = t('username_placeholder');
+    const dir = I18n.getLang() === 'ar' ? 'rtl' : 'ltr';
     document.getElementById('login-username').style.direction = dir;
     document.getElementById('login-pass').style.direction = dir;
+    // أزرار اللغة
+    const lang = I18n.getLang();
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active',
+        (lang==='ar' && btn.textContent==='العربية') ||
+        (lang==='en' && btn.textContent==='English') ||
+        (lang==='tr' && btn.textContent==='Türkçe')
+      );
+    });
   }
 
   function changeLang(lang) {
     I18n.setLang(lang);
-    _updateLangBtns();
+    applyTexts();
   }
 
-  _updateLangBtns();
+  // تطبيق أولي
+  applyTexts();
 
-  // فحص الاتصال
+  // ══ Rate Limiting ══
+  const _RL = { attempts:0, lockedUntil:0, MAX:5, LOCKOUT:120000 };
+
+  // ══ الاتصال + فحص الجلسة ══
   (async () => {
+    // فحص الجلسة أولاً — لا يحتاج DB
+    if (Auth.restoreSession()) {
+      window.location.href = 'dashboard.html';
+      return;
+    }
+    // فحص الاتصال
     try {
       await Storage.getUsers();
       document.getElementById('conn-status').innerHTML =
@@ -117,14 +133,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
       document.getElementById('conn-status').textContent = t('db_error');
     }
   })();
-
-  if (Auth.restoreSession()) window.location.href = 'dashboard.html';
-
-  // تعيين نص الزر بعد تحميل i18n
-  document.getElementById('login-btn').textContent = t('login_btn');
-
-  // ══ Rate Limiting ══
-  const _RL = { attempts:0, lockedUntil:0, MAX:5, LOCKOUT:120000 };
 
   async function doLogin() {
     const btn = document.getElementById('login-btn');
