@@ -84,21 +84,60 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 
   if (Auth.restoreSession()) window.location.href = 'dashboard.html';
 
+  // ══ Rate Limiting — الحد من محاولات تسجيل الدخول ══
+  const _RL = {
+    attempts: 0,
+    lockedUntil: 0,
+    MAX: 5,           // أقصى محاولات متتالية
+    LOCKOUT: 120000,  // مدة القفل: دقيقتان
+  };
+
   async function doLogin() {
     const btn = document.getElementById('login-btn');
     const err = document.getElementById('login-error');
+
+    // تحقق من القفل
+    if (Date.now() < _RL.lockedUntil) {
+      const secs = Math.ceil((_RL.lockedUntil - Date.now()) / 1000);
+      err.textContent = `تم تعليق الدخول. حاول بعد ${secs} ثانية.`;
+      err.classList.add('show');
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'جاري التحقق…';
     err.classList.remove('show');
-    const u = document.getElementById('login-username').value;
+
+    const u = document.getElementById('login-username').value.trim();
     const p = document.getElementById('login-pass').value;
+
+    if (!u || !p) {
+      err.textContent = 'أدخل اسم المستخدم وكلمة المرور';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'دخول للنظام';
+      return;
+    }
+
     const result = await Auth.login(u, p);
+
     if (result.ok) {
+      _RL.attempts = 0;
       window.location.href = 'dashboard.html';
     } else {
-      err.textContent = result.error;
-      err.classList.add('show');
+      _RL.attempts++;
       document.getElementById('login-pass').value = '';
+
+      if (_RL.attempts >= _RL.MAX) {
+        _RL.lockedUntil = Date.now() + _RL.LOCKOUT;
+        _RL.attempts = 0;
+        err.textContent = `محاولات كثيرة. تم تعليق الدخول لمدة دقيقتين.`;
+      } else {
+        const remaining = _RL.MAX - _RL.attempts;
+        err.textContent = `${result.error} — تبقى ${remaining} محاولة`;
+      }
+
+      err.classList.add('show');
       btn.disabled = false;
       btn.textContent = 'دخول للنظام';
     }
