@@ -81,16 +81,6 @@
 </button>
 </div>
 
-<!-- اختيار اللغة -->
-<div class="card settings-section">
-<h3>🌐 <span data-i18n="language"></span></h3>
-<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
-  <button class="btn" id="lang-btn-ar" onclick="applyLang('ar')" style="min-width:110px;">🇸🇦 العربية</button>
-  <button class="btn" id="lang-btn-en" onclick="applyLang('en')" style="min-width:110px;">🇬🇧 English</button>
-  <button class="btn" id="lang-btn-tr" onclick="applyLang('tr')" style="min-width:110px;">🇹🇷 Türkçe</button>
-</div>
-</div>
-
 <!-- إدارة العملات (أدمن فقط) -->
 <div class="card settings-section" id="currency-section" style="display:none;">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -209,26 +199,9 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
 <script src="js/app.js"></script>
-<script src="js/i18n.js"></script>
 <script>
-
-function applyLang(lang) {
-  I18n.setLang(lang);
-  _updateLangBtns();
-  UI.toast(lang === 'ar' ? 'تم تغيير اللغة ✅' : lang === 'en' ? 'Language changed ✅' : 'Dil değiştirildi ✅');
-}
-
-function _updateLangBtns() {
-  const lang = I18n.getLang();
-  ['ar','en','tr'].forEach(l => {
-    const btn = document.getElementById(`lang-btn-${l}`);
-    if (btn) btn.classList.toggle('btn-primary', lang === l);
-  });
-}
-
 (async () => {
   if (!await initApp('settings')) return;
-  _updateLangBtns();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   const user = Auth.getUser();
