@@ -16,7 +16,7 @@ const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
 // 4. ضع الـ token الجديد هنا بدلاً من القيمة الحالية
 // 5. شغّل MIGRATION_V13.sql في SQL Editor
 // ════════════════════════════════════════════════════════════
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJhcHBfcm9sZSI6InNtZ3JvdXBfYXBwIiwiaWF0IjoxNzgwNjYyNzUzLCJleHAiOjIwOTYyMzg3NTN9.K7aM4_lgQsDLNVGuxr7WARZk3RTGGD5C4JzXSuNoLPQ';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window._sb = _sb;
 
@@ -387,8 +387,13 @@ const Storage = (() => {
   // ══ بوابة الزبون ══════════════════════════════════════
   async function clientLogin(accountId, pin) {
     const accounts = await getAccounts();
-    const acc = accounts.find(a => a.id === accountId.trim() && a.client_pin === pin.trim());
-    if (!acc || acc.type !== 'customer') return null;
+    const hashedPin = await hashPassword(pin.trim());
+    const acc = accounts.find(a =>
+      a.id === accountId.trim() &&
+      a.client_pin === hashedPin &&
+      a.type === 'customer'
+    );
+    if (!acc) return null;
     return acc;
   }
 
@@ -411,11 +416,13 @@ const Storage = (() => {
   }
 
   async function regeneratePin(accountId) {
-    const pin = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-    const { error } = await _sb.from('accounts').update({ client_pin: pin }).eq('id', accountId);
+    const plain = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    const hashed = await hashPassword(plain);
+    const { error } = await _sb.from('accounts').update({ client_pin: hashed }).eq('id', accountId);
     if (error) return null;
     invalidate('accounts');
-    return pin;
+    // نعيد الـ PIN كـ plain text مرة واحدة فقط لعرضه للموظف
+    return plain;
   }
 
   async function getClientTxns(accountId, publishedAt) {

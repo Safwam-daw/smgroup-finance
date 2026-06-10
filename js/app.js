@@ -258,19 +258,20 @@ async function initApp(pageId) {
 
   // حماية الصفحات بالصلاحيات
   const permMap = {
-    'dashboard': 'dashboard',
-    'accounts':  'accounts',
-    'deposit':   'deposit',
-    'withdraw':  'withdraw',
-    'transfer':  'transfer',
-    'ledger':    'ledger',
-    'statement': 'statement',
-    'employees': 'employees',
+    'dashboard':    'dashboard',
+    'accounts':     'accounts',
+    'deposit':      'deposit',
+    'withdraw':     'withdraw',
+    'transfer':     'transfer',
+    'ledger':       'ledger',
+    'statement':    'statement',
+    'employees':    'employees',
     'reports':      'reports',
     'audit':        'audit',
     'account-view': 'accounts',
-    'analytics': 'viewAnalytics',
-    'settings':     null  // متاح للجميع
+    'analytics':    'viewAnalytics',
+    'history':      'viewHistory',
+    'settings':     null
   };
 
   if (permMap[pageId] !== undefined && permMap[pageId] !== null) {
