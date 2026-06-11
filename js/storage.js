@@ -16,7 +16,7 @@ const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
 // 4. ضع الـ token الجديد هنا بدلاً من القيمة الحالية
 // 5. شغّل MIGRATION_V13.sql في SQL Editor
 // ════════════════════════════════════════════════════════════
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJhcHBfcm9sZSI6InNtZ3JvdXBfYXBwIiwiaWF0IjoxNzgwNjYyNzUzLCJleHAiOjIwOTYyMzg3NTN9.K7aM4_lgQsDLNVGuxr7WARZk3RTGGD5C4JzXSuNoLPQ';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window._sb = _sb;
 
