@@ -72,21 +72,17 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>
 <script>
-  // فحص الجلسة أولاً ثم الاتصال
+  // فحص الاتصال
   (async () => {
-    // استعادة الجلسة أولاً — لا تحتاج DB
-    if (Auth.restoreSession()) {
-      window.location.href = 'dashboard.html';
-      return;
-    }
-    // فحص الاتصال
     try {
-      await Storage.getUsers();
+      const users = await Storage.getUsers();
       document.getElementById('conn-status').innerHTML = '<span class="conn-ok">✅ متصل بقاعدة البيانات</span>';
     } catch(e) {
       document.getElementById('conn-status').textContent = '❌ تعذّر الاتصال — تحقق من الإنترنت';
     }
   })();
+
+  if (Auth.restoreSession()) window.location.href = 'dashboard.html';
 
   // ══ Rate Limiting — الحد من محاولات تسجيل الدخول ══
   const _RL = {
