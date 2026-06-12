@@ -25,8 +25,8 @@ function buildSidebar(activePage) {
   return `
     <nav id="sidebar">
       <div class="sidebar-logo">
-        <h1>SM-Group</h1>
-        <p>نظام إدارة الخزينة المزدوجة</p>
+        <h1>${brandName()}</h1>
+        <p>${brandTagline()}</p>
       </div>
       
       <div class="sidebar-nav">
@@ -109,7 +109,7 @@ function buildSidebar(activePage) {
   <button id="menu-toggle" aria-label="القائمة">☰</button>
   
   <!-- 2. عنوان المنظومة في المنتصف -->
-  <h1 style="margin:0;">SM-Group</h1>
+  <h1 style="margin:0;">${brandName()}</h1>
   
   <!-- 3. زر جرس الإشعارات أصبح في أقصى اليسار -->
   <button id="notif-btn" onclick="toggleNotifPanel()"
@@ -254,6 +254,11 @@ async function initApp(pageId) {
   if (!Auth.restoreSession()) {
     window.location.href = 'login.html';
     return false;
+  }
+
+  // تحديث عنوان الصفحة باسم الشركة — يستبدل "SM-Group" تلقائياً
+  if (typeof brandName === 'function') {
+    document.title = document.title.replace(/^SM-Group/, brandName());
   }
 
   // حماية الصفحات بالصلاحيات
