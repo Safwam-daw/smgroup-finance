@@ -139,7 +139,7 @@ onchange="handleImport(event)">
 <div style="display:flex;flex-direction:column;gap:8px;font-size:0.83rem;color:var(--text2);">
 <div style="display:flex;gap:12px;">
 <span style="color:var(--text3);min-width:130px;">اسم النظام</span>
-<span style="color:var(--text);font-weight:600;">SM-Group — نظام إدارة الخزينة المزدوجة</span>
+<span style="color:var(--text);font-weight:600;" id="about-brand-name">SM-Group</span>
 </div>
 <div style="display:flex;gap:12px;">
 <span style="color:var(--text3);min-width:130px;">الإصدار</span>
@@ -155,7 +155,11 @@ onchange="handleImport(event)">
 </div>
 <div style="display:flex;gap:12px;">
 <span style="color:var(--text3);min-width:130px;">حقوق الملكية</span>
-<span>© 2025 SM-Group · جميع الحقوق محفوظة</span>
+<span id="about-copyright">© 2025 — جميع الحقوق محفوظة</span>
+</div>
+<div style="display:flex;gap:12px;">
+<span style="color:var(--text3);min-width:130px;">تطوير</span>
+<span>Daw Tech</span>
 </div>
 </div>
 </div>
@@ -210,12 +214,21 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
 <script src="js/app.js"></script>
 <script src="js/i18n.js"></script>
+<script src="js/config.js"></script>
 <script>
 
 function applyLang(lang) {
   I18n.setLang(lang);
   _updateLangBtns();
+  _applyBrandInfo();
   UI.toast(lang === 'ar' ? 'تم تغيير اللغة ✅' : lang === 'en' ? 'Language changed ✅' : 'Dil değiştirildi ✅');
+}
+
+function _applyBrandInfo() {
+  document.getElementById('about-brand-name').textContent =
+    brandName() + ' — ' + brandTagline();
+  document.getElementById('about-copyright').textContent =
+    `© ${BRAND.copyrightYear} ${brandName()} · جميع الحقوق محفوظة`;
 }
 
 function _updateLangBtns() {
@@ -229,6 +242,7 @@ function _updateLangBtns() {
 (async () => {
   if (!await initApp('settings')) return;
   _updateLangBtns();
+  _applyBrandInfo();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   const user = Auth.getUser();
@@ -317,7 +331,7 @@ function handleImport(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!data.accounts || !data.txns) {
-        UI.toast('ملف غير صالح — تأكد أنه نسخة احتياطية من SM-Group', 'error');
+        UI.toast('ملف غير صالح — تأكد أنه نسخة احتياطية من ' + brandName(), 'error');
         return;
       }
       _importData = data;

@@ -58,7 +58,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
       <button class="lang-btn" onclick="changeLang('tr')">Türkçe</button>
     </div>
     <div class="login-logo">
-      <h1>SM-Group</h1>
+      <h1 id="login-brand-name">SM-Group</h1>
       <p data-i18n="app_subtitle"></p>
     </div>
     <div class="login-divider"></div>
@@ -77,7 +77,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
     </div>
     <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn"></button>
     <div class="error-msg" id="login-error"></div>
-    <div class="login-footer">V3.0 — SM-Group · Supabase Cloud</div>
+    <div class="login-footer" id="login-footer">V3.0 — Powered by Daw Tech</div>
   </div>
 </div>
 
@@ -85,6 +85,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/i18n.js"></script>
+<script src="js/config.js"></script>
 <script>
   // تحديث زر اللغة النشط
   function _updateLangBtns() {
@@ -103,9 +104,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   function changeLang(lang) {
     I18n.setLang(lang);
     _updateLangBtns();
+    _applyBrand();
+  }
+
+  function _applyBrand() {
+    document.getElementById('login-brand-name').textContent = brandName();
+    document.title = brandName();
   }
 
   _updateLangBtns();
+  _applyBrand();
 
   // فحص الاتصال
   (async () => {

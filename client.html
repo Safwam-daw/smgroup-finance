@@ -139,7 +139,7 @@ tr:last-child td{border-bottom:none;}
 <!-- شاشة الدخول -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="logo">SM-Group</div>
+    <div class="logo" id="client-brand-name">SM-Group</div>
     <div class="logo-sub">بوابة الزبون</div>
     <div class="divider"></div>
     <div class="form-group">
@@ -168,7 +168,7 @@ tr:last-child td{border-bottom:none;}
     <div style="display:flex;justify-content:space-between;align-items:center;
          border-bottom:3px solid #c9a84c;padding-bottom:12px;">
       <div>
-        <h1 style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
+        <h1 id="print-brand-name" style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
         <p style="font-size:0.73rem;color:#555;margin-top:3px;">كشف حساب الزبون</p>
       </div>
       <div style="text-align:left;">
@@ -250,14 +250,24 @@ tr:last-child td{border-bottom:none;}
   <!-- تذييل الطباعة -->
   <div id="print-footer" style="display:none;margin-top:24px;border-top:1px solid #ddd;
        padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
-    SM-Group — كشف حساب رسمي · طُبع بتاريخ <span id="print-date2"></span>
+    <span id="print-brand-footer">SM-Group</span> — كشف حساب رسمي · طُبع بتاريخ <span id="print-date2"></span>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/config.js"></script>
 <script>
 const PAGE_SIZE = 20;
+
+// ── تطبيق هوية الشركة ───────────────────────────────────
+(() => {
+  const name = brandName();
+  document.getElementById('client-brand-name').textContent = name;
+  document.getElementById('print-brand-name').textContent = name;
+  document.getElementById('print-brand-footer').textContent = name;
+  document.title = name + ' — بوابة الزبون';
+})();
 let _acc = null, _allTxns = [], _filtered = [], _page = 1;
 const typeLabel = {dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل', fee:'💰 عمولة'};
 
@@ -339,7 +349,7 @@ async function loadPortal() {
   // اسم ومعلومات
   document.getElementById('p-name').textContent = _acc.name;
   document.getElementById('p-meta').textContent = 'رقم الحساب: ' + _acc.id;
-  document.title = 'SM-Group — ' + _acc.name;
+  document.title = brandName() + ' — ' + _acc.name;
 
   // أرصدة
   document.getElementById('p-bals').innerHTML = `
