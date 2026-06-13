@@ -163,6 +163,9 @@ const PAGE_SIZE = 20;
 let _allLogs  = [];
 let _filtered = [];
 let _page     = 1;
+let _printMode = false;
+window.addEventListener('beforeprint', () => { _printMode = true; renderPage(); });
+window.addEventListener('afterprint', () => { _printMode = false; renderPage(); });
 
 (async () => {
   if (!await initApp('audit')) return;
@@ -292,7 +295,7 @@ function renderPage() {
   const total      = _filtered.length;
   const totalPages = Math.ceil(total/PAGE_SIZE)||1;
   const start      = (_page-1)*PAGE_SIZE;
-  const page       = _filtered.slice(start, start+PAGE_SIZE);
+  const page       = _printMode ? _filtered : _filtered.slice(start, start+PAGE_SIZE);
 
   document.getElementById('audit-tbody').innerHTML = page.length
     ? page.map(l => {
@@ -308,8 +311,9 @@ function renderPage() {
       }).join('')
     : '<tr><td colspan="5" class="empty-state"><div class="empty-icon">🔍</div>لا توجد سجلات</td></tr>';
 
-  document.getElementById('audit-count').textContent =
-    `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} إجراء`;
+  document.getElementById('audit-count').textContent = _printMode
+    ? `${total} إجراء`
+    : `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} إجراء`;
 
   const pg = document.getElementById('audit-pages');
   if (totalPages<=1){pg.innerHTML='';return;}
