@@ -123,13 +123,14 @@
 <div class="print-header">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <h1 style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير الإحصائيات</h1>
+      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير الإحصائيات</h1>
       <p id="print-period-label" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
     </div>
     <div style="font-size:0.75rem;color:#555;text-align:left;">
       طُبع بتاريخ: <b id="print-date-analytics"></b>
     </div>
   </div>
+  <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-analytics"></div>
 </div>
 
 <div class="page-header">
@@ -242,6 +243,8 @@ let _charts    = {};
   // إعداد الطباعة
   document.getElementById('print-date-analytics').textContent =
     new Date().toLocaleDateString('ar-SA');
+  document.getElementById('print-report-brand').textContent = brandName() + ' — تقرير الإحصائيات';
+  document.getElementById('print-dawtech-analytics').textContent = brandPrintCopyright();
 
   window.addEventListener('beforeprint', () => {
     const periodMap = { 7:'آخر 7 أيام', 30:'آخر 30 يوم', 90:'آخر 3 أشهر', 365:'السنة كاملة' };

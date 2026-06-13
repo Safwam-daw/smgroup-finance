@@ -55,11 +55,12 @@
 <div class="print-header">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <h1 style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التعديلات</h1>
+      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التعديلات</h1>
       <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
     </div>
     <div style="font-size:0.75rem;color:#555;">طُبع بتاريخ: <b id="print-date"></b></div>
   </div>
+  <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-history"></div>
 </div>
 
 <div class="page-header">
@@ -137,7 +138,6 @@ const PAGE_SIZE = 20;
 let _allLogs  = [];
 let _filtered = [];
 let _page     = 1;
-let _printMode = false;
 
 (async () => {
   if (!await initApp('history')) return;
@@ -146,15 +146,13 @@ let _printMode = false;
   await UI.updateTreasury();
 
   document.getElementById('print-date').textContent = new Date().toLocaleDateString('ar-SA');
+  document.getElementById('print-report-brand').textContent = brandName() + ' — سجل التعديلات';
+  document.getElementById('print-dawtech-history').textContent = brandPrintCopyright();
   window.addEventListener('beforeprint', () => {
     const from = document.getElementById('f-from').value;
     const to   = document.getElementById('f-to').value;
     document.getElementById('print-period').textContent =
       (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
-    _printMode = true; renderPage();
-  });
-  window.addEventListener('afterprint', () => {
-    _printMode = false; renderPage();
   });
 
   const today = UI.todayStr();
@@ -219,7 +217,7 @@ function renderPage() {
   const total      = _filtered.length;
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
   const start      = (_page - 1) * PAGE_SIZE;
-  const page       = _printMode ? _filtered : _filtered.slice(start, start + PAGE_SIZE);
+  const page       = _filtered.slice(start, start + PAGE_SIZE);
 
   document.getElementById('history-tbody').innerHTML = page.length
     ? page.map(l => {
@@ -246,7 +244,7 @@ function renderPage() {
     : '<tr><td colspan="6" class="empty-state"><div class="empty-icon">📝</div>لا توجد تعديلات مسجّلة</td></tr>';
 
   document.getElementById('history-count').textContent =
-    !total ? '' : _printMode ? `${total} تعديل` : `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} تعديل`;
+    total ? `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} تعديل` : '';
 
   const pg = document.getElementById('history-pages');
   if (totalPages <= 1) { pg.innerHTML = ''; return; }
