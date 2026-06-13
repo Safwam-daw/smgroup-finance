@@ -138,6 +138,7 @@ const PAGE_SIZE = 20;
 let _allLogs  = [];
 let _filtered = [];
 let _page     = 1;
+let _printMode = false;
 
 (async () => {
   if (!await initApp('history')) return;
@@ -153,6 +154,10 @@ let _page     = 1;
     const to   = document.getElementById('f-to').value;
     document.getElementById('print-period').textContent =
       (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
+    _printMode = true; renderPage();
+  });
+  window.addEventListener('afterprint', () => {
+    _printMode = false; renderPage();
   });
 
   const today = UI.todayStr();
@@ -217,7 +222,7 @@ function renderPage() {
   const total      = _filtered.length;
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
   const start      = (_page - 1) * PAGE_SIZE;
-  const page       = _filtered.slice(start, start + PAGE_SIZE);
+  const page       = _printMode ? _filtered : _filtered.slice(start, start + PAGE_SIZE);
 
   document.getElementById('history-tbody').innerHTML = page.length
     ? page.map(l => {
@@ -244,7 +249,7 @@ function renderPage() {
     : '<tr><td colspan="6" class="empty-state"><div class="empty-icon">📝</div>لا توجد تعديلات مسجّلة</td></tr>';
 
   document.getElementById('history-count').textContent =
-    total ? `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} تعديل` : '';
+    !total ? '' : _printMode ? `${total} تعديل` : `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} تعديل`;
 
   const pg = document.getElementById('history-pages');
   if (totalPages <= 1) { pg.innerHTML = ''; return; }
