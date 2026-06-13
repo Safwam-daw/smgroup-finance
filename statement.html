@@ -86,8 +86,8 @@
     <div class="print-header" style="display:none;margin-bottom:18px;">
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c9a84c;padding-bottom:12px;">
         <div>
-          <h1 style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
-          <p style="font-size:0.75rem;color:#555;margin-top:3px;">نظام إدارة الخزينة المزدوجة</p>
+          <h1 id="print-brand-name" style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
+          <p id="print-brand-tagline" style="font-size:0.75rem;color:#555;margin-top:3px;">نظام إدارة الخزينة المزدوجة</p>
         </div>
         <div style="text-align:left;">
           <p style="font-size:0.75rem;color:#555;">تاريخ الطباعة: <b id="print-date"></b></p>
@@ -190,7 +190,7 @@
     <!-- تذييل الطباعة -->
     <div class="print-footer" style="display:none;margin-top:20px;border-top:1px solid #ddd;
          padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
-      SM-Group — نظام إدارة الخزينة المزدوجة · طُبع بتاريخ <span id="print-date-footer"></span>
+      <span id="print-brand-footer">SM-Group</span> — <span id="print-brand-footer-tag">نظام إدارة الخزينة المزدوجة</span> · طُبع بتاريخ <span id="print-date-footer"></span>
     </div>
   </main>
 </div>
@@ -245,6 +245,12 @@ const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحو
   if (!await initApp('statement')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
+
+  // هوية الشركة في الطباعة
+  document.getElementById('print-brand-name').textContent = brandName();
+  document.getElementById('print-brand-tagline').textContent = brandTagline();
+  document.getElementById('print-brand-footer').textContent = brandName();
+  document.getElementById('print-brand-footer-tag').textContent = brandTagline();
 
   // بيانات الطباعة
   const now = new Date().toLocaleDateString('ar-SA');
