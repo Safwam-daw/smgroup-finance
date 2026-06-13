@@ -117,13 +117,14 @@
     <div class="print-report-header">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <h1 style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التدقيق</h1>
+          <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التدقيق</h1>
           <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
         </div>
         <div style="font-size:0.75rem;color:#555;text-align:left;">
           طُبع بتاريخ: <b id="print-date-rep"></b>
         </div>
       </div>
+      <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-rep"></div>
     </div>
 
     <!-- جدول -->
@@ -172,6 +173,8 @@ let _page     = 1;
   // تاريخ الطباعة
   document.getElementById('print-date-rep').textContent =
     new Date().toLocaleDateString('ar-SA');
+  document.getElementById('print-report-brand').textContent = brandName() + ' — سجل التدقيق';
+  document.getElementById('print-dawtech-rep').textContent = brandPrintCopyright();
 
   window.addEventListener('beforeprint', () => {
     const from = document.getElementById('f-from').value;

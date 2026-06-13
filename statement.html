@@ -191,6 +191,7 @@
     <div class="print-footer" style="display:none;margin-top:20px;border-top:1px solid #ddd;
          padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
       <span id="print-brand-footer">SM-Group</span> — <span id="print-brand-footer-tag">نظام إدارة الخزينة المزدوجة</span> · طُبع بتاريخ <span id="print-date-footer"></span>
+      <div style="margin-top:4px;font-size:0.65rem;color:#aaa;" id="print-dawtech-footer"></div>
     </div>
   </main>
 </div>
@@ -251,6 +252,7 @@ const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحو
   document.getElementById('print-brand-tagline').textContent = brandTagline();
   document.getElementById('print-brand-footer').textContent = brandName();
   document.getElementById('print-brand-footer-tag').textContent = brandTagline();
+  document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
 
   // بيانات الطباعة
   const now = new Date().toLocaleDateString('ar-SA');
