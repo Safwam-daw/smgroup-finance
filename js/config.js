@@ -11,7 +11,7 @@
 
 const BRAND = {
   // اسم الشركة المستخدمة للنظام — ثابت، لا يُترجم
-  companyName: 'سندس',
+  companyName: 'soundos-group',
 
   // وصف فرعي يظهر تحت الاسم — يُترجم حسب اللغة
   tagline: {
