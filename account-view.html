@@ -436,7 +436,7 @@ const typeLabel  = {dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحوي
   _allTxns     = txns;
   _allAccounts = allAccounts;
 
-  document.title = 'SM-Group — ' + acc.name;
+  document.title = brandName() + ' — ' + acc.name;
   document.getElementById('hero-name').textContent = acc.name + ' · ' + acc.id;
   document.getElementById('hero-meta').textContent =
     (acc.type==='company'?'شركة':'زبون') + ' · ' + txns.length + ' حركة إجمالاً';
