@@ -11,6 +11,7 @@ const Currency = (() => {
   async function getAll() {
     if (_currencies) return _currencies;
     const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+    const { data, error } = await sb.from('currencies')
       .select('*').order('sort_order');
     if (error || !data) {
       // افتراضي إذا فشل الجلب
@@ -33,6 +34,7 @@ const Currency = (() => {
   // تفعيل/تعطيل عملة
   async function toggle(code, active) {
     const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+    const { error } = await sb.from('currencies')
       .update({ is_active: active }).eq('code', code);
     if (!error) _currencies = null; // إعادة تحميل
     return !error;
