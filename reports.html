@@ -119,6 +119,7 @@
           طُبع بتاريخ: <b id="print-date-rep"></b>
         </div>
       </div>
+      <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-rep"></div>
     </div>
 
     <!-- ملخص -->
@@ -278,6 +279,7 @@ let _allTxns = [], _allAccounts = [], _depPage=1, _witPage=1, _trfPage=1;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   document.getElementById('print-report-brand').textContent = brandName() + ' — تقرير مالي';
+  document.getElementById('print-dawtech-rep').textContent = brandPrintCopyright();
   // تاريخ الطباعة
   const now = new Date().toLocaleDateString('ar-SA');
   const prEl = document.getElementById('print-date-rep');
@@ -700,6 +702,7 @@ async function showDeletedTxns(originalId, name, archiveId) {
       <td>${t.by||'—'}</td></tr>`;
   }).join('')}</tbody></table>
   <p style="margin-top:20px;font-size:0.75rem;color:#4a5a72;">${brandName()} — سجل الأرشيف</p>
+  <p style="margin-top:4px;font-size:0.65rem;color:#aaa;">${brandPrintCopyright()}</p>
   <script>window.print();<\/script></body></html>`);
 }
 

@@ -251,6 +251,7 @@ tr:last-child td{border-bottom:none;}
   <div id="print-footer" style="display:none;margin-top:24px;border-top:1px solid #ddd;
        padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
     <span id="print-brand-footer">SM-Group</span> — كشف حساب رسمي · طُبع بتاريخ <span id="print-date2"></span>
+    <div style="margin-top:4px;font-size:0.65rem;color:#aaa;" id="print-dawtech-footer"></div>
   </div>
 </div>
 
@@ -266,6 +267,7 @@ const PAGE_SIZE = 20;
   document.getElementById('client-brand-name').textContent = name;
   document.getElementById('print-brand-name').textContent = name;
   document.getElementById('print-brand-footer').textContent = name;
+  document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
   document.title = name + ' — بوابة الزبون';
 })();
 let _acc = null, _allTxns = [], _filtered = [], _page = 1;

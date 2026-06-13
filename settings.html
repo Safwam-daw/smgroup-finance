@@ -122,17 +122,6 @@ onchange="handleImport(event)">
 </p>
 </div>
 
-<!-- منطقة الخطر — أدمن فقط -->
-<div class="settings-section" id="danger-zone-section" style="display:none;">
-<div class="danger-zone">
-<h3>🗑️ مسح بيانات قاعدة البيانات</h3>
-<p>هذا الإجراء يمسح جميع العمليات والحسابات والمحذوفات والتدقيق. لا يمكن التراجع عنه. مخصص لمسح بيانات الاختبار فقط.</p>
-<button class="btn btn-danger" onclick="confirmReset()">
-⚠️ مسح كل البيانات
-</button>
-</div>
-</div>
-
 <!-- حول النظام -->
 <div class="card settings-section">
 <h3>ℹ️ حول النظام</h3>
@@ -143,7 +132,7 @@ onchange="handleImport(event)">
 </div>
 <div style="display:flex;gap:12px;">
 <span style="color:var(--text3);min-width:130px;">الإصدار</span>
-<span style="color:var(--gold);font-weight:600;">v6.2</span>
+<span style="color:var(--gold);font-weight:600;" id="about-version">v6.2</span>
 </div>
 <div style="display:flex;gap:12px;">
 <span style="color:var(--text3);min-width:130px;">قاعدة البيانات</span>
@@ -188,25 +177,6 @@ z-index:2000;align-items:center;justify-content:center;padding:16px;">
   </div>
 </div>
 
-<!-- Modal تأكيد المسح -->
-<div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
-z-index:2000;align-items:center;justify-content:center;padding:16px;">
-<div class="card" style="width:100%;max-width:440px;text-align:center;">
-<div style="font-size:2.5rem;margin-bottom:12px;">☠️</div>
-<h3 style="color:var(--red);margin-bottom:10px;">تحذير شديد</h3>
-<p style="color:var(--text2);font-size:0.85rem;line-height:1.7;margin-bottom:16px;">
-سيتم مسح <b>جميع العمليات، الحسابات، المحذوفات، وسجل التدقيق</b> نهائياً.<br>
-لا يمكن التراجع عن هذا الإجراء.<br><br>
-اكتب <b style="color:var(--red);">RESET</b> للتأكيد:
-</p>
-<input type="text" id="reset-confirm-input" placeholder="اكتب RESET"
-style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spacing:0.1em;">
-<div style="display:flex;gap:10px;justify-content:center;">
-<button class="btn btn-ghost" onclick="closeReset()">إلغاء</button>
-<button class="btn btn-danger" onclick="doReset()">🗑️ مسح كل شيء</button>
-</div>
-</div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/storage.js"></script><script src="js/auth.js"></script>
@@ -219,14 +189,13 @@ style="width:100%;text-align:center;margin-bottom:14px;font-size:1rem;letter-spa
 
 function applyLang(lang) {
   I18n.setLang(lang);
-  _updateLangBtns();
-  _applyBrandInfo();
-  UI.toast(lang === 'ar' ? 'تم تغيير اللغة ✅' : lang === 'en' ? 'Language changed ✅' : 'Dil değiştirildi ✅');
+  location.reload();
 }
 
 function _applyBrandInfo() {
   document.getElementById('about-brand-name').textContent =
     brandName() + ' — ' + brandTagline();
+  document.getElementById('about-version').textContent = BRAND.version;
   document.getElementById('about-copyright').textContent =
     `© ${BRAND.copyrightYear} ${BRAND.developedBy} · جميع الحقوق محفوظة`;
 }
@@ -256,10 +225,6 @@ function _updateLangBtns() {
   // النسخ الاحتياطي — بالصلاحية
   if (Auth.isAdmin() || Auth.can('exportBackup')) {
     document.getElementById('backup-section').style.display = 'block';
-  }
-  // منطقة الخطر — للأدمن الرئيسي فقط
-  if (user.user === 'admin') {
-    document.getElementById('danger-zone-section').style.display = 'block';
   }
 })();
 
@@ -390,47 +355,6 @@ await sb.from('audit_log').delete().neq('id', 0);
   }
 }
   
-function confirmReset() {
-  if (confirm('هل تريد أخذ نسخة احتياطية قبل المسح؟\nاضغط موافق لأخذ نسخة، أو إلغاء للمتابعة بدون نسخة.')) {
-    Storage.exportBackup();
-  }
-  document.getElementById('reset-confirm-input').value = '';
-  document.getElementById('reset-modal').style.display = 'flex';
-}
-function closeReset() {
-  document.getElementById('reset-modal').style.display = 'none';
-}
-
-async function doReset() {
-  const val = document.getElementById('reset-confirm-input').value.trim();
-  if (val !== 'RESET') { UI.toast('اكتب RESET بالأحرف الكبيرة للتأكيد','error'); return; }
-  closeReset();
-  UI.showLoading(true);
-  try {
-    const sb = supabase.createClient(
-      'https://qrdasgkegudvnobjwafc.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU'
-    );
-    await sb.from('transactions').delete().neq('id', 0);
-    await sb.from('accounts').delete().neq('id', 'x');
-    await sb.from('deleted_accounts').delete().neq('id', 'x');
-    await sb.from('audit_log').delete().neq('id', 0);
-    await sb.from('notifications').delete().neq('id', 0);
-    await sb.from('daily_snapshots').delete().neq('id', 0);
-    await sb.from('alert_settings').delete().neq('id', 0);
-    await sb.from('alert_settings').insert({ debt_limit: -500 });
-    await Storage.ensureProfitAccount();
-    await Storage.addNotification('system', '🗑️ تم مسح قاعدة البيانات',
-      'تم إعادة ضبط النظام لوضع المصنع بتاريخ ' + new Date().toLocaleDateString('ar-SA'), '🗑️');
-    Storage.invalidate();
-    UI.showLoading(false);
-    UI.toast('تم مسح جميع البيانات — سيتم تسجيل الخروج');
-    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
-  } catch(e) {
-    UI.showLoading(false);
-    UI.toast('خطأ أثناء المسح: ' + e.message, 'error');
-  }
-}
 </script>
 </body>
 </html>

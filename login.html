@@ -109,6 +109,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 
   function _applyBrand() {
     document.getElementById('login-brand-name').textContent = brandName();
+    document.getElementById('login-footer').textContent = `${BRAND.version} — Powered by ${BRAND.developedBy}`;
     document.title = brandName();
   }
 
