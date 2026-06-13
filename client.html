@@ -256,7 +256,7 @@ tr:last-child td{border-bottom:none;}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/storage.js"></script>
+<script src="js/db-config.js"></script><script src="js/storage.js"></script>
 <script src="js/config.js"></script>
 <script>
 const PAGE_SIZE = 20;
@@ -270,7 +270,7 @@ const PAGE_SIZE = 20;
   document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
   document.title = name + ' — بوابة الزبون';
 })();
-let _acc = null, _allTxns = [], _filtered = [], _page = 1;
+let _acc = null, _allTxns = [], _filtered = [], _page = 1, _printMode = false;
 const typeLabel = {dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل', fee:'💰 عمولة'};
 
 // ── Toast ─────────────────────────────────────────────
@@ -427,7 +427,7 @@ function renderPage() {
   const total      = _filtered.length;
   const totalPages = Math.ceil(total/PAGE_SIZE)||1;
   const start      = (_page-1)*PAGE_SIZE;
-  const page       = _filtered.slice(start, start+PAGE_SIZE);
+  const page       = _printMode ? _filtered : _filtered.slice(start, start+PAGE_SIZE);
   const accId      = _acc.id;
 
   document.getElementById('p-tbody').innerHTML = page.length
@@ -461,7 +461,7 @@ function renderPage() {
     : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">لا توجد حركات منشورة في هذه الفترة</td></tr>';
 
   document.getElementById('p-count').textContent =
-    total ? `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة` : '';
+    !total ? '' : _printMode ? `${total} حركة` : `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة`;
 
   const pg=document.getElementById('p-pages');
   if(totalPages<=1){pg.innerHTML='';return;}
@@ -482,10 +482,12 @@ function go(p){const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;if(p<1||p>t)retu
 window.addEventListener('beforeprint', () => {
   document.getElementById('print-header').style.display='block';
   document.getElementById('print-footer').style.display='block';
+  _printMode = true; renderPage();
 });
 window.addEventListener('afterprint', () => {
   document.getElementById('print-header').style.display='none';
   document.getElementById('print-footer').style.display='none';
+  _printMode = false; renderPage();
 });
 
 // ── Restore session ───────────────────────────────────
