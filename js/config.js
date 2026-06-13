@@ -3,36 +3,36 @@
  * ─────────────────────────────────────────────
  * هذا الملف يُعدَّل لكل عميل بشكل مستقل
  * كل النسخ الأخرى من الكود تبقى كما هي
+ *
+ * ملاحظة: اسم الشركة لا يُترجم أبداً — يبقى كما يُكتب هنا
+ * بأي لغة كتبته (عربي أو إنجليزي أو غيره) سيظهر كما هو
+ * في كل اللغات.
  */
 
 const BRAND = {
-  // اسم الشركة المستخدمة للنظام (يظهر للموظفين والعملاء)
-  companyName: {
-    ar: 'سندس',
-    en: 'Sundus',
-    tr: 'Sundus'
-  },
+  // اسم الشركة المستخدمة للنظام — ثابت، لا يُترجم
+  companyName: 'سندس',
 
-  // وصف فرعي يظهر تحت الاسم
+  // وصف فرعي يظهر تحت الاسم — يُترجم حسب اللغة
   tagline: {
     ar: 'نظام إدارة الخزينة المزدوجة',
     en: 'Dual Treasury Management System',
     tr: 'Çift Hazine Yönetim Sistemi'
   },
 
-  // معلومات المطوّر — تظهر في تذييل الصفحات (footer) كحقوق ملكية
+  // معلومات المطوّر — ثابت، لا يُترجم
   developedBy: 'Daw Tech',
 
   // سنة حقوق النشر
   copyrightYear: '2025'
 };
 
-// دالة مساعدة — الحصول على اسم الشركة باللغة الحالية
+// اسم الشركة — دائماً كما هو، بدون ترجمة
 function brandName() {
-  const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'ar';
-  return BRAND.companyName[lang] || BRAND.companyName.ar;
+  return BRAND.companyName;
 }
 
+// الوصف الفرعي — يُترجم حسب اللغة الحالية
 function brandTagline() {
   const lang = (typeof I18n !== 'undefined') ? I18n.getLang() : 'ar';
   return BRAND.tagline[lang] || BRAND.tagline.ar;
