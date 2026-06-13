@@ -3,7 +3,7 @@
  * Cache مركزي قوي + طلبات متوازية = أسرع تحميل ممكن
  */
 
-const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
+const SUPABASE_URL = DB_CONFIG.url;
 
 // ══ تعليمات تفعيل RLS (مطلوب مرة واحدة) ══════════════════════
 // 1. اذهب إلى Supabase Dashboard → Project Settings → API
@@ -13,10 +13,10 @@ const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
 //      "role":"anon", "app_role":"smgroup_app",
 //      "iat":1780662753, "exp":2096238753 }
 //    وقّعه بنفس الـ JWT Secret
-// 4. ضع الـ token الجديد هنا بدلاً من القيمة الحالية
+// 4. حدّث القيمة في js/db-config.js
 // 5. شغّل MIGRATION_V13.sql في SQL Editor
 // ════════════════════════════════════════════════════════════
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
+const SUPABASE_KEY = DB_CONFIG.key;
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window._sb = _sb;
 

@@ -10,10 +10,7 @@ const Currency = (() => {
   // ── جلب العملات ─────────────────────────────────────
   async function getAll() {
     if (_currencies) return _currencies;
-    const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data, error } = await sb.from('currencies')
+    const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
       .select('*').order('sort_order');
     if (error || !data) {
       // افتراضي إذا فشل الجلب
@@ -35,10 +32,7 @@ const Currency = (() => {
 
   // تفعيل/تعطيل عملة
   async function toggle(code, active) {
-    const SUPABASE_URL = 'https://qrdasgkegudvnobjwafc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { error } = await sb.from('currencies')
+    const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
       .update({ is_active: active }).eq('code', code);
     if (!error) _currencies = null; // إعادة تحميل
     return !error;
