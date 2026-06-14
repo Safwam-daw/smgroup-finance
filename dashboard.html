@@ -216,7 +216,7 @@ function renderDebtorPage() {
   pg.innerHTML=`
     <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage-1})" ${_debtorPage===1?'disabled':''}>‹ ${I18n.t('prev')}</button>
     <span>${_debtorPage} / ${totalPages}</span>
-    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''>${I18n.t('next')} ›</button>`;
+    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''}>${I18n.t('next')} ›</button>`;
 }
 
 async function publishAll() {

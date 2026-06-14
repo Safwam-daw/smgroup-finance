@@ -188,7 +188,7 @@ async function updatePreview() {
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('outgoing')}</div>
            <b style="color:var(--red);">-${sym}${amt.toFixed(2)}</b></div>
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('sender_after')}</div>
-           <b style="color:${newFrom<0?'var(--red)':'var(--text)};">${sym}${newFrom.toFixed(2)}</b>
+           <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
            ${newFrom<0?'<span style="color:var(--red);font-size:0.72rem;"> ⚠️</span>':''}</div>
     </div>`;
   document.getElementById('trf-prev-to').innerHTML =
