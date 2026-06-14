@@ -95,13 +95,14 @@ let _debtorPage = 1;
 (async () => {
   if (!await initApp('dashboard')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
-  await Promise.all([ UI.updateTreasury(), loadAll() ]);
+  const accounts = await loadAll();
+  await UI.updateTreasury();
   Storage.saveDailySnapshot().catch(e => console.log('snapshot:', e));
   if (Auth.isAdmin()) {
     const pb = document.getElementById('publish-all-btn');
     if (pb) pb.style.display = 'inline-flex';
   }
-  await checkDebtAlerts(accounts);
+  await checkDebtAlerts(accounts || []);
   Realtime.start(
     async (txn) => {
       await UI.updateTreasury();
@@ -133,6 +134,7 @@ async function loadAll() {
     .querySelector('#debtor-stat').textContent = _debtors.length;
   _debtorPage = 1;
   renderDebtorPage();
+  return accounts;
 }
 
 function renderSummaryShell(accounts) {
