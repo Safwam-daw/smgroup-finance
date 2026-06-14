@@ -12,17 +12,23 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2>🔄 تحويل أرصدة</h2><p>نقل رصيد بين حسابين</p></div>
+      <div>
+        <h2 data-i18n="transfer_title">🔄 تحويل أرصدة</h2>
+        <p data-i18n="transfer_subtitle">نقل رصيد بين حسابين</p>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:16px;">
-      <h3>بيانات التحويل</h3>
+      <h3 data-i18n="transfer_data">بيانات التحويل</h3>
 
       <!-- المرسل -->
       <div class="form-group">
-        <label>من حساب (المرسل) <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <label>
+          <span data-i18n="from_account">من حساب (المرسل)</span>
+          <span style="color:var(--text3);font-size:0.7rem;" data-i18n="search_hint">(Enter لاختيار أول نتيجة)</span>
+        </label>
         <div class="search-wrap">
-          <input type="text" id="trf-from-search" placeholder="ابحث…" autocomplete="off">
+          <input type="text" id="trf-from-search" data-i18n-placeholder="search_placeholder" placeholder="ابحث…" autocomplete="off">
           <div id="trf-from-res" class="search-dropdown"></div>
         </div>
         <input type="hidden" id="trf-from-id">
@@ -30,17 +36,17 @@
       <!-- بطاقة رصيد المرسل -->
       <div id="from-bal-box" style="display:none; margin-bottom:12px; padding:10px 14px;
            background:var(--surface2); border:1px solid var(--border2); border-radius:8px;
-           font-size:0.83rem; display:none;">
-        <span style="color:var(--text3);">رصيد المرسل:</span>
+           font-size:0.83rem;">
+        <span style="color:var(--text3);" data-i18n="sender_balance">رصيد المرسل:</span>
         <b id="from-bal-usd" style="margin-right:10px;color:var(--gold);"></b>
         <b id="from-bal-eur" style="margin-right:10px;color:var(--euro);"></b>
       </div>
 
       <!-- المستقبل -->
       <div class="form-group">
-        <label>إلى حساب (المستقبل)</label>
+        <label data-i18n="to_account">إلى حساب (المستقبل)</label>
         <div class="search-wrap">
-          <input type="text" id="trf-to-search" placeholder="ابحث…" autocomplete="off">
+          <input type="text" id="trf-to-search" data-i18n-placeholder="search_placeholder" placeholder="ابحث…" autocomplete="off">
           <div id="trf-to-res" class="search-dropdown"></div>
         </div>
         <input type="hidden" id="trf-to-id">
@@ -49,23 +55,23 @@
       <div id="to-bal-box" style="display:none; margin-bottom:12px; padding:10px 14px;
            background:var(--surface2); border:1px solid var(--border2); border-radius:8px;
            font-size:0.83rem;">
-        <span style="color:var(--text3);">رصيد المستقبل:</span>
+        <span style="color:var(--text3);" data-i18n="receiver_balance">رصيد المستقبل:</span>
         <b id="to-bal-usd" style="margin-right:10px;color:var(--gold);"></b>
         <b id="to-bal-eur" style="margin-right:10px;color:var(--euro);"></b>
       </div>
 
       <div class="grid-2">
         <div class="form-group">
-          <label>العملة</label>
+          <label data-i18n="currency">العملة</label>
           <select id="trf-cur" class="currency-select" onchange="updatePreview()"></select>
         </div>
         <div class="form-group">
-          <label>سعر الصرف (للمستقبل)</label>
+          <label data-i18n="exchange_rate">سعر الصرف (للمستقبل)</label>
           <input type="number" id="trf-rate" value="1" step="0.0001" min="0" oninput="updatePreview()">
         </div>
       </div>
       <div class="form-group">
-        <label>المبلغ</label>
+        <label data-i18n="amount">المبلغ</label>
         <input type="number" id="trf-amount" placeholder="0.00" min="0" step="0.01"
                oninput="updatePreview()"
                onkeydown="if(event.key==='Enter') doTransfer(false)">
@@ -78,17 +84,22 @@
         <div id="trf-prev-to"></div>
       </div>
 
-      <button class="btn btn-primary btn-full" onclick="doTransfer(false)">🔄 تنفيذ التحويل</button>
+      <button class="btn btn-primary btn-full" onclick="doTransfer(false)" data-i18n="execute_transfer">🔄 تنفيذ التحويل</button>
     </div>
 
     <!-- آخر التحويلات -->
     <div class="card">
-      <h3>آخر التحويلات</h3>
+      <h3 data-i18n="recent_transfers">آخر التحويلات</h3>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>الوقت</th><th>من</th><th>إلى</th><th>المبلغ</th></tr></thead>
+          <thead><tr>
+            <th data-i18n="col_time">الوقت</th>
+            <th data-i18n="col_from">من</th>
+            <th data-i18n="col_to">إلى</th>
+            <th data-i18n="col_amount">المبلغ</th>
+          </tr></thead>
           <tbody id="recent-trf-tbody">
-            <tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr>
+            <tr><td colspan="4" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
           </tbody>
         </table>
       </div>
@@ -101,11 +112,11 @@
      z-index:1000;align-items:center;justify-content:center;padding:16px;">
   <div class="card" style="width:100%;max-width:420px;text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
-    <h3>رصيد المرسل غير كافٍ</h3>
+    <h3 data-i18n="overdraft_sender">رصيد المرسل غير كافٍ</h3>
     <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.7;"></p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
-      <button class="btn btn-danger" onclick="doTransfer(true)">المتابعة بالسالب</button>
+      <button class="btn btn-ghost" onclick="closeOverdraft()" data-i18n="cancel">إلغاء</button>
+      <button class="btn btn-danger" onclick="doTransfer(true)" data-i18n="proceed_negative">المتابعة بالسالب</button>
     </div>
   </div>
 </div>
@@ -122,27 +133,23 @@
   if (!await initApp('transfer')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-
-  // عند اختيار المرسل → اعرض رصيده
   await Currency.refreshSelects('USD');
   UI.initSearch('trf-from', async (id) => {
     await showBalBox('from', id);
     updatePreview();
   });
-
-  // عند اختيار المستقبل → اعرض رصيده
   UI.initSearch('trf-to', async (id) => {
     await showBalBox('to', id);
     updatePreview();
   });
-
   await renderRecent();
+  I18n.apply();
 })();
 
 async function showBalBox(side, id) {
-  const box    = document.getElementById(side + '-bal-box');
-  const usdEl  = document.getElementById(side + '-bal-usd');
-  const eurEl  = document.getElementById(side + '-bal-eur');
+  const box   = document.getElementById(side + '-bal-box');
+  const usdEl = document.getElementById(side + '-bal-usd');
+  const eurEl = document.getElementById(side + '-bal-eur');
   if (!id) { box.style.display='none'; return; }
   const [usd, eur] = await Promise.all([
     Storage.getBalance(id,'usd'),
@@ -163,38 +170,37 @@ async function updatePreview() {
   const rate   = parseFloat(document.getElementById('trf-rate').value) || 1;
   const box    = document.getElementById('trf-preview');
   if (!fromId || !toId || amt <= 0) { box.style.display='none'; return; }
-  const activeCurs  = await Currency.getActive();
-  const curObj      = activeCurs.find(c => c.code.toLowerCase() === cur.toLowerCase());
-  const sym         = curObj ? curObj.symbol : cur.toUpperCase();
-  const fromBal     = await Storage.getBalance(fromId, cur);
-  const newFrom     = fromBal - amt;
-  const gross       = parseFloat((amt * rate).toFixed(2));
-  // احسب العمولة على المستقبل
-  const accounts    = await Storage.getAccounts();
-  const toAcc       = accounts.find(a => a.id === toId);
-  const ratePct     = (toAcc && toAcc.type==='customer') ? parseFloat(toAcc.commission_rate??0.025) : 0;
-  const rawComm     = ratePct > 0 ? parseFloat((gross * ratePct / 100).toFixed(2)) : 0;
-  const commission  = rawComm >= 0.01 ? rawComm : 0;
-  const net         = parseFloat((gross - commission).toFixed(2));
+  const activeCurs = await Currency.getActive();
+  const curObj     = activeCurs.find(c => c.code.toLowerCase() === cur.toLowerCase());
+  const sym        = curObj ? curObj.symbol : cur.toUpperCase();
+  const fromBal    = await Storage.getBalance(fromId, cur);
+  const newFrom    = fromBal - amt;
+  const gross      = parseFloat((amt * rate).toFixed(2));
+  const accounts   = await Storage.getAccounts();
+  const toAcc      = accounts.find(a => a.id === toId);
+  const ratePct    = (toAcc && toAcc.type==='customer') ? parseFloat(toAcc.commission_rate??0.025) : 0;
+  const rawComm    = ratePct > 0 ? parseFloat((gross * ratePct / 100).toFixed(2)) : 0;
+  const commission = rawComm >= 0.01 ? rawComm : 0;
+  const net        = parseFloat((gross - commission).toFixed(2));
 
   document.getElementById('trf-prev-from').innerHTML =
     `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
-      <div><div style="font-size:0.67rem;color:var(--text3);">يخرج من المرسل</div>
+      <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('outgoing')}</div>
            <b style="color:var(--red);">-${sym}${amt.toFixed(2)}</b></div>
-      <div><div style="font-size:0.67rem;color:var(--text3);">رصيد المرسل بعد</div>
+      <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('sender_after')}</div>
            <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
            ${newFrom<0?'<span style="color:var(--red);font-size:0.72rem;"> ⚠️</span>':''}</div>
     </div>`;
   document.getElementById('trf-prev-to').innerHTML =
     `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;
           padding-top:10px;border-top:1px solid var(--border);">
-      <div><div style="font-size:0.67rem;color:var(--text3);">إجمالي للمستقبل</div>
+      <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('gross_to_receiver')}</div>
            <b>${sym}${gross.toFixed(2)}</b>
            ${rate!==1?`<span style="font-size:0.72rem;color:var(--text3);"> (×${rate})</span>`:''}
       </div>
-      ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">عمولة (${ratePct}%)</div>
+      ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('commission_pct')} (${ratePct}%)</div>
            <b style="color:var(--red);">-${sym}${commission.toFixed(2)}</b></div>`:''}
-      <div><div style="font-size:0.67rem;color:var(--text3);">يدخل حساب المستقبل</div>
+      <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('net_to_receiver')}</div>
            <b style="color:var(--green);">+${sym}${net.toFixed(2)}</b></div>
     </div>`;
   box.style.display = 'block';
@@ -210,7 +216,7 @@ async function doTransfer(force) {
   const result = await Transactions.transfer(from, to, cur, amt, rate, force);
   UI.showLoading(false);
   if (result.ok) {
-    UI.toast('تم التحويل بنجاح ✅');
+    UI.toast(I18n.t('transfer_success'));
     closeOverdraft();
     ['trf-from-search','trf-to-search'].forEach(id => document.getElementById(id).value='');
     ['trf-from-id','trf-to-id'].forEach(id => document.getElementById(id).value='');
@@ -222,12 +228,13 @@ async function doTransfer(force) {
   } else if (result.needsConfirm) {
     const sym = cur==='usd'?'$':'€';
     document.getElementById('overdraft-msg').innerHTML =
-      `رصيد المرسل: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
-       المطلوب: <b>${sym}${amt.toFixed(2)}</b><br>
-       سيصبح: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+      `${I18n.t('sender_balance_lbl')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
+       ${I18n.t('required_amount')}: <b>${sym}${amt.toFixed(2)}</b><br>
+       ${I18n.t('will_become')}: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
     document.getElementById('overdraft-modal').style.display='flex';
   } else { UI.toast(result.error,'error'); }
 }
+
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
 
 async function renderRecent() {
@@ -242,9 +249,9 @@ async function renderRecent() {
         const [fromAcc, toAcc] = await Promise.all([
           Accounts.getById(t.from), Accounts.getById(t.to)
         ]);
-        const curs = await Currency.getActive();
-const curObj = curs.find(c => c.code.toLowerCase() === (t.cur||'').toLowerCase());
-const sym = curObj ? curObj.symbol : (t.cur||'').toUpperCase();
+        const curs   = await Currency.getActive();
+        const curObj = curs.find(c => c.code.toLowerCase() === (t.cur||'').toLowerCase());
+        const sym    = curObj ? curObj.symbol : (t.cur||'').toUpperCase();
         return `<tr>
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(fromAcc?fromAcc.name:t.from)}</td>
@@ -252,7 +259,7 @@ const sym = curObj ? curObj.symbol : (t.cur||'').toUpperCase();
           <td style="color:var(--blue);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
         </tr>`;
       }))).join('')
-    : '<tr><td colspan="4" class="empty-state">لا توجد تحويلات</td></tr>';
+    : `<tr><td colspan="4" class="empty-state">${I18n.t('no_transfers')}</td></tr>`;
 }
 </script>
 </body>

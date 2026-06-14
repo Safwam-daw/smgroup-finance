@@ -12,32 +12,39 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2>لوحة التحكم</h2><p>ملخص مالي سريع</p></div>
+      <div>
+        <h2 data-i18n="dashboard_title">لوحة التحكم</h2>
+        <p data-i18n="dashboard_subtitle">ملخص مالي سريع</p>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 تحديث</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadAll()" data-i18n="refresh">🔄 تحديث</button>
         <button class="btn btn-primary btn-sm" id="publish-all-btn"
-                style="display:none;" onclick="publishAll()">
+                style="display:none;" onclick="publishAll()" data-i18n="publish_all">
           📤 نشر كشوف الزبائن
         </button>
       </div>
     </div>
 
-    <!-- بطاقات الإحصاء — 4 بطاقات -->
     <div class="grid-4" id="summary-cards" style="margin-bottom:20px;"></div>
-
-    <!-- تنبيهات الديون -->
     <div id="debt-alerts" style="display:none; margin-bottom:16px;"></div>
 
     <!-- آخر العمليات -->
     <div class="card" style="margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">⚡ آخر العمليات</h3>
-        <button class="btn btn-ghost btn-sm" onclick="navTo('ledger.html')">عرض الكل</button>
+        <h3 style="margin-bottom:0;" data-i18n="recent_txns">⚡ آخر العمليات</h3>
+        <button class="btn btn-ghost btn-sm" onclick="navTo('ledger.html')" data-i18n="view_all">عرض الكل</button>
       </div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>الوقت</th><th>النوع</th><th>الحساب</th><th>المبلغ</th></tr></thead>
-          <tbody id="recent-tbody"><tr><td colspan="4" class="empty-state">جاري التحميل…</td></tr></tbody>
+          <thead><tr>
+            <th data-i18n="col_time">الوقت</th>
+            <th data-i18n="col_type">النوع</th>
+            <th data-i18n="col_account">الحساب</th>
+            <th data-i18n="col_amount">المبلغ</th>
+          </tr></thead>
+          <tbody id="recent-tbody">
+            <tr><td colspan="4" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -45,13 +52,21 @@
     <!-- حسابات مدينة -->
     <div class="card" style="margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">⚠️ حسابات مدينة</h3>
+        <h3 style="margin-bottom:0;" data-i18n="debtors_section">⚠️ حسابات مدينة</h3>
         <span id="debtor-count" style="font-size:0.75rem;color:var(--red);"></span>
       </div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>الكود</th><th>الاسم</th><th>رصيد $</th><th>رصيد €</th><th>كشف</th></tr></thead>
-          <tbody id="debtor-tbody"><tr><td colspan="5" class="empty-state">جاري التحميل…</td></tr></tbody>
+          <thead><tr>
+            <th data-i18n="col_code">الكود</th>
+            <th data-i18n="col_name">الاسم</th>
+            <th data-i18n="col_bal_usd">رصيد $</th>
+            <th data-i18n="col_bal_eur">رصيد €</th>
+            <th data-i18n="col_statement">كشف</th>
+          </tr></thead>
+          <tbody id="debtor-tbody">
+            <tr><td colspan="5" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
+          </tbody>
         </table>
       </div>
       <div class="pagination" id="debtor-pages"></div>
@@ -80,60 +95,46 @@ let _debtorPage = 1;
 (async () => {
   if (!await initApp('dashboard')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
-  // تحميل متوازٍ — كل شيء في نفس الوقت
-  await Promise.all([
-    UI.updateTreasury(),
-    loadAll()
-  ]);
-
-  // حفظ السجل اليومي (مرة واحدة في اليوم)
+  const accounts = await loadAll();
+  await UI.updateTreasury();
   Storage.saveDailySnapshot().catch(e => console.log('snapshot:', e));
-
-  // إظهار زر نشر الكل للأدمن
   if (Auth.isAdmin()) {
     const pb = document.getElementById('publish-all-btn');
     if (pb) pb.style.display = 'inline-flex';
   }
-
-  // فحص تنبيهات الديون
-  await checkDebtAlerts(accounts);
-
-  // Real-time: تحديث تلقائي عند أي عملية
+  await checkDebtAlerts(accounts || []);
   Realtime.start(
     async (txn) => {
-      // حدّث الخزينة والعمليات الأخيرة
       await UI.updateTreasury();
       const txns = await Transactions.getAll({ limit:50 });
       renderRecent(txns);
     },
     async () => {
-      // حدّث إحصاءات الحسابات
       const accounts = await Accounts.getAll();
       renderSummaryShell(accounts);
     }
   );
+  I18n.apply();
 })();
 
 async function loadAll() {
-  // نشغّل كل الطلبات بالتوازي بدل الترتيب
   const [accounts, txns] = await Promise.all([
     Accounts.getAll(),
     Transactions.getAll({ limit: 50 })
   ]);
-
   renderSummaryShell(accounts);
   renderRecent(txns);
-
-  // الحسابات المدينة — نجلبها من الأعمدة المخزّنة (سريع)
   _debtors = accounts.filter(a =>
     parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0
   );
-  document.getElementById('debtor-count').textContent =
-    _debtors.length ? _debtors.length + ' حساب مدين' : '';
+  const debtorCount = document.getElementById('debtor-count');
+  debtorCount.textContent = _debtors.length
+    ? _debtors.length + ' ' + I18n.t('stat_debtors') : '';
   document.getElementById('summary-cards')
     .querySelector('#debtor-stat').textContent = _debtors.length;
   _debtorPage = 1;
   renderDebtorPage();
+  return accounts;
 }
 
 function renderSummaryShell(accounts) {
@@ -141,38 +142,40 @@ function renderSummaryShell(accounts) {
   const companies = accounts.filter(a=>a.type==='company').length;
   document.getElementById('summary-cards').innerHTML = `
     <div class="stat-card" style="border-right:3px solid var(--gold);">
-      <div class="stat-label">حسابات الزبائن</div>
+      <div class="stat-label">${I18n.t('stat_customers')}</div>
       <div class="stat-value" style="color:var(--gold);">${customers}</div>
     </div>
     <div class="stat-card" style="border-right:3px solid var(--euro);">
-      <div class="stat-label">حسابات الشركات</div>
+      <div class="stat-label">${I18n.t('stat_companies')}</div>
       <div class="stat-value" style="color:var(--euro);">${companies}</div>
     </div>
     <div class="stat-card" style="border-right:3px solid var(--blue);">
-      <div class="stat-label">عمليات اليوم</div>
+      <div class="stat-label">${I18n.t('stat_today')}</div>
       <div class="stat-value" style="color:var(--blue);" id="today-stat">—</div>
     </div>
     <div class="stat-card" style="border-right:3px solid var(--red);">
-      <div class="stat-label">حسابات مدينة</div>
+      <div class="stat-label">${I18n.t('stat_debtors')}</div>
       <div class="stat-value" style="color:var(--red);" id="debtor-stat">—</div>
     </div>`;
 }
 
 function renderRecent(txns) {
-  // إخفاء عمليات حسابات الأرشيف (7xxx)
   txns = txns.filter(t =>
     !String(t.acc||'').startsWith('7') &&
     !String(t.from||'').startsWith('7') &&
     !String(t.to||'').startsWith('7')
   ).slice(0, 10);
-  // حساب عمليات اليوم من البيانات المحمّلة
-  const todayStr = new Date().toDateString();
+  const todayStr   = new Date().toDateString();
   const todayCount = txns.filter(t=>new Date(t.date).toDateString()===todayStr).length;
   const el = document.getElementById('today-stat');
   if (el) el.textContent = todayCount;
 
-  const labels = {dep:'إيداع',wit:'سحب',trf:'تحويل'};
-  const colors  = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'};
+  const labels = {
+    dep: I18n.t('deposit'),
+    wit: I18n.t('withdraw'),
+    trf: I18n.t('transfer')
+  };
+  const colors = {dep:'var(--green)',wit:'var(--red)',trf:'var(--blue)'};
   document.getElementById('recent-tbody').innerHTML = txns.length
     ? txns.map(t=>`<tr>
         <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
@@ -181,12 +184,12 @@ function renderRecent(txns) {
         <td style="font-weight:600;color:${colors[t.type]||'var(--text)'};">
           ${parseFloat(t.amt).toFixed(2)} ${t.cur.toUpperCase()}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" class="empty-state">لا توجد عمليات</td></tr>';
+    : `<tr><td colspan="4" class="empty-state">${I18n.t('no_operations')}</td></tr>`;
 }
 
 function renderDebtorPage() {
-  const start = (_debtorPage-1)*PAGE_SIZE;
-  const page  = _debtors.slice(start, start+PAGE_SIZE);
+  const start      = (_debtorPage-1)*PAGE_SIZE;
+  const page       = _debtors.slice(start, start+PAGE_SIZE);
   const totalPages = Math.ceil(_debtors.length/PAGE_SIZE)||1;
 
   document.getElementById('debtor-tbody').innerHTML = page.length
@@ -206,56 +209,48 @@ function renderDebtorPage() {
           <td><button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc=${a.id}')">📋</button></td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="5" class="empty-state">لا توجد حسابات مدينة ✅</td></tr>';
+    : `<tr><td colspan="5" class="empty-state">${I18n.t('no_debtors')}</td></tr>`;
 
   const pg = document.getElementById('debtor-pages');
   if (totalPages<=1){pg.innerHTML='';return;}
   pg.innerHTML=`
-    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage-1})" ${_debtorPage===1?'disabled':''}>‹ السابق</button>
+    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage-1})" ${_debtorPage===1?'disabled':''}>‹ ${I18n.t('prev')}</button>
     <span>${_debtorPage} / ${totalPages}</span>
-    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''}>التالي ›</button>`;
+    <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''}>${I18n.t('next')} ›</button>`;
 }
 
 async function publishAll() {
   const btn = document.getElementById('publish-all-btn');
-  if (btn) { btn.disabled=true; btn.textContent='⏳ جاري النشر…'; }
+  if (btn) { btn.disabled=true; btn.textContent=I18n.t('publishing'); }
   try {
-    // نشر مباشر لكل الزبائن
-    const now = new Date().toISOString();
+    const now      = new Date().toISOString();
     const accounts = await Storage.getAccounts();
     const customers = accounts.filter(a => a.type === 'customer');
-    if (!customers.length) {
-      UI.toast('لا يوجد زبائن لنشر كشوفاتهم', 'error');
-      return;
-    }
-    // فحص من يحتاج نشر (آخر نشر قبل آخر عملية)
+    if (!customers.length) { UI.toast(I18n.t('publish_no_clients'), 'error'); return; }
     const needsPublish = customers.filter(a => {
-      if (!a.client_pin) return false; // بدون PIN لا يُنشر
-      if (!a.client_published_at) return true; // لم يُنشر أبداً
-      return false; // تم نشره مسبقاً
+      if (!a.client_pin) return false;
+      if (!a.client_published_at) return true;
+      return false;
     });
-    if (!needsPublish.length) {
-      UI.toast('✅ جميع الكشوفات منشورة بالفعل — لا يوجد جديد');
-      return;
-    }
+    if (!needsPublish.length) { UI.toast(I18n.t('publish_already')); return; }
     const ok = await Storage.publishAllClients(Auth.getUser().user);
     if (ok) {
       Storage.invalidate('accounts');
-      UI.toast(`✅ تم نشر كشوفات ${needsPublish.length} زبون من أصل ${customers.length}`);
-      await Storage.addNotification('publish', '📤 نشر الكشوفات',
-        `تم نشر كشوفات ${needsPublish.length} زبون`, '📤');
+      UI.toast(`✅ ${I18n.t('publish_success')} ${needsPublish.length} / ${customers.length}`);
+      await Storage.addNotification('publish', '📤 ' + I18n.t('publish_all'),
+        `${I18n.t('publish_success')} ${needsPublish.length}`, '📤');
     } else {
-      UI.toast('خطأ في النشر — حاول مرة أخرى', 'error');
+      UI.toast(I18n.t('publish_error'), 'error');
     }
   } finally {
-    if (btn) { btn.disabled=false; btn.textContent='📤 نشر كشوف الزبائن'; }
+    if (btn) { btn.disabled=false; btn.textContent=I18n.t('publish_all'); }
   }
 }
 
 async function checkDebtAlerts(accounts) {
-  const settings   = await Storage.getAlertSettings();
-  const debtLimit  = parseFloat(settings.debt_limit || -500);
-  const overLimit  = accounts.filter(a =>
+  const settings  = await Storage.getAlertSettings();
+  const debtLimit = parseFloat(settings.debt_limit || -500);
+  const overLimit = accounts.filter(a =>
     parseFloat(a.bal_usd||0) < debtLimit ||
     parseFloat(a.bal_eur||0) < debtLimit
   );
@@ -267,7 +262,7 @@ async function checkDebtAlerts(accounts) {
          border-radius:var(--radius);padding:14px 18px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div style="font-weight:700;color:var(--red);">
-          🚨 ${overLimit.length} حساب تجاوز حد الدين (${debtLimit})
+          🚨 ${overLimit.length} ${I18n.t('debt_alert_title')} (${debtLimit})
         </div>
         <button class="btn btn-ghost btn-sm" onclick="this.parentElement.parentElement.parentElement.style.display='none'">✕</button>
       </div>
@@ -280,7 +275,7 @@ async function checkDebtAlerts(accounts) {
               $${parseFloat(a.bal_usd||0).toFixed(2)} | €${parseFloat(a.bal_eur||0).toFixed(2)}
             </span>
             <button class="btn btn-ghost btn-sm"
-              onclick="navTo('account-view.html?acc=${a.id}')">عرض الحساب</button>
+              onclick="navTo('account-view.html?acc=${a.id}')">${I18n.t('view_account')}</button>
           </div>`).join('')}
       </div>
     </div>`;
