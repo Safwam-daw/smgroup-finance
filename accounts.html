@@ -13,31 +13,39 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2>إدارة الحسابات</h2><p>إنشاء ومتابعة حسابات الزبائن والشركات</p></div>
+      <div>
+        <h2 data-i18n="manage_accounts">إدارة الحسابات</h2>
+        <p data-i18n="manage_accounts_sub">إنشاء ومتابعة حسابات الزبائن والشركات</p>
+      </div>
       <button class="btn btn-primary no-print" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 Excel</button>
     </div>
 
-    <!-- فتح حساب جديد (مدير فقط) -->
+    <!-- فتح حساب جديد -->
     <div class="card" id="create-card" style="margin-bottom:16px;">
-      <h3>➕ فتح حساب جديد</h3>
+      <h3 data-i18n="create_account">➕ فتح حساب جديد</h3>
       <div class="grid-2">
         <div>
-          <div class="form-group"><label>نوع الحساب</label>
+          <div class="form-group">
+            <label data-i18n="account_type">نوع الحساب</label>
             <select id="acc-type" onchange="refreshCode()">
-              <option value="customer">زبون</option>
-              <option value="company">شركة</option>
+              <option value="customer" data-i18n="lbl_customer">زبون</option>
+              <option value="company" data-i18n="lbl_company">شركة</option>
             </select>
           </div>
-          <div class="form-group"><label>كود الحساب (تلقائي)</label>
+          <div class="form-group">
+            <label data-i18n="account_code_auto">كود الحساب (تلقائي)</label>
             <input type="text" id="acc-code" readonly>
           </div>
         </div>
         <div>
-          <div class="form-group"><label>اسم الحساب</label>
-            <input type="text" id="acc-name" placeholder="اسم الزبون أو الشركة"
+          <div class="form-group">
+            <label data-i18n="account_name">اسم الحساب</label>
+            <input type="text" id="acc-name" data-i18n-placeholder="account_name_ph"
+                   placeholder="اسم الزبون أو الشركة"
                    onkeydown="if(event.key==='Enter') doCreate()">
           </div>
-          <button class="btn btn-primary btn-full" style="margin-top:6px;" onclick="doCreate()">💾 حفظ الحساب</button>
+          <button class="btn btn-primary btn-full" style="margin-top:6px;"
+                  onclick="doCreate()" data-i18n="save_account">💾 حفظ الحساب</button>
         </div>
       </div>
     </div>
@@ -45,20 +53,24 @@
     <!-- فلاتر -->
     <div class="card" style="margin-bottom:16px;padding:14px 16px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div class="form-group" style="flex:2;min-width:160px;margin-bottom:0;"><label>بحث سريع</label>
-          <input type="text" id="filter-input" placeholder="اسم أو كود…" oninput="applyFilter()">
+        <div class="form-group" style="flex:2;min-width:160px;margin-bottom:0;">
+          <label data-i18n="quick_search">بحث سريع</label>
+          <input type="text" id="filter-input" data-i18n-placeholder="search_name_code"
+                 placeholder="اسم أو كود…" oninput="applyFilter()">
         </div>
-        <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>النوع</label>
+        <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;">
+          <label data-i18n="filter_type">النوع</label>
           <select id="filter-type" onchange="applyFilter()">
-            <option value="all">الكل</option>
-            <option value="customer">زبائن</option>
-            <option value="company">شركات</option>
+            <option value="all" data-i18n="filter_all">الكل</option>
+            <option value="customer" data-i18n="filter_customers">زبائن</option>
+            <option value="company" data-i18n="filter_companies">شركات</option>
           </select>
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>الرصيد</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="filter_balance">الرصيد</label>
           <select id="filter-bal" onchange="applyFilter()">
-            <option value="all">الكل</option>
-            <option value="debtor">مدينون ⚠️</option>
+            <option value="all" data-i18n="filter_all">الكل</option>
+            <option value="debtor" data-i18n="filter_debtors">مدينون ⚠️</option>
           </select>
         </div>
       </div>
@@ -67,23 +79,46 @@
     <!-- جدول الحسابات -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">قائمة الحسابات</h3>
+        <h3 style="margin-bottom:0;" data-i18n="accounts_list">قائمة الحسابات</h3>
         <span id="acc-count" style="font-size:0.75rem;color:var(--text3);"></span>
       </div>
       <div class="tbl-wrap">
         <table id="acc-table">
           <thead><tr>
-            <th>الكود</th><th>الاسم</th><th>النوع</th>
-            <th>رصيد $</th><th>رصيد €</th><th>إجراءات</th>
+            <th data-i18n="col_code">الكود</th>
+            <th data-i18n="col_name">الاسم</th>
+            <th data-i18n="col_type">النوع</th>
+            <th data-i18n="col_bal_usd">رصيد $</th>
+            <th data-i18n="col_bal_eur">رصيد €</th>
+            <th data-i18n="col_actions">إجراءات</th>
           </tr></thead>
           <tbody id="acc-tbody">
-            <tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr>
+            <tr><td colspan="6" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
           </tbody>
         </table>
       </div>
       <div class="pagination no-print" id="acc-pages"></div>
     </div>
   </main>
+</div>
+
+<!-- Modal حذف الحساب -->
+<div id="del-acc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+     z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:420px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:10px;">⚠️</div>
+    <h3 style="color:var(--red);" data-i18n="delete_account">حذف الحساب</h3>
+    <p style="color:var(--text2);font-size:0.85rem;margin:14px 0;">
+      <b id="del-acc-name" style="color:var(--text);"></b><br>
+      <span data-i18n="current_balance_lbl">الرصيد الحالي</span>: <b id="del-acc-bal"></b><br><br>
+      <span data-i18n="delete_balance_note">سيُحوَّل الرصيد تلقائياً لحساب الأرباح.</span><br>
+      <b style="color:var(--red);" data-i18n="delete_irreversible">لا يمكن التراجع.</b>
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-ghost" onclick="closeDelAcc()" data-i18n="cancel">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelAcc()" data-i18n="delete_confirm">🗑️ حذف</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -95,10 +130,10 @@
 <script src="js/i18n.js"></script>
 <script>
 const PAGE_SIZE  = 15;
-let _allAccounts = [];  // القائمة الكاملة مع الأرصدة
+let _allAccounts = [];
 let _filtered    = [];
 let _page        = 1;
-let _rawAccounts = []; // النسخة الأصلية من قاعدة البيانات
+let _rawAccounts = [];
 
 (async () => {
   if (!await initApp('accounts')) return;
@@ -107,13 +142,12 @@ let _rawAccounts = []; // النسخة الأصلية من قاعدة البيا
   if (!Auth.isAdmin()) document.getElementById('create-card').style.display='none';
   await refreshCode();
   await loadAccounts();
+  I18n.apply();
 })();
 
-// تحميل الحسابات مع الأرصدة من الـ Cache مرة واحدة
 async function loadAccounts() {
   UI.showLoading(true);
   const raw = await Accounts.getAll();
-  // الأرصدة موجودة في الكائن مباشرة من Supabase (bal_usd, bal_eur)
   _rawAccounts = raw;
   _allAccounts = raw.map(a => ({
     ...a,
@@ -136,7 +170,7 @@ async function doCreate() {
   const result = await Accounts.create(type, name);
   UI.showLoading(false);
   if (result.ok) {
-    UI.toast('تم إنشاء الحساب: ' + result.id);
+    UI.toast(I18n.t('account_created') + ': ' + result.id);
     document.getElementById('acc-name').value = '';
     await refreshCode();
     await loadAccounts();
@@ -148,7 +182,6 @@ function applyFilter() {
   const q    = document.getElementById('filter-input').value.toLowerCase().trim();
   const type = document.getElementById('filter-type').value;
   const bal  = document.getElementById('filter-bal').value;
-
   _filtered = _allAccounts.filter(a => {
     if (q && !a.id.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
     if (type !== 'all' && a.type !== type) return false;
@@ -165,11 +198,11 @@ function renderPage() {
   const start      = (_page - 1) * PAGE_SIZE;
   const pagItems   = _filtered.slice(start, start + PAGE_SIZE);
 
-  document.getElementById('acc-count').textContent = total + ' حساب';
+  document.getElementById('acc-count').textContent = total + ' ' + I18n.t('account');
 
   const tbody = document.getElementById('acc-tbody');
   if (!pagItems.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>لا توجد نتائج</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>${I18n.t('no_results')}</td></tr>`;
     document.getElementById('acc-pages').innerHTML = '';
     return;
   }
@@ -179,7 +212,9 @@ function renderPage() {
     const debtor   = a.usd < 0 || a.eur < 0;
     const isProfit = a.id === '9999';
     const canDel   = isAdminUser && !isProfit;
-    const typeLabel = a.type === 'company' ? 'شركة' : a.type === 'profit' ? '🏦 أرباح' : 'زبون';
+    const typeLabel = a.type === 'company' ? I18n.t('lbl_company')
+                    : a.type === 'profit'  ? I18n.t('lbl_profit')
+                    : I18n.t('lbl_customer');
     const safeId   = a.id.replace(/'/g, '');
     const safeName = a.name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
     return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
@@ -190,20 +225,18 @@ function renderPage() {
       <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${a.usd.toFixed(2)}</td>
       <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${a.eur.toFixed(2)}</td>
       <td onclick="event.stopPropagation();" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-ghost btn-sm" title="حركات"
+        <button class="btn btn-ghost btn-sm" title="${I18n.t('movements')}"
           onclick="event.stopPropagation();navTo('account-view.html?acc=${safeId}')">👁️</button>
-        <button class="btn btn-ghost btn-sm" title="كشف"
+        <button class="btn btn-ghost btn-sm" title="${I18n.t('statement')}"
           onclick="event.stopPropagation();navTo('statement.html?acc=${safeId}')">📋</button>
-        ${canDel ? `<button class="btn btn-danger btn-sm" title="حذف الحساب"
+        ${canDel ? `<button class="btn btn-danger btn-sm" title="${I18n.t('delete_account')}"
           onclick="event.stopPropagation();confirmDelAcc('${safeId}','${safeName}')">🗑️</button>` : ''}
       </td>
     </tr>`;
   }).join('');
 
-  // Pagination
   const pg = document.getElementById('acc-pages');
   if (totalPages <= 1) { pg.innerHTML = ''; return; }
-
   let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
   const sp = Math.max(1, _page-2), ep = Math.min(totalPages, _page+2);
   if (sp > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
@@ -219,20 +252,17 @@ function renderPage() {
 function goPage(p) {
   const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
   if (p < 1 || p > t) return;
-  _page = p;
-  renderPage();
+  _page = p; renderPage();
 }
-// ── حذف الحساب من القائمة ─────────────────────────────
+
 let _delAccId = null;
 function confirmDelAcc(id, name) {
   _delAccId = id;
   const usd = _filtered.find(a=>a.id===id)?.usd || 0;
   const eur = _filtered.find(a=>a.id===id)?.eur || 0;
   document.getElementById('del-acc-name').textContent = name + ' (' + id + ')';
-  document.getElementById('del-acc-bal').textContent =
-    `$${usd.toFixed(2)} | €${eur.toFixed(2)}`;
-  document.getElementById('del-acc-bal').style.color =
-    (usd < 0 || eur < 0) ? 'var(--red)' : 'var(--text2)';
+  document.getElementById('del-acc-bal').textContent = `$${usd.toFixed(2)} | €${eur.toFixed(2)}`;
+  document.getElementById('del-acc-bal').style.color = (usd < 0 || eur < 0) ? 'var(--red)' : 'var(--text2)';
   document.getElementById('del-acc-modal').style.display = 'flex';
 }
 
@@ -246,36 +276,15 @@ async function doDelAcc() {
   const result = await Storage.deleteAccount(_delAccId, Auth.getUser().user);
   UI.showLoading(false);
   closeDelAcc();
-  console.log('delete result:', JSON.stringify(result));
   if (result.ok) {
-    let msg = 'تم حذف الحساب ✅';
+    let msg = I18n.t('account_deleted');
     if (result.usd !== 0 || result.eur !== 0)
-      msg += ` · رصيد ($${result.usd.toFixed(2)} | €${result.eur.toFixed(2)}) حُوِّل للأرباح`;
+      msg += ` · ($${result.usd.toFixed(2)} | €${result.eur.toFixed(2)}) ${I18n.t('balance_transferred')}`;
     UI.toast(msg);
-    await buildList();
+    await loadAccounts();
     await UI.updateTreasury();
   } else { UI.toast(result.error, 'error'); }
 }
 </script>
-
-<!-- Modal حذف الحساب -->
-<div id="del-acc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
-     z-index:1000;align-items:center;justify-content:center;padding:16px;">
-  <div class="card" style="width:100%;max-width:420px;text-align:center;">
-    <div style="font-size:2rem;margin-bottom:10px;">⚠️</div>
-    <h3 style="color:var(--red);">حذف الحساب</h3>
-    <p style="color:var(--text2);font-size:0.85rem;margin:14px 0;">
-      <b id="del-acc-name" style="color:var(--text);"></b><br>
-      الرصيد الحالي: <b id="del-acc-bal"></b><br><br>
-      سيُحوَّل الرصيد تلقائياً لحساب الأرباح.<br>
-      <b style="color:var(--red);">لا يمكن التراجع.</b>
-    </p>
-    <div style="display:flex;gap:10px;justify-content:center;">
-      <button class="btn btn-ghost" onclick="closeDelAcc()">إلغاء</button>
-      <button class="btn btn-danger" onclick="doDelAcc()">🗑️ حذف</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
