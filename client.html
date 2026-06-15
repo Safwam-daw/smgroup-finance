@@ -140,21 +140,21 @@ tr:last-child td{border-bottom:none;}
 <div id="login-screen">
   <div class="login-box">
     <div class="logo" id="client-brand-name">SM-Group</div>
-    <div class="logo-sub">بوابة الزبون</div>
+    <div class="logo-sub" data-i18n="client_portal">بوابة الزبون</div>
     <div class="divider"></div>
     <div class="form-group">
-      <label>رقم الحساب</label>
+      <label data-i18n="acc_number">رقم الحساب</label>
       <input type="text" id="c-acc" placeholder="0001" maxlength="6"
              onkeydown="if(event.key==='Enter') document.getElementById('c-pin').focus()">
     </div>
     <div class="form-group">
-      <label>كلمة المرور (6 أرقام)</label>
+      <label data-i18n="pin_label">كلمة المرور (6 أرقام)</label>
       <input type="password" id="c-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
              onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <button class="btn-login" id="login-btn" onclick="doLogin()">دخول</button>
+    <button class="btn-login" id="login-btn" onclick="doLogin()" data-i18n="login_btn">دخول</button>
     <div class="error-box" id="login-err">رقم الحساب أو كلمة المرور غير صحيحة</div>
-    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;">
+    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;" data-i18n="contact_admin">
       للحصول على كلمة المرور تواصل مع الإدارة
     </p>
   </div>
@@ -186,7 +186,7 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-ghost" onclick="doLogout()">🚪 خروج</button>
+        <button class="btn btn-ghost" onclick="doLogout()" data-i18n="logout_btn">🚪 خروج</button>
       </div>
     </div>
     <!-- أرصدة -->
@@ -230,8 +230,8 @@ tr:last-child td{border-bottom:none;}
       <table id="p-table">
         <thead>
           <tr>
-            <th>التاريخ</th><th>النوع</th><th>العملة</th>
-            <th>دين (خروج)</th><th>دائن (دخول)</th><th>ملاحظة</th>
+            <th data-i18n="col_date">التاريخ</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_currency">العملة</th>
+            <th data-i18n="col_debit_out">دين (خروج)</th><th data-i18n="col_credit_in">دائن (دخول)</th><th data-i18n="col_note">ملاحظة</th>
           </tr>
         </thead>
         <tbody id="p-tbody">

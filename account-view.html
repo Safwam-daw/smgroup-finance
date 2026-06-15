@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SM-Group — حركات الحساب</title>
+<title data-i18n="account_view_title">حركات الحساب</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -105,22 +105,22 @@
         </div>
         <div class="btn-group no-print" style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" id="edit-acc-btn" onclick="openEditAcc()" style="display:none;">✏️ تعديل</button>
-          <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)">📋 كشف كامل</button>
+          <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)" data-i18n="full_statement">📋 كشف كامل</button>
           <button class="btn btn-danger btn-sm" id="del-acc-btn" onclick="openDelAcc()" style="display:none;">🗑️ حذف الحساب</button>
           <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;">📤 نشر الكشف</button>
           <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;">🔍 فحص الرصيد</button>
-          <button class="btn btn-ghost btn-sm" onclick="history.back()">← رجوع</button>
+          <button class="btn btn-ghost btn-sm" onclick="history.back()" data-i18n="go_back">← رجوع</button>
         </div>
       </div>
 
       <!-- أرصدة -->
       <div class="bal-row" id="bal-row">
         <div class="bal-box" id="box-usd" style="border-color:var(--gold);background:var(--gold-dim2);cursor:pointer;" onclick="filterByCur('usd')">
-          <div class="bal-box-label">🇺🇸 رصيد الدولار</div>
+          <div class="bal-box-label" data-i18n="bal_usd_lbl">🇺🇸 رصيد الدولار</div>
           <div class="bal-box-val" id="bal-usd" style="color:var(--gold);">—</div>
         </div>
         <div class="bal-box" id="box-eur" style="border-color:var(--euro);background:var(--euro-dim);cursor:pointer;" onclick="filterByCur('eur')">
-          <div class="bal-box-label">🇪🇺 رصيد اليورو</div>
+          <div class="bal-box-label" data-i18n="bal_eur_lbl">🇪🇺 رصيد اليورو</div>
           <div class="bal-box-val" id="bal-eur" style="color:var(--euro);">—</div>
         </div>
       </div>
@@ -128,13 +128,13 @@
 
     <!-- أزرار العمليات السريعة -->
     <div class="ops-bar no-print">
-      <button class="btn btn-primary" onclick="openOp('dep')">
+      <button class="btn btn-primary" onclick="openOp('dep')" data-i18n="quick_dep">
         💵 إيداع
       </button>
-      <button class="btn btn-danger" onclick="openOp('wit')">
+      <button class="btn btn-danger" onclick="openOp('wit')" data-i18n="quick_wit">
         💸 سحب
       </button>
-      <button class="btn btn-ghost" onclick="openOp('trf')">
+      <button class="btn btn-ghost" onclick="openOp('trf')" data-i18n="quick_trf">
         🔄 تحويل
       </button>
     </div>
@@ -148,7 +148,7 @@
         <button class="qf-btn" onclick="setQuick('all')">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
-        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>النوع</label>
+        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="col_type_lbl">النوع</label>
           <select id="f-type" onchange="renderRows()">
             <option value="all">الكل</option>
             <option value="dep">إيداع</option>
@@ -156,17 +156,17 @@
             <option value="trf">تحويل</option>
           </select>
         </div>
-        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>العملة</label>
+        <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
           <select id="f-cur" onchange="renderRows()">
             <option value="all">الكل</option>
             <option value="usd">دولار</option>
             <option value="eur">يورو</option>
           </select>
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
           <input type="date" id="f-from" onchange="clearQuick();renderRows()">
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
           <input type="date" id="f-to" onchange="clearQuick();renderRows()">
         </div>
         <div class="no-print" style="align-self:flex-end;">
@@ -180,9 +180,9 @@
       <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
         <table id="mov-table">
           <thead><tr>
-            <th>التاريخ</th><th>النوع</th><th>الطرف الآخر</th>
-            <th>العملة</th><th>دين</th><th>دائن</th>
-            <th class="no-print">ملاحظة</th><th class="no-print">إجراء</th>
+            <th data-i18n="col_date">التاريخ</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_counterpart">الطرف الآخر</th>
+            <th data-i18n="col_currency">العملة</th><th data-i18n="col_debit_lbl">دين</th><th data-i18n="col_credit_lbl">دائن</th>
+            <th class="no-print" data-i18n="col_note">ملاحظة</th><th class="no-print" data-i18n="col_action">إجراء</th>
           </tr></thead>
           <tbody id="mov-tbody">
             <tr><td colspan="8" class="empty-state">جاري التحميل…</td></tr>

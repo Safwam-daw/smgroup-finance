@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SM-Group — إدارة الموظفين</title>
+<title data-i18n="employees_title">🛡️ إدارة الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <style>
@@ -62,20 +62,20 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2>🛡️ إدارة الموظفين</h2><p>إضافة المستخدمين وضبط الصلاحيات</p></div>
+      <div><h2 data-i18n="employees_title">🛡️ إدارة الموظفين</h2><p data-i18n="employees_subtitle">إضافة المستخدمين وضبط الصلاحيات</p></div>
     </div>
 
     <!-- إضافة موظف -->
     <div class="card" style="margin-bottom:16px;">
-      <h3>➕ إضافة موظف جديد</h3>
+      <h3 data-i18n="add_employee_title">➕ إضافة موظف جديد</h3>
       <div class="grid-2">
         <div>
           <div class="form-group">
-            <label>اسم المستخدم</label>
+            <label data-i18n="username_label">اسم المستخدم</label>
             <input type="text" id="emp-user" placeholder="اسم المستخدم" autocomplete="off">
           </div>
           <div class="form-group">
-            <label>الصلاحية الرئيسية</label>
+            <label data-i18n="role_label">الصلاحية الرئيسية</label>
             <select id="emp-role" onchange="toggleAdminPerms()">
               <option value="employee">👤 موظف</option>
             </select>
@@ -83,11 +83,11 @@
         </div>
         <div>
           <div class="form-group">
-            <label>كلمة المرور</label>
+            <label data-i18n="password_label">كلمة المرور</label>
             <input type="password" id="emp-pass" placeholder="كلمة المرور">
           </div>
           <div class="form-group">
-            <label>تأكيد كلمة المرور</label>
+            <label data-i18n="password_confirm">تأكيد كلمة المرور</label>
             <input type="password" id="emp-pass2" placeholder="أعد كتابة كلمة المرور">
           </div>
         </div>
@@ -102,7 +102,7 @@
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;">
-        <button class="btn btn-primary" onclick="doAdd()" style="min-width:160px;">💾 إضافة الموظف</button>
+        <button class="btn btn-primary" onclick="doAdd()" style="min-width:160px;" data-i18n="save_employee">💾 إضافة الموظف</button>
         <span style="font-size:0.72rem;color:var(--text3);">🔐 كلمات المرور مشفرة</span>
       </div>
     </div>
@@ -110,7 +110,7 @@
     <!-- قائمة الموظفين -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">الموظفون المسجلون</h3>
+        <h3 style="margin-bottom:0;" data-i18n="employees_list">الموظفون المسجلون</h3>
         <span id="emp-count" style="font-size:0.75rem;color:var(--text3);"></span>
       </div>
       <div id="emp-list"><div class="empty-state">جاري التحميل…</div></div>
