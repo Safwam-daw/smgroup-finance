@@ -123,11 +123,11 @@
 <div class="print-header">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير الإحصائيات</h1>
+      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — Analytics Report</h1>
       <p id="print-period-label" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
     </div>
     <div style="font-size:0.75rem;color:#555;text-align:left;">
-      طُبع بتاريخ: <b id="print-date-analytics"></b>
+      <span data-i18n="print_date_an">طُبع بتاريخ:</span> <b id="print-date-analytics"></b>
     </div>
   </div>
   <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-analytics"></div>
@@ -135,7 +135,7 @@
 
 <div class="page-header">
   <div><h2 data-i18n="analytics_title">📈 الإحصائيات</h2><p data-i18n="analytics_subtitle">تحليل أداء المنظومة المالية</p></div>
-  <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn btn-ghost btn-sm no-print" onclick="window.print()" data-i18n="print_btn2">🖨️ طباعة</button>
 </div>
 
 <!-- فلتر الفترة -->
@@ -149,22 +149,22 @@
 <!-- KPI Cards -->
 <div class="kpi-grid" id="kpi-grid">
   <div class="kpi-card">
-    <div class="kpi-label">إجمالي الحسابات</div>
+    <div class="kpi-label" data-i18n="kpi_total_accounts">إجمالي الحسابات</div>
     <div class="kpi-value" id="kpi-accounts" style="color:var(--gold);">—</div>
     <div class="kpi-sub" id="kpi-accounts-sub"></div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">خزينة الدولار</div>
+    <div class="kpi-label" data-i18n="kpi_treasury_usd">خزينة الدولار</div>
     <div class="kpi-value" id="kpi-usd" style="color:var(--green);">—</div>
     <div class="kpi-sub" id="kpi-usd-sub"></div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">إجمالي الأرباح $</div>
+    <div class="kpi-label" data-i18n="kpi_total_profit">إجمالي الأرباح $</div>
     <div class="kpi-value" id="kpi-profit" style="color:var(--euro);">—</div>
     <div class="kpi-sub" id="kpi-profit-sub"></div>
   </div>
   <div class="kpi-card">
-    <div class="kpi-label">حسابات مدينة</div>
+    <div class="kpi-label" data-i18n="kpi_debtors">حسابات مدينة</div>
     <div class="kpi-value" id="kpi-debtors" style="color:var(--red);">—</div>
     <div class="kpi-sub" id="kpi-debtors-sub"></div>
   </div>
@@ -173,19 +173,19 @@
 <!-- الرسوم البيانية -->
 <div class="analytics-grid">
   <div class="chart-card">
-    <h3>💰 نمو الخزينة </h3>
+    <h3 data-i18n="chart_treasury_growth">💰 نمو الخزينة </h3>
     <div class="chart-wrap"><canvas id="chart-treasury"></canvas></div>
   </div>
   <div class="chart-card">
-    <h3>📈 الأرباح التراكمية</h3>
+    <h3 data-i18n="chart_profit_cumul">📈 الأرباح التراكمية</h3>
     <div class="chart-wrap"><canvas id="chart-profit"></canvas></div>
   </div>
   <div class="chart-card">
-    <h3>👥 نمو الحسابات</h3>
+    <h3 data-i18n="chart_accounts_growth">👥 نمو الحسابات</h3>
     <div class="chart-wrap"><canvas id="chart-accounts"></canvas></div>
   </div>
   <div class="chart-card">
-    <h3>⚠️ الحسابات المدينة</h3>
+    <h3 data-i18n="chart_debtors">⚠️ الحسابات المدينة</h3>
     <div class="chart-wrap"><canvas id="chart-debtors"></canvas></div>
   </div>
 </div>
@@ -193,15 +193,15 @@
 <!-- أكبر العملاء + أنشط الموظفين -->
 <div class="analytics-grid">
   <div class="chart-card">
-    <h3>🏆 أكبر 3 عملاء (رصيد $)</h3>
+    <h3 data-i18n="top_clients_usd">🏆 أكبر 3 عملاء (رصيد $)</h3>
     <div class="top-list" id="top-customers"></div>
   </div>
   <div class="chart-card">
-    <h3>🏆 أكبر 3 عملاء (رصيد €)</h3>
+    <h3 data-i18n="top_clients_eur">🏆 أكبر 3 عملاء (رصيد €)</h3>
     <div class="top-list" id="top-customers-eur"></div>
   </div>
   <div class="chart-card">
-    <h3>👤 أنشط الموظفين</h3>
+    <h3 data-i18n="top_employees">👤 أنشط الموظفين</h3>
     <div class="top-list" id="top-employees"></div>
   </div>
 </div>
@@ -242,14 +242,14 @@ let _charts    = {};
 
   // إعداد الطباعة
   document.getElementById('print-date-analytics').textContent =
-    new Date().toLocaleDateString('ar-SA');
-  document.getElementById('print-report-brand').textContent = brandName() + ' — تقرير الإحصائيات';
+    new Date().toLocaleDateString();
+  document.getElementById('print-report-brand').textContent = brandName() + ' — ' + t('report_title');
   document.getElementById('print-dawtech-analytics').textContent = brandPrintCopyright();
 
   window.addEventListener('beforeprint', () => {
-    const periodMap = { 7:'آخر 7 أيام', 30:'آخر 30 يوم', 90:'آخر 3 أشهر', 365:'السنة كاملة' };
+    const periodMap = { 7:t('period_7'), 30:t('period_30'), 90:t('period_90'), 365:t('period_365') };
     document.getElementById('print-period-label').textContent =
-      'الفترة: ' + (periodMap[_days] || _days + ' يوم');
+      t('period_lbl') + ' ' + (periodMap[_days] || _days + ' ' + t('day_unit'));
   });
 })();
 
@@ -281,7 +281,7 @@ function renderKPIs(data) {
   document.getElementById('kpi-accounts').textContent = latest.total_accounts;
   const accDiff = latest.total_accounts - oldest.total_accounts;
   document.getElementById('kpi-accounts-sub').textContent =
-    accDiff >= 0 ? `▲ ${accDiff} خلال الفترة` : `▼ ${Math.abs(accDiff)} خلال الفترة`;
+    accDiff >= 0 ? `▲ ${accDiff} ${t('since_period')}` : `▼ ${Math.abs(accDiff)} ${t('since_period')}`;
 
   // خزينة
   document.getElementById('kpi-usd').textContent = '$' + latest.treasury_usd.toFixed(0);
@@ -294,13 +294,13 @@ function renderKPIs(data) {
   document.getElementById('kpi-profit').textContent = '$' + latest.profit_usd.toFixed(0);
   const pDiff = latest.profit_usd - oldest.profit_usd;
   document.getElementById('kpi-profit-sub').textContent =
-    (pDiff >= 0 ? '▲ +' : '▼ ') + '$' + Math.abs(pDiff).toFixed(0) + ' خلال الفترة';
+    (pDiff >= 0 ? '▲ +' : '▼ ') + '$' + Math.abs(pDiff).toFixed(0) + ' ' + t('since_period');
   document.getElementById('kpi-profit-sub').style.color = pDiff >= 0 ? 'var(--green)' : 'var(--red)';
 
   // مدينون
   document.getElementById('kpi-debtors').textContent = latest.total_debtors;
   document.getElementById('kpi-debtors-sub').textContent =
-    `من ${latest.total_accounts} حساب إجمالي`;
+    t('of_total_accounts', { n: latest.total_accounts });
 }
 
 function makeChart(id, labels, datasets, type='line') {
@@ -324,7 +324,7 @@ function renderCharts(data) {
   if (!data.length) {
     ['chart-treasury','chart-profit','chart-accounts','chart-debtors'].forEach(id => {
       const ctx = document.getElementById(id);
-      if (ctx) ctx.parentElement.innerHTML = '<div class="no-data">لا توجد بيانات — افتح لوحة التحكم يومياً لتراكم البيانات</div>';
+      if (ctx) ctx.parentElement.innerHTML = `<div class="no-data">${t('no_data_general')}</div>`;
     });
     return;
   }
@@ -333,36 +333,36 @@ function renderCharts(data) {
 
   // خزينة
   makeChart('chart-treasury', labels, [{
-    label:'$ دولار', data: data.map(s=>s.treasury_usd),
+    label:t('chart_dollar'), data: data.map(s=>s.treasury_usd),
     borderColor:'#c9a84c', backgroundColor:'rgba(201,168,76,0.08)',
     fill:true, tension:0.4, pointRadius:2
   },{
-    label:'€ يورو', data: data.map(s=>s.treasury_eur),
+    label:t('chart_euro'), data: data.map(s=>s.treasury_eur),
     borderColor:'#a78bfa', backgroundColor:'rgba(167,139,250,0.08)',
     fill:true, tension:0.4, pointRadius:2
   }]);
 
   // أرباح
   makeChart('chart-profit', labels, [{
-    label:'$ ربح', data: data.map(s=>s.profit_usd),
+    label:t('chart_profit_lbl'), data: data.map(s=>s.profit_usd),
     borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.08)',
     fill:true, tension:0.4, pointRadius:2
   }]);
 
   // حسابات
   makeChart('chart-accounts', labels, [{
-    label:'زبائن', data: data.map(s=>s.total_customers),
+    label:t('chart_clients'), data: data.map(s=>s.total_customers),
     borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)',
     fill:true, tension:0.3, pointRadius:2
   },{
-    label:'شركات', data: data.map(s=>s.total_companies),
+    label:t('chart_companies'), data: data.map(s=>s.total_companies),
     borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.08)',
     fill:true, tension:0.3, pointRadius:2
   }]);
 
   // مدينون
   makeChart('chart-debtors', labels, [{
-    label:'مدينون', data: data.map(s=>s.total_debtors),
+    label:t('chart_debtors_lbl'), data: data.map(s=>s.total_debtors),
     borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.08)',
     fill:true, tension:0.3, pointRadius:2
   }]);
@@ -382,7 +382,7 @@ function renderTopCustomers() {
         <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
         <div class="top-val" style="color:var(--green);">$${parseFloat(a.bal_usd).toFixed(2)}</div>
       </div>`).join('')
-    : '<div class="no-data">لا توجد حسابات دائنة بالدولار</div>';
+    : `<div class="no-data">${t('no_creditors_usd')}</div>`;
 
   // يورو
   const custsEur = _accounts
@@ -398,7 +398,7 @@ function renderTopCustomers() {
           <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
           <div class="top-val" style="color:var(--euro);">€${parseFloat(a.bal_eur).toFixed(2)}</div>
         </div>`).join('')
-      : '<div class="no-data">لا توجد حسابات دائنة باليورو</div>';
+      : `<div class="no-data">${t('no_creditors_eur')}</div>`;
   }
 }
 
@@ -406,7 +406,7 @@ function renderTopEmployees() {
   // إحصاء العمليات لكل موظف
   const stats = {};
   _txns.forEach(t => {
-    const by = t.by || 'غير محدد';
+    const by = t.by || I18n.t('unspecified');
     if (!stats[by]) stats[by] = { dep:0, wit:0, trf:0, total:0 };
     if (t.type==='dep') stats[by].dep++;
     else if (t.type==='wit') stats[by].wit++;
@@ -420,14 +420,14 @@ function renderTopEmployees() {
 
   const el = document.getElementById('top-employees');
   if (!sorted.length) {
-    el.innerHTML = '<div class="no-data">لا توجد عمليات مسجّلة</div>'; return;
+    el.innerHTML = `<div class="no-data">${t('no_ops_recorded')}</div>`; return;
   }
   el.innerHTML = sorted.map(([name, s], i) => `
     <div class="top-item">
       <div class="top-rank">${i+1}</div>
       <div class="top-name">${UI.escapeHtml(name)}</div>
       <div style="font-size:0.72rem;color:var(--text3);">
-        إيداع ${s.dep} · سحب ${s.wit} · تحويل ${s.trf}
+        ${t('emp_ops_summary', {dep:s.dep, wit:s.wit, trf:s.trf})}
       </div>
       <div class="top-val" style="color:var(--gold);">${s.total}</div>
     </div>`).join('');
