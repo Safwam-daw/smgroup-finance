@@ -22,7 +22,7 @@ const UI = (() => {
         display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
         <div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--gold);
           border-radius:50%;animation:spin .7s linear infinite;"></div>
-        <div style="font-size:0.82rem;color:var(--text2);">جاري التحميل…</div>
+        <div style="font-size:0.82rem;color:var(--text2);">${typeof t === 'function' ? t('loading') : 'جاري التحميل…'}</div>
       </div>`;
       document.body.appendChild(el);
       if (!document.getElementById('spin-style')) {
@@ -224,7 +224,7 @@ const UI = (() => {
   }
 
   function exportExcel(tableId, filename) {
-    if (typeof XLSX === 'undefined') { toast('مكتبة Excel غير محملة','error'); return; }
+    if (typeof XLSX === 'undefined') { toast(typeof t==='function'?t('excel_not_loaded'):'مكتبة Excel غير محملة','error'); return; }
     const table = document.getElementById(tableId);
     if (!table) return;
     const wb = XLSX.utils.table_to_book(table, { sheet:'Sheet1' });

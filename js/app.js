@@ -32,60 +32,60 @@ function buildSidebar(activePage) {
       <div class="sidebar-nav">
         <!-- زر تبديل الوضع المطور (سويتش متحرك) -->
         <div class="theme-switch-container">
-          <span class="theme-switch-label">🌙 مظهر داكن</span>
+          <span class="theme-switch-label">${t('theme_dark')}</span>
           <label class="theme-switch">
             <input type="checkbox" id="theme-toggle-checkbox" onclick="toggleTheme()">
             <span class="slider"></span>
           </label>
-          <span class="theme-switch-label">☀️ مظهر فاتح</span>
+          <span class="theme-switch-label">${t('theme_light')}</span>
         </div>
 
-        <div class="nav-section-label">الرئيسية</div>
+        <div class="nav-section-label">${t('nav_main')}</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
-          <span class="nav-icon">📊</span> لوحة التحكم
+          <span class="nav-icon">📊</span> ${t('nav_dashboard')}
         </button>
         <button class="nav-btn ${activePage==='analytics'?'active':''}" data-admin-only onclick="navTo('analytics.html')">
-          <span class="nav-icon">📈</span> الإحصائيات
+          <span class="nav-icon">📈</span> ${t('nav_analytics')}
         </button>
-        <div class="nav-section-label">العمليات اليومية</div>
+        <div class="nav-section-label">${t('nav_daily')}</div>
         <button class="nav-btn ${activePage==='accounts'?'active':''}" data-page="accounts" onclick="navTo('accounts.html')">
-          <span class="nav-icon">👥</span> إدارة الحسابات
+          <span class="nav-icon">👥</span> ${t('nav_accounts')}
         </button>
         <button class="nav-btn ${activePage==='deposit'?'active':''}" data-page="deposit" onclick="navTo('deposit.html')">
-          <span class="nav-icon">💵</span> إيداع نقدي
+          <span class="nav-icon">💵</span> ${t('nav_deposit')}
         </button>
         <button class="nav-btn ${activePage==='withdraw'?'active':''}" data-page="withdraw" onclick="navTo('withdraw.html')">
-          <span class="nav-icon">💸</span> سحب نقدي
+          <span class="nav-icon">💸</span> ${t('nav_withdraw')}
         </button>
         <button class="nav-btn ${activePage==='transfer'?'active':''}" data-page="transfer" onclick="navTo('transfer.html')">
-          <span class="nav-icon">🔄</span> تحويل أرصدة
+          <span class="nav-icon">🔄</span> ${t('nav_transfer')}
         </button>
         <button class="nav-btn ${activePage==='ledger'?'active':''}" data-page="ledger" onclick="navTo('ledger.html')">
-          <span class="nav-icon">📒</span> السجل المحاسبي
+          <span class="nav-icon">📒</span> ${t('nav_ledger')}
         </button>
         <button class="nav-btn ${activePage==='statement'?'active':''}" data-page="statement" onclick="navTo('statement.html')">
-          <span class="nav-icon">📋</span> كشف الحساب
+          <span class="nav-icon">📋</span> ${t('nav_statement')}
         </button>
-        <div class="nav-section-label" data-admin-only>الإدارة المتقدمة</div>
+        <div class="nav-section-label" data-admin-only>${t('nav_admin')}</div>
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only data-page="employees" onclick="navTo('employees.html')">
-          <span class="nav-icon">🛡️</span> إدارة الموظفين
+          <span class="nav-icon">🛡️</span> ${t('nav_employees')}
         </button>
-        <div class="nav-section-label" data-admin-only>التحليل والتدقيق</div>
+        <div class="nav-section-label" data-admin-only>${t('nav_audit_section')}</div>
         <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" onclick="navTo('reports.html')">
-          <span class="nav-icon">📊</span> التقارير
+          <span class="nav-icon">📊</span> ${t('nav_reports')}
         </button>
         <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" onclick="navTo('audit.html')">
-          <span class="nav-icon">🔍</span> سجل التدقيق
+          <span class="nav-icon">🔍</span> ${t('nav_audit')}
         </button>
         <button class="nav-btn ${activePage==='history'?'active':''}" data-page="history" onclick="navTo('history.html')">
-          <span class="nav-icon">📝</span> سجل التعديلات
+          <span class="nav-icon">📝</span> ${t('nav_history')}
         </button>
-        <div class="nav-section-label">أدوات النظام</div>
+        <div class="nav-section-label">${t('nav_tools')}</div>
         <button class="nav-btn" data-page="clientPortal" onclick="window.open('client.html','_blank')">
-          <span class="nav-icon">👤</span> بوابة الزبون
+          <span class="nav-icon">👤</span> ${t('nav_client_portal')}
         </button>
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
-          <span class="nav-icon">⚙️</span> الإعدادات
+          <span class="nav-icon">⚙️</span> ${t('nav_settings')}
         </button>
       </div>
 
@@ -98,7 +98,7 @@ function buildSidebar(activePage) {
           </div>
         </div>
         <button class="nav-btn logout-btn" onclick="doLogout()">
-          <span class="nav-icon">🚪</span> تسجيل الخروج
+          <span class="nav-icon">🚪</span> ${t('logout')}
         </button>
       </div>
     </nav>
@@ -132,10 +132,10 @@ function buildSidebar(activePage) {
       flex-direction:column;">
       <div style="display:flex;justify-content:space-between;align-items:center;
         padding:12px 14px;border-bottom:1px solid var(--border);">
-        <span style="font-weight:700;font-size:0.88rem;">🔔 الإشعارات</span>
+        <span style="font-weight:700;font-size:0.88rem;">🔔 ${t('notifications')}</span>
         <button onclick="markAllRead()"
           style="background:none;border:none;color:var(--gold);cursor:pointer;
-          font-size:0.74rem;font-family:inherit;">تعليم الكل كمقروء</button>
+          font-size:0.74rem;font-family:inherit;">${t('mark_all_read')}</button>
       </div>
       <div id="notif-list" style="overflow-y:auto;max-height:340px;"></div>
     </div>
@@ -151,16 +151,16 @@ function buildTreasuryBar() {
     <div id="treasury-bar">
       ${canTreasury ? `
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--gold);">
-        <div class="stat-label">💵 خزينة الدولار</div>
+        <div class="stat-label">${t('treasury_usd')}</div>
         <div class="stat-value" id="t-usd" style="color:var(--gold);">$0.00</div>
       </div>
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--euro);">
-        <div class="stat-label">💶 خزينة اليورو</div>
+        <div class="stat-label">${t('treasury_eur')}</div>
         <div class="stat-value" id="t-eur" style="color:var(--euro);">€0.00</div>
       </div>` : ''}
       ${canProfit ? `
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
-        <div class="stat-label">📈 الأرباح</div>
+        <div class="stat-label">${t('treasury_profit')}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;">
           <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:1rem;">$0.00</span>
           <span style="color:var(--green);font-weight:700;font-size:0.95rem;" id="t-profit-eur">€0.00</span>
@@ -199,7 +199,7 @@ async function loadNotifications() {
   const list = document.getElementById('notif-list');
   if (!list) return;
   if (!notifs.length) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3);font-size:0.82rem;">لا توجد إشعارات</div>';
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:0.82rem;">${t('no_notifications')}</div>`;
     return;
   }
   list.innerHTML = notifs.map(n => `
