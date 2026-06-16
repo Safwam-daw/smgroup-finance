@@ -118,25 +118,19 @@ tr:last-child td{border-bottom:none;}
   .bal-box{min-width:calc(50% - 4px);padding:12px 10px;}
   .bal-val{font-size:0.95rem;}
   .login-box{padding:24px 16px;}
-  .card{padding:12px;}
+  .card{padding:10px;}
   .qf-row{gap:6px;}
   .qf-btn{padding:6px 10px;font-size:0.7rem;}
   .lang-bar{gap:4px;}
   .client-lang-btn{padding:3px 9px;font-size:0.68rem;}
-  /* تحويل الجدول إلى بطاقات على الجوال لتجنب التمرير الأفقي */
-  .tbl-wrap{overflow-x:visible;border:none;}
-  table{min-width:0;width:100%;}
-  thead{display:none;}
-  table, tbody, tr, td{display:block;width:100%;}
-  tr{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
-     margin-bottom:8px;padding:8px 10px;}
-  tr:has(.empty-row-mobile){background:transparent;border:none;padding:0;}
-  td{border-bottom:none;padding:4px 0;display:flex;justify-content:space-between;
-     align-items:center;font-size:0.78rem;gap:8px;}
-  td.empty-row-mobile{display:block;text-align:center;}
-  td::before{content:attr(data-label);color:var(--text3);font-size:0.7rem;
-     font-weight:600;flex-shrink:0;}
-  td:empty,td:has(> *:only-child:empty){display:none;}
+  /* جدول مضغوط حقيقي بدل التمرير الأفقي الطويل */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:0;width:100%;font-size:0.68rem;}
+  th,td{padding:6px 5px;}
+  th{font-size:0.62rem;}
+  .badge{font-size:0.62rem;padding:2px 6px;}
+  /* عمود الملاحظة أقل أهمية على الجوال */
+  th:last-child,td:last-child{display:none;}
 }
 @media print{
   #login-screen,#toast{display:none!important;}
@@ -612,7 +606,7 @@ function renderPage() {
           <td data-label="${ClientI18n.ct('col_note')}" style="font-size:0.73rem;color:var(--text2);">${t.note||'—'}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="6" class="empty-row-mobile" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
+    : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
 
   document.getElementById('p-count').textContent =
     !total ? '' : _printMode
