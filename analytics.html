@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SM-Group — الإحصائيات</title>
+<title data-i18n="analytics_title">📈 الإحصائيات</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -134,16 +134,16 @@
 </div>
 
 <div class="page-header">
-  <div><h2>📈 الإحصائيات</h2><p>تحليل أداء المنظومة المالية</p></div>
+  <div><h2 data-i18n="analytics_title">📈 الإحصائيات</h2><p data-i18n="analytics_subtitle">تحليل أداء المنظومة المالية</p></div>
   <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨️ طباعة</button>
 </div>
 
 <!-- فلتر الفترة -->
 <div class="period-btns">
-  <button class="period-btn active" onclick="setPeriod(7,this)">آخر 7 أيام</button>
-  <button class="period-btn" onclick="setPeriod(30,this)">آخر 30 يوم</button>
-  <button class="period-btn" onclick="setPeriod(90,this)">آخر 3 أشهر</button>
-  <button class="period-btn" onclick="setPeriod(365,this)">السنة كاملة</button>
+  <button class="period-btn active" onclick="setPeriod(7,this)" data-i18n="period_7">آخر 7 أيام</button>
+  <button class="period-btn" onclick="setPeriod(30,this)" data-i18n="period_30">آخر 30 يوم</button>
+  <button class="period-btn" onclick="setPeriod(90,this)" data-i18n="period_90">آخر 3 أشهر</button>
+  <button class="period-btn" onclick="setPeriod(365,this)" data-i18n="period_365">السنة كاملة</button>
 </div>
 
 <!-- KPI Cards -->

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SM-Group — التقارير</title>
+<title data-i18n="reports_title">📊 التقارير</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -69,7 +69,7 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2>📊 التقارير</h2><p>تقارير مالية شاملة وقابلة للطباعة</p></div>
+      <div><h2 data-i18n="reports_title">📊 التقارير</h2><p data-i18n="reports_subtitle">تقارير مالية شاملة وقابلة للطباعة</p></div>
       <div style="display:flex;gap:8px;" class="no-print">
         <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
         <button class="btn btn-primary btn-sm" onclick="exportCurrent()">📊 Excel</button>
@@ -85,10 +85,10 @@
         <button class="qf-btn" onclick="setQuick('all')">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
           <input type="date" id="r-from" onchange="clearQuick();reload()">
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
           <input type="date" id="r-to" onchange="clearQuick();reload()">
         </div>
       </div>
@@ -96,16 +96,16 @@
 
     <!-- التبويبات -->
     <div class="tab-bar no-print">
-      <button class="tab-btn active" onclick="switchTab('summary',this)">📋 الملخص</button>
-      <button class="tab-btn" onclick="switchTab('deposits',this)">💵 الإيداعات</button>
-      <button class="tab-btn" onclick="switchTab('withdrawals',this)">💸 السحوبات</button>
-      <button class="tab-btn" onclick="switchTab('transfers',this)">🔄 التحويلات</button>
-      <button class="tab-btn" onclick="switchTab('creditors',this)">✅ حسابات دائنة</button>
-      <button class="tab-btn" onclick="switchTab('debtors',this)">⚠️ حسابات مدينة</button>
-      <button class="tab-btn" onclick="switchTab('activity',this)">🕐 آخر نشاط</button>
-      <button class="tab-btn" onclick="switchTab('employees',this)">👤 حركة الموظفين</button>
-      <button class="tab-btn" onclick="switchTab('deleted',this)">🗑️ المحذوفات</button>
-      <button class="tab-btn" onclick="switchTab('debtLimit',this)">⚙️ إعداد حد الدين</button>
+      <button class="tab-btn active" onclick="switchTab('summary',this)" data-i18n="tab_summary">📋 الملخص</button>
+      <button class="tab-btn" onclick="switchTab('deposits',this)" data-i18n="tab_deposits">💵 الإيداعات</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals',this)" data-i18n="tab_withdrawals">💸 السحوبات</button>
+      <button class="tab-btn" onclick="switchTab('transfers',this)" data-i18n="tab_transfers">🔄 التحويلات</button>
+      <button class="tab-btn" onclick="switchTab('creditors',this)" data-i18n="tab_creditors">✅ حسابات دائنة</button>
+      <button class="tab-btn" onclick="switchTab('debtors',this)" data-i18n="tab_debtors">⚠️ حسابات مدينة</button>
+      <button class="tab-btn" onclick="switchTab('activity',this)" data-i18n="tab_activity">🕐 آخر نشاط</button>
+      <button class="tab-btn" onclick="switchTab('employees',this)" data-i18n="tab_employees">👤 حركة الموظفين</button>
+      <button class="tab-btn" onclick="switchTab('deleted',this)" data-i18n="tab_deleted">🗑️ المحذوفات</button>
+      <button class="tab-btn" onclick="switchTab('debtLimit',this)" data-i18n="tab_debt_limit">⚙️ إعداد حد الدين</button>
     </div>
 
     <!-- ترويسة الطباعة -->

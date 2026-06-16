@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SM-Group — السجل المحاسبي</title>
+<title data-i18n="ledger_title">📒 السجل المحاسبي</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -22,40 +22,40 @@ font-family:inherit; cursor:pointer; transition:all .15s; white-space:nowrap;
 <main id="main">
 <div id="treasury-placeholder"></div>
 <div class="page-header">
-<div><h2>📒 السجل المحاسبي</h2><p>جميع العمليات المالية</p></div>
-<button class="btn btn-primary" onclick="UI.exportExcel('ledger-table','Daily_Ledger')">📊 Excel</button>
+<div><h2 data-i18n="ledger_title">📒 السجل المحاسبي</h2><p data-i18n="ledger_subtitle">جميع العمليات المالية</p></div>
+<button class="btn btn-primary" onclick="UI.exportExcel('ledger-table','Daily_Ledger')" data-i18n="excel_btn">📊 Excel</button>
 </div>
 <!-- فلاتر -->
 <div class="card" style="margin-bottom:14px; padding:14px 16px;">
 <div class="quick-filters">
-<button class="qf-btn active" id="qf-today" onclick="setQuick('today')">اليوم</button>
-<button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
-<button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-<button class="qf-btn" onclick="setQuick('all')">الكل</button>
+<button class="qf-btn active" id="qf-today" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+<button class="qf-btn" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+<button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev">الشهر السابق</button>
+<button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-<div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label>نوع العملية</label>
+<div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;"><label data-i18n="filter_type">نوع العملية</label>
 <select id="f-type" onchange="applyFilter()">
-<option value="all">الكل</option>
-<option value="dep">إيداع</option>
-<option value="wit">سحب</option>
-<option value="trf">تحويل</option>
+<option value="all" data-i18n="filter_all">الكل</option>
+<option value="dep" data-i18n="filter_deposit">إيداع</option>
+<option value="wit" data-i18n="filter_withdraw">سحب</option>
+<option value="trf" data-i18n="filter_transfer">تحويل</option>
 </select>
 </div>
-<div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label>العملة</label>
+<div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
 <select id="f-cur" onchange="applyFilter()">
 <option value="all">الكل</option>
 <option value="usd">دولار</option>
 <option value="eur">يورو</option>
 </select>
 </div>
-<div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label>بحث بالحساب</label>
+<div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label data-i18n="search_account_lbl">بحث بالحساب</label>
 <input type="text" id="f-acc" placeholder="كود أو اسم…" oninput="applyFilter()">
 </div>
-<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>من تاريخ</label>
+<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
 <input type="date" id="f-from" onchange="clearQuick();applyFilter()">
 </div>
-<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label>إلى تاريخ</label>
+<div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
 <input type="date" id="f-to" onchange="clearQuick();applyFilter()">
 </div>
 </div>
@@ -69,8 +69,8 @@ overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
 <table id="ledger-table">
 <thead>
 <tr>
-<th>الوقت</th><th>النوع</th><th>الحساب</th>
-<th>العملة</th><th>المبلغ</th><th>سعر الصرف</th><th>بواسطة</th>
+<th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_account_lbl">الحساب</th>
+<th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_rate">سعر الصرف</th><th data-i18n="col_by_lbl">بواسطة</th>
 </tr>
 </thead>
 <tbody id="ledger-tbody">
