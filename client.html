@@ -87,7 +87,15 @@ tr:last-child td{border-bottom:none;}
 /* Pub note */
 .pub-note{font-size:0.72rem;color:var(--text3);text-align:center;padding:8px;
   background:var(--surface2);border-radius:6px;margin-bottom:10px;}
-/* Btn */
+/* أزرار اللغة */
+.lang-bar { display:flex; justify-content:center; gap:8px; margin-bottom:16px; }
+.client-lang-btn {
+  padding:4px 12px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.72rem;
+  font-family:inherit; cursor:pointer; transition:all .15s;
+}
+.client-lang-btn:hover { border-color:var(--gold); color:var(--gold); }
+.client-lang-btn.active-lang { background:var(--gold); color:#000; border-color:var(--gold); font-weight:700; }
 .btn{padding:8px 16px;border:none;border-radius:var(--radius-sm);cursor:pointer;
   font-family:inherit;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;
   gap:6px;transition:all .15s;white-space:nowrap;}
@@ -139,22 +147,28 @@ tr:last-child td{border-bottom:none;}
 <!-- شاشة الدخول -->
 <div id="login-screen">
   <div class="login-box">
+    <!-- أزرار اللغة المستقلة -->
+    <div class="lang-bar">
+      <button class="client-lang-btn active-lang" data-lang="ar" onclick="ClientI18n.setLang('ar')">ع</button>
+      <button class="client-lang-btn" data-lang="en" onclick="ClientI18n.setLang('en')">EN</button>
+      <button class="client-lang-btn" data-lang="tr" onclick="ClientI18n.setLang('tr')">TR</button>
+    </div>
     <div class="logo" id="client-brand-name">SM-Group</div>
-    <div class="logo-sub" data-i18n="client_portal">بوابة الزبون</div>
+    <div class="logo-sub" data-ct="portal_title">بوابة الزبون</div>
     <div class="divider"></div>
     <div class="form-group">
-      <label data-i18n="acc_number">رقم الحساب</label>
-      <input type="text" id="c-acc" placeholder="0001" maxlength="6"
+      <label data-ct="acc_number">رقم الحساب</label>
+      <input type="text" id="c-acc" data-ct-placeholder="acc_ph" placeholder="0001" maxlength="6"
              onkeydown="if(event.key==='Enter') document.getElementById('c-pin').focus()">
     </div>
     <div class="form-group">
-      <label data-i18n="pin_label">كلمة المرور (6 أرقام)</label>
-      <input type="password" id="c-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+      <label data-ct="pin_label">كلمة المرور (6 أرقام)</label>
+      <input type="password" id="c-pin" data-ct-placeholder="pin_ph" placeholder="••••••" maxlength="6" inputmode="numeric"
              onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <button class="btn-login" id="login-btn" onclick="doLogin()" data-i18n="login_btn">دخول</button>
-    <div class="error-box" id="login-err">رقم الحساب أو كلمة المرور غير صحيحة</div>
-    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;" data-i18n="contact_admin">
+    <button class="btn-login" id="login-btn" onclick="doLogin()" data-ct="login_btn">دخول</button>
+    <div class="error-box" id="login-err" data-ct="login_error">رقم الحساب أو كلمة المرور غير صحيحة</div>
+    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;" data-ct="contact_admin">
       للحصول على كلمة المرور تواصل مع الإدارة
     </p>
   </div>
@@ -169,10 +183,10 @@ tr:last-child td{border-bottom:none;}
          border-bottom:3px solid #c9a84c;padding-bottom:12px;">
       <div>
         <h1 id="print-brand-name" style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
-        <p style="font-size:0.73rem;color:#555;margin-top:3px;">كشف حساب الزبون</p>
+        <p style="font-size:0.73rem;color:#555;margin-top:3px;" data-ct="stmt_title">كشف حساب الزبون</p>
       </div>
       <div style="text-align:left;">
-        <p style="font-size:0.73rem;color:#555;">تاريخ الطباعة: <b id="print-date"></b></p>
+        <p style="font-size:0.73rem;color:#555;"><span data-ct="print_date_lbl">تاريخ الطباعة:</span> <b id="print-date"></b></p>
       </div>
     </div>
   </div>
@@ -184,9 +198,15 @@ tr:last-child td{border-bottom:none;}
         <div class="p-name" id="p-name">—</div>
         <div class="p-meta" id="p-meta">—</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-ghost" onclick="doLogout()" data-i18n="logout_btn">🚪 خروج</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <!-- أزرار اللغة في الشاشة الرئيسية -->
+        <div class="lang-bar" style="margin-bottom:0;">
+          <button class="client-lang-btn active-lang" data-lang="ar" onclick="ClientI18n.setLang('ar');refreshPortalText()">ع</button>
+          <button class="client-lang-btn" data-lang="en" onclick="ClientI18n.setLang('en');refreshPortalText()">EN</button>
+          <button class="client-lang-btn" data-lang="tr" onclick="ClientI18n.setLang('tr');refreshPortalText()">TR</button>
+        </div>
+        <button class="btn btn-ghost" onclick="window.print()" data-ct="print_btn">🖨️ طباعة</button>
+        <button class="btn btn-ghost" onclick="doLogout()" data-ct="logout_btn">🚪 خروج</button>
       </div>
     </div>
     <!-- أرصدة -->
@@ -199,10 +219,10 @@ tr:last-child td{border-bottom:none;}
   <!-- فلاتر -->
   <div class="card" style="padding:14px 16px;">
     <div class="qf-row">
-      <button class="qf-btn active" onclick="setQuick('month')">هذا الشهر</button>
-      <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-      <button class="qf-btn" onclick="setQuick('today')">اليوم</button>
-      <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+      <button class="qf-btn active" onclick="setQuick('month')" data-ct="qf_month">هذا الشهر</button>
+      <button class="qf-btn" onclick="setQuick('prev')" data-ct="qf_prev">الشهر السابق</button>
+      <button class="qf-btn" onclick="setQuick('today')" data-ct="qf_today">اليوم</button>
+      <button class="qf-btn" onclick="setQuick('all')" data-ct="qf_all">الكل</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
       <div style="display:none;">
@@ -210,15 +230,15 @@ tr:last-child td{border-bottom:none;}
         <input type="date" id="p-to">
       </div>
       <div style="display:none;">
-        <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;">النوع</label>
+        <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;" data-ct="col_type">النوع</label>
         <select id="p-type" onchange="filterRows()"
                 style="width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);
                        color:var(--text);border-radius:8px;font-family:inherit;outline:none;">
-          <option value="all">الكل</option>
-          <option value="dep">💵 إيداع</option>
-          <option value="wit">💸 سحب</option>
-          <option value="trf">🔄 تحويل</option>
-          <option value="fee">💰 عمولة</option>
+          <option value="all" data-ct="qf_all">الكل</option>
+          <option value="dep" data-ct="type_dep">💵 إيداع</option>
+          <option value="wit" data-ct="type_wit">💸 سحب</option>
+          <option value="trf" data-ct="type_trf">🔄 تحويل</option>
+          <option value="fee" data-ct="type_fee">💰 عمولة</option>
         </select>
       </div>
     </div>
@@ -230,12 +250,12 @@ tr:last-child td{border-bottom:none;}
       <table id="p-table">
         <thead>
           <tr>
-            <th data-i18n="col_date">التاريخ</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_currency">العملة</th>
-            <th data-i18n="col_debit_out">دين (خروج)</th><th data-i18n="col_credit_in">دائن (دخول)</th><th data-i18n="col_note">ملاحظة</th>
+            <th data-ct="col_date">التاريخ</th><th data-ct="col_type">النوع</th><th data-ct="col_currency">العملة</th>
+            <th data-ct="col_debit">دين (خروج)</th><th data-ct="col_credit">دائن (دخول)</th><th data-ct="col_note">ملاحظة</th>
           </tr>
         </thead>
         <tbody id="p-tbody">
-          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">جاري التحميل…</td></tr>
+          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);" data-ct="loading">جاري التحميل…</td></tr>
         </tbody>
       </table>
     </div>
@@ -259,6 +279,91 @@ tr:last-child td{border-bottom:none;}
 <script src="js/db-config.js"></script><script src="js/storage.js"></script>
 <script src="js/config.js"></script>
 <script>
+// ══ نظام ترجمة مستقل لبوابة الزبون ══════════════════
+const ClientI18n = (() => {
+  const KEY = 'client_lang';
+  let _lang = localStorage.getItem(KEY) || 'ar';
+
+  const _dict = {
+    // عام
+    portal_title:    { ar: 'بوابة الزبون', en: 'Client Portal', tr: 'Müşteri Portalı' },
+    acc_number:      { ar: 'رقم الحساب', en: 'Account Number', tr: 'Hesap No' },
+    pin_label:       { ar: 'كلمة المرور (6 أرقام)', en: 'Password (6 digits)', tr: 'Şifre (6 rakam)' },
+    acc_ph:          { ar: '0001', en: '0001', tr: '0001' },
+    pin_ph:          { ar: '••••••', en: '••••••', tr: '••••••' },
+    login_btn:       { ar: 'دخول', en: 'Login', tr: 'Giriş' },
+    login_checking:  { ar: 'جاري التحقق…', en: 'Checking…', tr: 'Kontrol ediliyor…' },
+    login_error:     { ar: 'رقم الحساب أو كلمة المرور غير صحيحة', en: 'Invalid account or password', tr: 'Geçersiz hesap veya şifre' },
+    locked_msg:      { ar: 'تم تعليق الدخول. حاول بعد', en: 'Login suspended. Try after', tr: 'Giriş askıya alındı.' },
+    locked_sec:      { ar: 'ثانية', en: 'seconds', tr: 'saniye' },
+    too_many:        { ar: 'محاولات كثيرة. تم تعليق الدخول لمدة دقيقتين.', en: 'Too many attempts. Suspended for 2 minutes.', tr: 'Çok fazla deneme. 2 dakika askıya alındı.' },
+    contact_admin:   { ar: 'للحصول على كلمة المرور تواصل مع الإدارة', en: 'Contact management for your password', tr: 'Şifre için yönetimle iletişime geçin' },
+    logout_btn:      { ar: '🚪 خروج', en: '🚪 Logout', tr: '🚪 Çıkış' },
+    print_btn:       { ar: '🖨️ طباعة', en: '🖨️ Print', tr: '🖨️ Yazdır' },
+    acc_id_lbl:      { ar: 'رقم الحساب:', en: 'Account No:', tr: 'Hesap No:' },
+    bal_usd:         { ar: '🇺🇸 رصيد الدولار', en: '🇺🇸 USD Balance', tr: '🇺🇸 Dolar Bakiyesi' },
+    bal_eur:         { ar: '🇪🇺 رصيد اليورو', en: '🇪🇺 EUR Balance', tr: '🇪🇺 Euro Bakiyesi' },
+    qf_month:        { ar: 'هذا الشهر', en: 'This Month', tr: 'Bu Ay' },
+    qf_prev:         { ar: 'الشهر السابق', en: 'Last Month', tr: 'Geçen Ay' },
+    qf_today:        { ar: 'اليوم', en: 'Today', tr: 'Bugün' },
+    qf_all:          { ar: 'الكل', en: 'All', tr: 'Tümü' },
+    col_date:        { ar: 'التاريخ', en: 'Date', tr: 'Tarih' },
+    col_type:        { ar: 'النوع', en: 'Type', tr: 'Tür' },
+    col_currency:    { ar: 'العملة', en: 'Currency', tr: 'Para Birimi' },
+    col_debit:       { ar: 'دين (خروج)', en: 'Debit (Out)', tr: 'Borç (Çıkan)' },
+    col_credit:      { ar: 'دائن (دخول)', en: 'Credit (In)', tr: 'Alacak (Giren)' },
+    col_note:        { ar: 'ملاحظة', en: 'Note', tr: 'Not' },
+    type_dep:        { ar: '💵 إيداع', en: '💵 Deposit', tr: '💵 Yatırma' },
+    type_wit:        { ar: '💸 سحب', en: '💸 Withdrawal', tr: '💸 Çekim' },
+    type_trf:        { ar: '🔄 تحويل', en: '🔄 Transfer', tr: '🔄 Transfer' },
+    type_fee:        { ar: '💰 عمولة', en: '💰 Commission', tr: '💰 Komisyon' },
+    no_movements:    { ar: 'لا توجد حركات منشورة في هذه الفترة', en: 'No published movements in this period', tr: 'Bu dönemde yayınlanmış hareket yok' },
+    pub_note:        { ar: '🕐 آخر تحديث للكشف:', en: '🕐 Last statement update:', tr: '🕐 Son özet güncellemesi:' },
+    no_pub:          { ar: '⏳ لم يتم نشر الكشف بعد — تواصل مع الإدارة', en: '⏳ Statement not published yet — contact management', tr: '⏳ Özet henüz yayınlanmadı — yönetimle iletişime geçin' },
+    showing:         { ar: 'عرض', en: 'Showing', tr: 'Gösterilen' },
+    of:              { ar: 'من', en: 'of', tr: '/' },
+    movement:        { ar: 'حركة', en: 'movements', tr: 'hareket' },
+    stmt_title:      { ar: 'كشف حساب الزبون', en: 'Client Account Statement', tr: 'Müşteri Hesap Özeti' },
+    print_date_lbl:  { ar: 'تاريخ الطباعة:', en: 'Print Date:', tr: 'Yazdırma Tarihi:' },
+    official_stmt:   { ar: 'كشف حساب رسمي · طُبع بتاريخ', en: 'Official Statement · Printed on', tr: 'Resmi Özet · Yazdırıldı' },
+  };
+
+  function ct(key) {
+    const e = _dict[key];
+    if (!e) return key;
+    return e[_lang] || e['ar'] || key;
+  }
+
+  function setLang(lang) {
+    _lang = lang;
+    localStorage.setItem(KEY, lang);
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = lang;
+    applyAll();
+  }
+
+  function getLang() { return _lang; }
+
+  function applyAll() {
+    document.querySelectorAll('[data-ct]').forEach(el => {
+      el.textContent = ct(el.getAttribute('data-ct'));
+    });
+    document.querySelectorAll('[data-ct-placeholder]').forEach(el => {
+      el.placeholder = ct(el.getAttribute('data-ct-placeholder'));
+    });
+    // تحديث اتجاه الصفحة
+    const dir = _lang === 'ar' ? 'rtl' : 'ltr';
+    document.body.style.direction = dir;
+    // تحديث أزرار اللغة
+    document.querySelectorAll('.client-lang-btn').forEach(btn => {
+      btn.classList.toggle('active-lang', btn.dataset.lang === _lang);
+    });
+  }
+
+  return { ct, setLang, getLang, applyAll };
+})();
+</script>
 const PAGE_SIZE = 20;
 
 // ── تطبيق هوية الشركة ───────────────────────────────────
@@ -268,10 +373,33 @@ const PAGE_SIZE = 20;
   document.getElementById('print-brand-name').textContent = name;
   document.getElementById('print-brand-footer').textContent = name;
   document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
-  document.title = name + ' — بوابة الزبون';
+  document.title = name + ' — ' + ClientI18n.ct('portal_title');
+  // تطبيق اللغة المحفوظة عند أول تحميل
+  ClientI18n.applyAll();
 })();
 let _acc = null, _allTxns = [], _filtered = [], _page = 1, _printMode = false;
-const typeLabel = {dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل', fee:'💰 عمولة'};
+function typeLabel(type) {
+  const ct = ClientI18n.ct;
+  const map = {dep: ct('type_dep'), wit: ct('type_wit'), trf: ct('type_trf'), fee: ct('type_fee')};
+  return map[type] || type;
+}
+
+// دالة لتحديث النصوص الديناميكية عند تغيير اللغة
+function refreshPortalText() {
+  ClientI18n.applyAll();
+  if (_acc) {
+    // إعادة رسم الجدول بالترجمة الجديدة
+    renderPage();
+    // تحديث ملاحظة النشر
+    const pubEl = document.getElementById('p-pub');
+    if (pubEl && pubEl.dataset.pubAt) {
+      const d = new Date(pubEl.dataset.pubAt).toLocaleString();
+      pubEl.textContent = ClientI18n.ct('pub_note') + ' ' + d;
+    } else if (pubEl) {
+      pubEl.textContent = ClientI18n.ct('no_pub');
+    }
+  }
+}
 
 // ── Toast ─────────────────────────────────────────────
 function showToast(msg, type='success') {
@@ -293,12 +421,12 @@ async function doLogin() {
   // تحقق من القفل
   if (Date.now() < _CRL.lockedUntil) {
     const secs = Math.ceil((_CRL.lockedUntil - Date.now()) / 1000);
-    err.textContent = `تم تعليق الدخول. حاول بعد ${secs} ثانية.`;
+    err.textContent = `${ClientI18n.ct('locked_msg')} ${secs} ${ClientI18n.ct('locked_sec')}`;
     err.classList.add('show'); return;
   }
 
-  if (!accId || !pin) { err.textContent = 'رقم الحساب أو كلمة المرور غير صحيحة'; err.classList.add('show'); return; }
-  btn.disabled=true; btn.textContent='جاري التحقق…'; err.classList.remove('show');
+  if (!accId || !pin) { err.textContent = ClientI18n.ct('login_error'); err.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent=ClientI18n.ct('login_checking'); err.classList.remove('show');
 
   const acc = await Storage.clientLogin(accId, pin);
   if (!acc) {
@@ -306,12 +434,12 @@ async function doLogin() {
     if (_CRL.attempts >= _CRL.MAX) {
       _CRL.lockedUntil = Date.now() + _CRL.LOCKOUT;
       _CRL.attempts = 0;
-      err.textContent = 'محاولات كثيرة. تم تعليق الدخول لمدة دقيقتين.';
+      err.textContent = ClientI18n.ct('too_many');
     } else {
-      err.textContent = 'رقم الحساب أو كلمة المرور غير صحيحة';
+      err.textContent = ClientI18n.ct('login_error');
     }
     err.classList.add('show');
-    btn.disabled=false; btn.textContent='دخول';
+    btn.disabled=false; btn.textContent=ClientI18n.ct('login_btn');
     document.getElementById('c-pin').value='';
     return;
   }
@@ -330,7 +458,7 @@ function doLogout() {
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('c-pin').value='';
   document.getElementById('login-btn').disabled=false;
-  document.getElementById('login-btn').textContent='دخول';
+  document.getElementById('login-btn').textContent=ClientI18n.ct('login_btn');
 }
 
 // ── Load Portal ───────────────────────────────────────
@@ -350,21 +478,21 @@ async function loadPortal() {
 
   // اسم ومعلومات
   document.getElementById('p-name').textContent = _acc.name;
-  document.getElementById('p-meta').textContent = 'رقم الحساب: ' + _acc.id;
+  document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
   document.title = brandName() + ' — ' + _acc.name;
 
   // أرصدة
   document.getElementById('p-bals').innerHTML = `
     <div class="bal-box" style="border-color:${usd<0?'var(--red)':'var(--gold)'};
          background:${usd<0?'var(--red-dim)':'var(--gold-dim2)'};">
-      <div class="bal-label">🇺🇸 رصيد الدولار</div>
+      <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
       <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--gold)'};">
         ${usd<0?'-':''}$${Math.abs(usd).toFixed(2)}
       </div>
     </div>
     <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--euro)'};
          background:${eur<0?'var(--red-dim)':'var(--euro-dim)'};">
-      <div class="bal-label">🇪🇺 رصيد اليورو</div>
+      <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
       <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--euro)'};">
         ${eur<0?'-':''}€${Math.abs(eur).toFixed(2)}
       </div>
@@ -373,11 +501,13 @@ async function loadPortal() {
   // ملاحظة التحديث
   const pubEl = document.getElementById('p-pub');
   if (pubAt) {
-    const d = new Date(pubAt).toLocaleString('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    pubEl.textContent = '🕐 آخر تحديث للكشف: ' + d;
+    const d = new Date(pubAt).toLocaleString();
+    pubEl.textContent = ClientI18n.ct('pub_note') + ' ' + d;
+    pubEl.dataset.pubAt = pubAt;
     pubEl.style.borderLeft = '3px solid var(--gold)';
   } else {
-    pubEl.textContent = '⏳ لم يتم نشر الكشف بعد — تواصل مع الإدارة';
+    pubEl.textContent = ClientI18n.ct('no_pub');
+    pubEl.dataset.pubAt = '';
   }
 
   // جلب الحركات المنشورة
@@ -445,7 +575,7 @@ function renderPage() {
         if(isTo)   credit=parseFloat(t.amt)*(parseFloat(t.rate)||1);
         const dCell=debit>0 ?`<span class="cell-debit">-${sym}${debit.toFixed(2)}</span>`:'—';
         const cCell=credit>0?`<span class="cell-credit">+${sym}${credit.toFixed(2)}</span>`:'—';
-        const lbl = typeLabel[t.type]||t.type;
+        const lbl = typeLabel(t.type);
         const bCls= isFee?'badge-fee':`badge-${t.type}`;
         const rSty= isFee?'background:rgba(201,168,76,0.04);border-right:2px solid var(--gold);':'';
         const d = new Date(t.date).toLocaleString('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -458,10 +588,12 @@ function renderPage() {
           <td style="font-size:0.73rem;color:var(--text2);">${t.note||'—'}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">لا توجد حركات منشورة في هذه الفترة</td></tr>';
+    : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
 
   document.getElementById('p-count').textContent =
-    !total ? '' : _printMode ? `${total} حركة` : `عرض ${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} حركة`;
+    !total ? '' : _printMode
+      ? `${total} ${ClientI18n.ct('movement')}`
+      : `${ClientI18n.ct('showing')} ${start+1}–${Math.min(start+PAGE_SIZE,total)} ${ClientI18n.ct('of')} ${total} ${ClientI18n.ct('movement')}`;
 
   const pg=document.getElementById('p-pages');
   if(totalPages<=1){pg.innerHTML='';return;}
