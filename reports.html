@@ -71,18 +71,18 @@
     <div class="page-header">
       <div><h2 data-i18n="reports_title">📊 التقارير</h2><p data-i18n="reports_subtitle">تقارير مالية شاملة وقابلة للطباعة</p></div>
       <div style="display:flex;gap:8px;" class="no-print">
-        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-primary btn-sm" onclick="exportCurrent()">📊 Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn2">🖨️ طباعة</button>
+        <button class="btn btn-primary btn-sm" onclick="exportCurrent()" data-i18n="excel_btn">📊 Excel</button>
       </div>
     </div>
 
     <!-- فلاتر مشتركة -->
     <div class="card" style="padding:14px 16px;margin-bottom:14px;" id="filter-card">
       <div class="quick-filters" id="quick-btns">
-        <button class="qf-btn active" onclick="setQuick('today')">اليوم</button>
-        <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
-        <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+        <button class="qf-btn active" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev">الشهر السابق</button>
+        <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -116,7 +116,7 @@
           <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
         </div>
         <div style="font-size:0.75rem;color:#555;text-align:left;">
-          طُبع بتاريخ: <b id="print-date-rep"></b>
+          <span data-i18n="printed_on_lbl">طُبع بتاريخ:</span> <b id="print-date-rep"></b>
         </div>
       </div>
       <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-rep"></div>
@@ -134,7 +134,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="dep-table">
-            <thead><tr><th>الوقت</th><th>الحساب</th><th>العملة</th><th>المبلغ</th><th>العمولة</th><th>صافي</th><th>بواسطة</th></tr></thead>
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_account_lbl">الحساب</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_commission">العمولة</th><th data-i18n="col_net">صافي</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
             <tbody id="dep-tbody"></tbody>
           </table>
         </div>
@@ -148,7 +148,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="wit-table">
-            <thead><tr><th>الوقت</th><th>الحساب</th><th>العملة</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_account_lbl">الحساب</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
             <tbody id="wit-tbody"></tbody>
           </table>
         </div>
@@ -162,7 +162,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="trf-table">
-            <thead><tr><th>الوقت</th><th>المرسل</th><th>المستقبل</th><th>العملة</th><th>المبلغ</th><th>العمولة</th><th>بواسطة</th></tr></thead>
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_sender">المرسل</th><th data-i18n="col_receiver">المستقبل</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_commission">العمولة</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
             <tbody id="trf-tbody"></tbody>
           </table>
         </div>
@@ -175,7 +175,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="crd-table">
-            <thead><tr><th>الكود</th><th>الاسم</th><th>النوع</th><th>رصيد $</th><th>رصيد €</th><th class="no-print">إجراء</th></tr></thead>
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
             <tbody id="crd-tbody"></tbody>
           </table>
         </div>
@@ -187,7 +187,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="dbt-table">
-            <thead><tr><th>الكود</th><th>الاسم</th><th>النوع</th><th>رصيد $</th><th>رصيد €</th><th class="no-print">إجراء</th></tr></thead>
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
             <tbody id="dbt-tbody"></tbody>
           </table>
         </div>
@@ -198,18 +198,18 @@
     <div class="tab-content" id="tab-activity">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
         <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
-          <label>الحسابات التي لم تتحرك منذ أكثر من</label>
+          <label data-i18n="inactive_accounts_lbl">الحسابات التي لم تتحرك منذ أكثر من</label>
           <div style="display:flex;gap:8px;align-items:center;">
             <input type="number" id="inactivity-days" value="30" min="1" style="flex:1;">
-            <span style="color:var(--text2);font-size:0.82rem;">يوم</span>
-            <button class="btn btn-primary btn-sm" onclick="loadActivity()">بحث</button>
+            <span style="color:var(--text2);font-size:0.82rem;" data-i18n="day_unit">يوم</span>
+            <button class="btn btn-primary btn-sm" onclick="loadActivity()" data-i18n="search_btn">بحث</button>
           </div>
         </div>
       </div>
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="act-table">
-            <thead><tr><th>الكود</th><th>الاسم</th><th>رصيد $</th><th>رصيد €</th><th>آخر حركة</th><th>الأيام</th><th class="no-print">إجراء</th></tr></thead>
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th data-i18n="last_movement_lbl">آخر حركة</th><th data-i18n="days_lbl">الأيام</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
             <tbody id="act-tbody"></tbody>
           </table>
         </div>
@@ -221,7 +221,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="emp-act-table">
-            <thead><tr><th>الموظف</th><th>إيداعات</th><th>سحوبات</th><th>تحويلات</th><th>حذف</th><th>المجموع</th></tr></thead>
+            <thead><tr><th data-i18n="employee_lbl">الموظف</th><th data-i18n="stat_deposits">إيداعات</th><th data-i18n="stat_withdrawals">سحوبات</th><th data-i18n="stat_transfers_lbl">تحويلات</th><th data-i18n="delete_btn2">حذف</th><th data-i18n="total_lbl">المجموع</th></tr></thead>
             <tbody id="emp-act-tbody"></tbody>
           </table>
         </div>
@@ -233,7 +233,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="tbl-wrap" style="border:none;margin:0;">
           <table id="del-table">
-            <thead><tr><th>رقم الأرشيف</th><th>الاسم</th><th>النوع</th><th>رصيد $ عند الحذف</th><th>رصيد € عند الحذف</th><th>بواسطة</th><th>تاريخ الحذف</th><th class="no-print">حركات</th></tr></thead>
+            <thead><tr><th data-i18n="archive_no_lbl">رقم الأرشيف</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="bal_usd_at_delete">رصيد $ عند الحذف</th><th data-i18n="bal_eur_at_delete">رصيد € عند الحذف</th><th data-i18n="col_by_lbl">بواسطة</th><th data-i18n="delete_date_lbl">تاريخ الحذف</th><th class="no-print" data-i18n="movements_lbl">حركات</th></tr></thead>
             <tbody id="del-tbody"></tbody>
           </table>
         </div>
@@ -243,15 +243,15 @@
     <!-- إعداد حد الدين -->
     <div class="tab-content" id="tab-debtLimit">
       <div class="card" id="debt-settings-card">
-        <h3>⚙️ إعداد حد تنبيه الديون</h3>
+        <h3 data-i18n="debt_limit_title">⚙️ إعداد حد تنبيه الديون</h3>
         <div class="form-group" style="max-width:300px;margin-top:10px;">
-          <label>حد الدين (قيمة سالبة)</label>
+          <label data-i18n="debt_limit_lbl">حد الدين (قيمة سالبة)</label>
           <div style="display:flex;gap:10px;align-items:center;">
             <input type="number" id="debt-limit-input" value="-500" max="0" step="50" style="flex:1;">
-            <button class="btn btn-primary btn-sm" onclick="saveDebtLimit()">💾 حفظ</button>
+            <button class="btn btn-primary btn-sm" onclick="saveDebtLimit()" data-i18n="save_btn">💾 حفظ</button>
           </div>
         </div>
-        <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;">
+        <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;" data-i18n="debt_limit_note">
           أي حساب يتجاوز هذا الحد يُظهر تنبيهاً في لوحة التحكم. الافتراضي: -500
         </p>
       </div>
@@ -290,17 +290,17 @@ window.addEventListener('afterprint', exitPrintMode);
   if (!Auth.can('reports')) { navTo('accounts.html'); return; }
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-  document.getElementById('print-report-brand').textContent = brandName() + ' — تقرير مالي';
+  document.getElementById('print-report-brand').textContent = brandName() + ' — ' + t('financial_report_lbl');
   document.getElementById('print-dawtech-rep').textContent = brandPrintCopyright();
   // تاريخ الطباعة
-  const now = new Date().toLocaleDateString('ar-SA');
+  const now = new Date().toLocaleDateString();
   const prEl = document.getElementById('print-date-rep');
   if (prEl) prEl.textContent = now;
   window.addEventListener('beforeprint', () => {
     const from = document.getElementById('r-from').value;
     const to   = document.getElementById('r-to').value;
     const pp = document.getElementById('print-period');
-    if (pp) pp.textContent = (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
+    if (pp) pp.textContent = (from || to) ? `${t('period_lbl')} ${from} — ${to}` : t('all_time_lbl');
   });
 
   const s = await Storage.getAlertSettings();
@@ -372,7 +372,7 @@ async function reload() {
     console.log('Loaded:', _allTxns.length, 'txns,', _allAccounts.length, 'accounts');
   } catch(e) {
     console.error('reload error:', e);
-    UI.toast('خطأ في تحميل البيانات: ' + e.message, 'error');
+    UI.toast(t('load_data_error') + ': ' + e.message, 'error');
   } finally {
     UI.showLoading(false);
     renderCurrentTab();
@@ -380,21 +380,21 @@ async function reload() {
 }
 
 function renderCurrentTab() {
-  const t = _currentTab;
-  if (t==='summary')     renderSummary();
-  else if (t==='deposits')    renderDep();
-  else if (t==='withdrawals') renderWit();
-  else if (t==='transfers')   renderTrf();
-  else if (t==='creditors')   renderCreditors();
-  else if (t==='debtors')     renderDebtors();
-  else if (t==='activity')    loadActivity();
-  else if (t==='employees')   renderEmpActivity();
-  else if (t==='deleted')     loadDeleted();
+  const tabName = _currentTab;
+  if (tabName==='summary')     renderSummary();
+  else if (tabName==='deposits')    renderDep();
+  else if (tabName==='withdrawals') renderWit();
+  else if (tabName==='transfers')   renderTrf();
+  else if (tabName==='creditors')   renderCreditors();
+  else if (tabName==='debtors')     renderDebtors();
+  else if (tabName==='activity')    loadActivity();
+  else if (tabName==='employees')   renderEmpActivity();
+  else if (tabName==='deleted')     loadDeleted();
 }
 
 // ── Summary ───────────────────────────────────────────
 function renderSummary() {
-  if (!_allTxns) { document.getElementById('sum-stats').innerHTML='<div class="empty-state">جاري التحميل…</div>'; return; }
+  if (!_allTxns) { document.getElementById('sum-stats').innerHTML=`<div class="empty-state">${t('loading')}</div>`; return; }
   const deps = _allTxns.filter(t=>t.type==='dep');
   const wits = _allTxns.filter(t=>t.type==='wit');
   const trfs = _allTxns.filter(t=>t.type==='trf');
@@ -405,30 +405,30 @@ function renderSummary() {
   wits.forEach(t=>{ if(t.cur==='usd')witUsd+=parseFloat(t.amt); else witEur+=parseFloat(t.amt); });
   document.getElementById('sum-stats').innerHTML = `
     <div class="stat-mini" style="border-right:3px solid var(--green);">
-      <div class="stat-mini-label">إجمالي الإيداعات</div>
+      <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--green);">$${depUsd.toFixed(2)}</div>
       <div style="font-size:0.78rem;color:var(--euro);">€${depEur.toFixed(2)}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--red);">
-      <div class="stat-mini-label">إجمالي السحوبات</div>
+      <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--red);">$${witUsd.toFixed(2)}</div>
       <div style="font-size:0.78rem;color:var(--euro);">€${witEur.toFixed(2)}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--blue);">
-      <div class="stat-mini-label">عدد التحويلات</div>
+      <div class="stat-mini-label">${t('transfer_count_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--blue);">${trfs.length}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--gold);">
-      <div class="stat-mini-label">عمولات الفترة</div>
+      <div class="stat-mini-label">${t('period_commissions_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--gold);">$${comm.toFixed(2)}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--text2);">
-      <div class="stat-mini-label">إجمالي العمليات</div>
+      <div class="stat-mini-label">${t('total_ops_lbl')}</div>
       <div class="stat-mini-val">${_allTxns.length}</div>
     </div>`;
   if (profitAcc && Auth.can('viewProfit')) {
     document.getElementById('sum-profit-box').innerHTML = `
-      <div style="font-weight:700;margin-bottom:10px;">📈 حساب الأرباح الإجمالي</div>
+      <div style="font-weight:700;margin-bottom:10px;">📈 ${t('total_profit_calc_lbl')}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.9rem;">
         <div>$ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_usd||0).toFixed(2)}</b></div>
         <div>€ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_eur||0).toFixed(2)}</b></div>
@@ -469,14 +469,14 @@ function renderDep(p=null) {
   rows.forEach(t=>{ tot[t.cur]+=parseFloat(t.amt); comm[t.cur]+=parseFloat(t.commission_amt||0); });
   document.getElementById('dep-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--green);">
-      <div class="stat-mini-label">إجمالي الإيداعات</div>
+      <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--green);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--gold);">
-      <div class="stat-mini-label">إجمالي العمولات</div>
+      <div class="stat-mini-label">${t('total_commissions_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--gold);">$${comm.usd.toFixed(2)} | €${comm.eur.toFixed(2)}</div>
     </div>
-    <div class="stat-mini"><div class="stat-mini-label">عدد الإيداعات</div><div class="stat-mini-val">${rows.length}</div></div>`;
+    <div class="stat-mini"><div class="stat-mini-label">${t('deposit_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_depPage-1)*PAGE_SIZE, _depPage*PAGE_SIZE);
   document.getElementById('dep-tbody').innerHTML = page.length
     ? page.map(t=>{
@@ -494,7 +494,7 @@ function renderDep(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">💵</div>لا توجد إيداعات في هذه الفترة</td></tr>`;
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">💵</div>${t('no_deposits_period')}</td></tr>`;
   buildPagination('dep-pages', rows.length, _depPage, 'renderDep');
 }
 
@@ -506,10 +506,10 @@ function renderWit(p=null) {
   rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
   document.getElementById('wit-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--red);">
-      <div class="stat-mini-label">إجمالي السحوبات</div>
+      <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--red);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
     </div>
-    <div class="stat-mini"><div class="stat-mini-label">عدد السحوبات</div><div class="stat-mini-val">${rows.length}</div></div>`;
+    <div class="stat-mini"><div class="stat-mini-label">${t('withdrawal_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_witPage-1)*PAGE_SIZE, _witPage*PAGE_SIZE);
   document.getElementById('wit-tbody').innerHTML = page.length
     ? page.map(t=>{
@@ -523,7 +523,7 @@ function renderWit(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="5" class="empty-state"><div class="empty-icon">💸</div>لا توجد سحوبات في هذه الفترة</td></tr>`;
+    : `<tr><td colspan="5" class="empty-state"><div class="empty-icon">💸</div>${t('no_withdrawals_period')}</td></tr>`;
   buildPagination('wit-pages', rows.length, _witPage, 'renderWit');
 }
 
@@ -535,10 +535,10 @@ function renderTrf(p=null) {
   rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
   document.getElementById('trf-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--blue);">
-      <div class="stat-mini-label">إجمالي التحويلات</div>
+      <div class="stat-mini-label">${t('total_transfers_lbl')}</div>
       <div class="stat-mini-val" style="color:var(--blue);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
     </div>
-    <div class="stat-mini"><div class="stat-mini-label">عدد التحويلات</div><div class="stat-mini-val">${rows.length}</div></div>`;
+    <div class="stat-mini"><div class="stat-mini-label">${t('transfer_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_trfPage-1)*PAGE_SIZE, _trfPage*PAGE_SIZE);
   document.getElementById('trf-tbody').innerHTML = page.length
     ? page.map(t=>{
@@ -555,7 +555,7 @@ function renderTrf(p=null) {
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">🔄</div>لا توجد تحويلات في هذه الفترة</td></tr>`;
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">🔄</div>${t('no_transfers_period')}</td></tr>`;
   buildPagination('trf-pages', rows.length, _trfPage, 'renderTrf');
 }
 
@@ -568,12 +568,12 @@ function renderCreditors() {
     ? list.map(a=>`<tr>
         <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
         <td>${UI.escapeHtml(a.name)}</td>
-        <td>${a.type==='company'?'شركة':'زبون'}</td>
+        <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
         <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
         <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
         <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="empty-state">لا توجد حسابات دائنة</td></tr>';
+    : `<tr><td colspan="6" class="empty-state">${t('no_creditor_accounts')}</td></tr>`;
 }
 
 function renderDebtors() {
@@ -584,12 +584,12 @@ function renderDebtors() {
     ? list.map(a=>`<tr class="row-debtor">
         <td style="font-weight:700;">${UI.escapeHtml(a.id)} ⚠️</td>
         <td>${UI.escapeHtml(a.name)}</td>
-        <td>${a.type==='company'?'شركة':'زبون'}</td>
+        <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
         <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
         <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
         <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="empty-state">✅ لا توجد حسابات مدينة</td></tr>';
+    : `<tr><td colspan="6" class="empty-state">✅ ${t('no_debtor_accounts')}</td></tr>`;
 }
 
 // ── Activity ──────────────────────────────────────────
@@ -623,12 +623,12 @@ async function loadActivity() {
           <td>${UI.escapeHtml(a.name)}</td>
           <td style="color:${parseFloat(a.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
           <td style="color:${parseFloat(a.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
-          <td style="font-size:0.73rem;color:var(--text3);">${a.last ? UI.formatDate(a.last.toISOString()) : 'لا يوجد'}</td>
-          <td style="color:var(--red);font-weight:700;">${daysSince} يوم</td>
+          <td style="font-size:0.73rem;color:var(--text3);">${a.last ? UI.formatDate(a.last.toISOString()) : t('none_lbl')}</td>
+          <td style="color:var(--red);font-weight:700;">${daysSince} ${t('day_unit')}</td>
           <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="7" class="empty-state">لا توجد حسابات خاملة بهذا المعيار</td></tr>';
+    : `<tr><td colspan="7" class="empty-state">${t('no_inactive_accounts')}</td></tr>`;
 }
 
 // ── Employee Activity ─────────────────────────────────
@@ -653,7 +653,7 @@ function renderEmpActivity() {
         <td style="color:var(--text3);">${s.del}</td>
         <td style="font-weight:700;">${s.dep+s.wit+s.trf+s.del}</td>
       </tr>`).join('')
-    : '<tr><td colspan="6" class="empty-state">لا توجد بيانات</td></tr>';
+    : `<tr><td colspan="6" class="empty-state">${t('no_data_lbl')}</td></tr>`;
 }
 
 // ── Deleted Accounts ──────────────────────────────────
@@ -666,7 +666,7 @@ UI.showLoading(false);
     ? rows.map(r=>`<tr>
         <td style="font-weight:700;color:var(--text3);">${UI.escapeHtml(r.archive_id||r.id)}</td>
         <td>${UI.escapeHtml(r.name)}</td>
-        <td>${r.type==='company'?'شركة':'زبون'}</td>
+        <td>${r.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
         <td style="color:${parseFloat(r.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_usd||0).toFixed(2)}</td>
         <td style="color:${parseFloat(r.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_eur||0).toFixed(2)}</td>
         <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(r.deleted_by||'—')}</td>
@@ -674,24 +674,24 @@ UI.showLoading(false);
         <td class="no-print">
           <button class="btn btn-ghost btn-sm"
             onclick="navTo('archived-view.html?acc=${UI.escapeHtml(r.archive_id||r.id)}')">
-            👁️ الحركات
+            👁️ ${t('movements_lbl')}
           </button>
         </td>
       </tr>`).join('')
-    : '<tr><td colspan="8" class="empty-state">لا يوجد حسابات محذوفة</td></tr>';
+    : `<tr><td colspan="8" class="empty-state">${t('no_deleted_accounts')}</td></tr>`;
 }
 
 async function showDeletedTxns(originalId, name, archiveId) {
   UI.showLoading(true);
   const txns = await Storage.getTxns({ acc: originalId });
   UI.showLoading(false);
-  if (!txns.length) { UI.toast('لا توجد حركات لهذا الحساب', 'error'); return; }
+  if (!txns.length) { UI.toast(t('no_movements_for_account'), 'error'); return; }
 
   // فتح نافذة جديدة بالحركات
   const win = window.open('', '_blank', 'width=900,height=600');
-  const typeLabel = {dep:'💵 إيداع',wit:'💸 سحب',trf:'🔄 تحويل',fee:'💰 عمولة'};
-  win.document.write(`<!DOCTYPE html><html dir="rtl"><head>
-    <meta charset="UTF-8"><title>حركات - ${name}</title>
+  const typeLabel = {dep:t('type_dep'),wit:t('type_wit'),trf:t('type_trf'),fee:t('type_fee')};
+  win.document.write(`<!DOCTYPE html><html dir="${I18n.getLang()==='ar'?'rtl':'ltr'}"><head>
+    <meta charset="UTF-8"><title>${t('movements_lbl')} - ${name}</title>
     <style>
       body{font-family:sans-serif;padding:20px;direction:rtl;background:#07090f;color:#e8eaf0;}
       h2{color:#c9a84c;} table{width:100%;border-collapse:collapse;font-size:0.85rem;}
@@ -701,19 +701,19 @@ async function showDeletedTxns(originalId, name, archiveId) {
       @media print{body{background:#fff;color:#111;} th{background:#f5f0e0;color:#333;border-bottom:2px solid #c9a84c;} td{border-bottom:1px solid #eee;color:#111;}}
     </style>
   </head><body>
-  <h2>📋 حركات الحساب — ${name} (أرشيف: ${archiveId})</h2>
-  <p style="color:#8a9bb5;font-size:0.8rem;">الرقم الأصلي: ${originalId} · ${txns.length} حركة</p>
-  <table><thead><tr><th>التاريخ</th><th>النوع</th><th>العملة</th><th>المبلغ</th><th>بواسطة</th></tr></thead>
+  <h2>📋 ${t('account_movements_title')} — ${name} (${t('archive_lbl')}: ${archiveId})</h2>
+  <p style="color:#8a9bb5;font-size:0.8rem;">${t('original_number_lbl')}: ${originalId} · ${txns.length} ${t('movement_unit')}</p>
+  <table><thead><tr><th>${t('col_date')}</th><th>${t('col_type_lbl')}</th><th>${t('col_currency')}</th><th>${t('col_amount_lbl')}</th><th>${t('col_by_lbl')}</th></tr></thead>
   <tbody>${txns.map(t=>{
     const sym=t.cur==='usd'?'$':'€';
     const cls=t.type;
-    return `<tr><td style="font-size:0.75rem;">${new Date(t.date).toLocaleString('ar-SA')}</td>
+    return `<tr><td style="font-size:0.75rem;">${new Date(t.date).toLocaleString()}</td>
       <td class="${cls}">${typeLabel[t.type]||t.type}</td>
       <td>${t.cur.toUpperCase()}</td>
       <td class="${cls}">${sym}${parseFloat(t.amt).toFixed(2)}</td>
       <td>${t.by||'—'}</td></tr>`;
   }).join('')}</tbody></table>
-  <p style="margin-top:20px;font-size:0.75rem;color:#4a5a72;">${brandName()} — سجل الأرشيف</p>
+  <p style="margin-top:20px;font-size:0.75rem;color:#4a5a72;">${brandName()} — ${t('archive_record_lbl')}</p>
   <p style="margin-top:4px;font-size:0.65rem;color:#aaa;">${brandPrintCopyright()}</p>
   <script>window.print();<\/script></body></html>`);
 }
@@ -721,25 +721,25 @@ async function showDeletedTxns(originalId, name, archiveId) {
 // ── Debt Limit ────────────────────────────────────────
 async function saveDebtLimit() {
   const limit = parseFloat(document.getElementById('debt-limit-input').value);
-  if (isNaN(limit) || limit > 0) { UI.toast('يجب أن يكون الحد قيمة سالبة','error'); return; }
+  if (isNaN(limit) || limit > 0) { UI.toast(t('debt_limit_must_be_negative'),'error'); return; }
   UI.showLoading(true);
   const ok = await Storage.saveAlertSettings({ debt_limit: limit, updated_by: Auth.getUser().user });
   UI.showLoading(false);
-  if (ok) UI.toast('تم حفظ حد الدين ✅');
-  else UI.toast('خطأ في الحفظ','error');
+  if (ok) UI.toast(t('debt_limit_saved_toast'));
+  else UI.toast(t('save_error'),'error');
 }
 
 // ── Export ────────────────────────────────────────────
 function exportCurrent() {
-  if (typeof XLSX === 'undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
+  if (typeof XLSX === 'undefined') { UI.toast(t('excel_not_loaded'),'error'); return; }
   const tableMap = {
     summary:'sum-stats', deposits:'dep-table', withdrawals:'wit-table',
     transfers:'trf-table', creditors:'crd-table', debtors:'dbt-table',
     employees:'emp-act-table', deleted:'del-table'
   };
   const tableId = tableMap[_currentTab];
-  if (!tableId || !document.getElementById(tableId)) { UI.toast('لا يمكن تصدير هذا التبويب','error'); return; }
-  const wb = XLSX.utils.table_to_book(document.getElementById(tableId), {sheet:'التقرير'});
+  if (!tableId || !document.getElementById(tableId)) { UI.toast(t('cannot_export_tab'),'error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById(tableId), {sheet:t('report_sheet_name')});
   XLSX.writeFile(wb, `SMGroup_${_currentTab}_${UI.todayStr()}.xlsx`);
 }
 
