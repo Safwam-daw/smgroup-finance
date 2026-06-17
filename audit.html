@@ -25,7 +25,6 @@
 .act-delete   { background:rgba(239,68,68,0.2); color:var(--red); }
 .act-other    { background:var(--surface3); color:var(--text2); }
 
-/* مخفي بالشاشة ويظهر بالطباعة */
 .print-report-header { display:none; }
 
 @media print {
@@ -57,11 +56,6 @@
     color:#111 !important; padding:6px 9px;
   }
 
-  /*.action-badge {
-    background:#e5e7eb !important; color:#222 !important;
-    border:1px solid #d1d5db !important; box-shadow:none !important;
-  }*/
-
   .act-deposit  { background:#e8f8ef !important; color:#16a34a !important; }
   .act-withdraw { background:#fef2f2 !important; color:#dc2626 !important; }
   .act-transfer { background:#eff6ff !important; color:#3b82f6 !important; }
@@ -77,37 +71,44 @@
   <main id="main">
     <div id="treasury-placeholder"></div>
     <div class="page-header">
-      <div><h2 data-i18n="audit_title">🔍 سجل التدقيق</h2><p data-i18n="audit_subtitle">تتبع جميع الإجراءات في النظام</p></div>
+      <div>
+        <h2 data-i18n="audit_title">🔍 سجل التدقيق</h2>
+        <p data-i18n="audit_subtitle">تتبع جميع الإجراءات في النظام</p>
+      </div>
       <div style="display:flex;gap:8px;" class="no-print">
-        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-primary btn-sm" onclick="UI.exportExcel('audit-table','Audit_Log')">📊 Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn">🖨️ طباعة</button>
+        <button class="btn btn-primary btn-sm" onclick="exportAuditExcel()">📊 Excel</button>
       </div>
     </div>
 
     <!-- فلاتر -->
     <div class="card" id="filter-card" style="padding:14px 16px;margin-bottom:14px;">
       <div class="quick-filters">
-        <button class="qf-btn active" onclick="setQuick('today')">اليوم</button>
-        <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
-        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+        <button class="qf-btn active" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="filter_action">الإجراء</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="filter_action">الإجراء</label>
           <select id="f-action" onchange="applyFilter()">
-            <option value="all">الكل</option>
-            <option value="deposit">إيداع</option>
-            <option value="withdraw">سحب</option>
-            <option value="transfer">تحويل</option>
-            <option value="delete">حذف</option>
+            <option value="all" data-i18n="qf_all">الكل</option>
+            <option value="deposit" data-i18n="action_deposit">إيداع</option>
+            <option value="withdraw" data-i18n="action_withdraw">سحب</option>
+            <option value="transfer" data-i18n="action_transfer">تحويل</option>
+            <option value="delete" data-i18n="action_delete">حذف عملية</option>
           </select>
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="filter_user">المستخدم</label>
-          <input type="text" id="f-user" placeholder="اسم المستخدم…" oninput="applyFilter()">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="filter_user">المستخدم</label>
+          <input type="text" id="f-user" data-i18n-placeholder="username_placeholder" placeholder="اسم المستخدم…" oninput="applyFilter()">
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="from_date">من تاريخ</label>
           <input type="date" id="f-from" onchange="clearQuick();loadLogs()">
         </div>
-        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="to_date">إلى تاريخ</label>
           <input type="date" id="f-to" onchange="clearQuick();loadLogs()">
         </div>
       </div>
@@ -117,11 +118,11 @@
     <div class="print-report-header">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التدقيق</h1>
+          <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;"></h1>
           <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
         </div>
         <div style="font-size:0.75rem;color:#555;text-align:left;">
-          طُبع بتاريخ: <b id="print-date-rep"></b>
+          <span id="print-on-lbl"></span> <b id="print-date-rep"></b>
         </div>
       </div>
       <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-rep"></div>
@@ -133,12 +134,15 @@
         <table id="audit-table">
           <thead>
             <tr>
-              <th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_action_lbl">الإجراء</th><th data-i18n="col_user">المستخدم</th>
-              <th data-i18n="col_page">الصفحة</th><th data-i18n="col_details">التفاصيل</th>
+              <th data-i18n="col_time_lbl">الوقت</th>
+              <th data-i18n="col_action_lbl">الإجراء</th>
+              <th data-i18n="col_user">المستخدم</th>
+              <th data-i18n="col_page">الصفحة</th>
+              <th data-i18n="col_details">التفاصيل</th>
             </tr>
           </thead>
           <tbody id="audit-tbody">
-            <tr><td colspan="5" class="empty-state">جاري التحميل…</td></tr>
+            <tr><td colspan="5" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
           </tbody>
         </table>
       </div>
@@ -164,8 +168,9 @@ let _allLogs  = [];
 let _filtered = [];
 let _page     = 1;
 let _printMode = false;
+
 window.addEventListener('beforeprint', () => { _printMode = true; renderPage(); });
-window.addEventListener('afterprint', () => { _printMode = false; renderPage(); });
+window.addEventListener('afterprint',  () => { _printMode = false; renderPage(); });
 
 (async () => {
   if (!await initApp('audit')) return;
@@ -173,17 +178,19 @@ window.addEventListener('afterprint', () => { _printMode = false; renderPage(); 
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
 
-  // تاريخ الطباعة
-  document.getElementById('print-date-rep').textContent =
-    new Date().toLocaleDateString('ar-SA');
-  document.getElementById('print-report-brand').textContent = brandName() + ' — سجل التدقيق';
+  document.getElementById('print-date-rep').textContent = new Date().toLocaleDateString('ar-SA');
+  document.getElementById('print-report-brand').textContent =
+    brandName() + ' — ' + I18n.t('audit_title');
+  document.getElementById('print-on-lbl').textContent = I18n.t('printed_on_lbl');
   document.getElementById('print-dawtech-rep').textContent = brandPrintCopyright();
 
   window.addEventListener('beforeprint', () => {
     const from = document.getElementById('f-from').value;
     const to   = document.getElementById('f-to').value;
+    const periodLabel = I18n.t('period_lbl');
+    const allTimeLabel = I18n.t('qf_all');
     document.getElementById('print-period').textContent =
-      (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
+      (from || to) ? `${periodLabel} ${from} — ${to}` : allTimeLabel;
   });
 
   const today = UI.todayStr();
@@ -191,8 +198,12 @@ window.addEventListener('afterprint', () => { _printMode = false; renderPage(); 
   document.getElementById('f-to').value   = today;
   document.querySelectorAll('.qf-btn')[0]?.classList.add('active');
   await loadLogs();
-I18n.apply();
+  I18n.apply();
 })();
+
+function exportAuditExcel() {
+  UI.exportExcel('audit-table', I18n.t('audit_title') || 'Audit_Log');
+}
 
 async function loadLogs() {
   UI.showLoading(true);
@@ -204,23 +215,23 @@ async function loadLogs() {
 }
 
 function setQuick(key) {
-  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
   const today = UI.todayStr();
   const map = {
-    today:{ from:today,              to:today },
-    month:{ from:UI.firstOfMonth(0), to:UI.lastOfMonth(0) },
-    all:  { from:'',                 to:'' }
+    today: { from: today,              to: today },
+    month: { from: UI.firstOfMonth(0), to: UI.lastOfMonth(0) },
+    all:   { from: '',                 to: '' }
   };
   const r = map[key] || map.today;
   document.getElementById('f-from').value = r.from;
   document.getElementById('f-to').value   = r.to;
-  const idx = {today:0, month:1, all:2}[key];
+  const idx = { today:0, month:1, all:2 }[key];
   const btns = document.querySelectorAll('.qf-btn');
   if (btns[idx]) btns[idx].classList.add('active');
   loadLogs();
 }
 function clearQuick() {
-  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
 }
 
 function applyFilter() {
@@ -230,26 +241,36 @@ function applyFilter() {
   const fTo     = document.getElementById('f-to').value;
 
   _filtered = _allLogs.filter(l => {
-    if (fAction!=='all' && l.action!==fAction) return false;
+    if (fAction !== 'all' && l.action !== fAction) return false;
     if (fUser && !(l.username||'').toLowerCase().includes(fUser)) return false;
     if (fFrom && new Date(l.created_at) < new Date(fFrom)) return false;
-    if (fTo   && new Date(l.created_at) > new Date(fTo+'T23:59:59')) return false;
+    if (fTo   && new Date(l.created_at) > new Date(fTo + 'T23:59:59')) return false;
     return true;
   });
   _page = 1;
   renderPage();
 }
 
-const actionLabels = {
-  deposit:'إيداع', withdraw:'سحب', transfer:'تحويل',
-  delete:'حذف عملية', login:'دخول', logout:'خروج',
-  create_account:'إنشاء حساب', delete_account:'حذف حساب',
-  add_employee:'إضافة موظف', delete_employee:'حذف موظف',
-  change_permissions:'تغيير صلاحيات', change_password:'تغيير كلمة مرور',
-  change_own_password:'تغيير كلمة المرور الذاتية',
-  toggle_currency:'تغيير حالة عملة',
-  balance_check_mismatch:'تعارض في الرصيد'
-};
+function _getActionLabels() {
+  return {
+    deposit:              I18n.t('action_deposit'),
+    withdraw:             I18n.t('action_withdraw'),
+    transfer:             I18n.t('action_transfer'),
+    delete:               I18n.t('action_delete'),
+    login:                I18n.t('action_login'),
+    logout:               I18n.t('action_logout'),
+    create_account:       I18n.t('action_create_acc'),
+    delete_account:       I18n.t('action_delete_acc'),
+    add_employee:         I18n.t('action_add_emp'),
+    delete_employee:      I18n.t('action_del_emp'),
+    change_permissions:   I18n.t('action_change_perm'),
+    change_password:      I18n.t('action_change_pass'),
+    change_own_password:  I18n.t('action_change_pass'),
+    toggle_currency:      I18n.t('action_toggle_cur'),
+    balance_check_mismatch: I18n.t('action_balance_mismatch') || 'Balance Mismatch'
+  };
+}
+
 const actionClass = {
   deposit:'act-deposit', withdraw:'act-withdraw',
   transfer:'act-transfer', delete:'act-delete',
@@ -262,31 +283,31 @@ const actionClass = {
 function _buildDetails(l) {
   const d = l.details || {};
   let parts = [];
-  if (d.accountId)   parts.push(`حساب: ${d.accountId}`);
-  if (d.name)        parts.push(`الاسم: ${d.name}`);
-  if (d.amount)      parts.push(`مبلغ: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`);
-  if (d.fromId)      parts.push(`من: ${d.fromId} → ${d.toId}`);
-  if (d.commission && d.commission > 0) parts.push(`عمولة: ${parseFloat(d.commission).toFixed(2)}`);
-  if (d.txnId)       parts.push(`عملية #${d.txnId}`);
-  if (d.username)    parts.push(`المستخدم: ${d.username}`);
-  if (d.target_user) parts.push(`المستهدف: ${d.target_user}`);
-  if (d.role)        parts.push(`الدور: ${d.role}`);
-  if (d.currency)    parts.push(`العملة: ${d.currency}`);
-  if (d.archiveId)   parts.push(`رقم الأرشيف: ${d.archiveId}`);
-  if (d.changed_by)  parts.push(`بواسطة: ${d.changed_by}`);
+  if (d.accountId)   parts.push(`${I18n.t('account') || 'حساب'}: ${d.accountId}`);
+  if (d.name)        parts.push(`${I18n.t('col_name') || 'الاسم'}: ${d.name}`);
+  if (d.amount)      parts.push(`${I18n.t('amount') || 'مبلغ'}: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`);
+  if (d.fromId)      parts.push(`${I18n.t('from') || 'من'}: ${d.fromId} → ${d.toId}`);
+  if (d.commission && d.commission > 0) parts.push(`${I18n.t('commission') || 'عمولة'}: ${parseFloat(d.commission).toFixed(2)}`);
+  if (d.txnId)       parts.push(`#${d.txnId}`);
+  if (d.username)    parts.push(`${I18n.t('col_user') || 'المستخدم'}: ${d.username}`);
+  if (d.target_user) parts.push(`${I18n.t('col_target') || 'المستهدف'}: ${d.target_user}`);
+  if (d.role)        parts.push(`${I18n.t('role') || 'الدور'}: ${d.role}`);
+  if (d.currency)    parts.push(`${I18n.t('currency') || 'العملة'}: ${d.currency}`);
+  if (d.archiveId)   parts.push(`${I18n.t('archive_no_lbl') || 'أرشيف'}: ${d.archiveId}`);
+  if (d.changed_by)  parts.push(`${I18n.t('by_lbl') || 'بواسطة'}: ${d.changed_by}`);
 
   let html = parts.length ? `<div>${UI.escapeHtml(parts.join(' · '))}</div>` : '';
 
   if (l.old_value || l.new_value) {
     if (l.action === 'change_permissions') {
-      html += `<div style="font-size:0.68rem;color:var(--text3);margin-top:3px;">تم تعديل الصلاحيات</div>`;
+      html += `<div style="font-size:0.68rem;color:var(--text3);margin-top:3px;">${I18n.t('action_change_perm') || 'تم تعديل الصلاحيات'}</div>`;
     } else if (l.old_value && l.new_value) {
       const oldStr = JSON.stringify(l.old_value).slice(0, 80);
       const newStr = JSON.stringify(l.new_value).slice(0, 80);
-      html += `<div style="font-size:0.68rem;margin-top:3px;"><span style="color:var(--red);">قبل: ${UI.escapeHtml(oldStr)}</span><br><span style="color:var(--green);">بعد: ${UI.escapeHtml(newStr)}</span></div>`;
+      html += `<div style="font-size:0.68rem;margin-top:3px;"><span style="color:var(--red);">${I18n.t('col_old_val') || 'قبل'}: ${UI.escapeHtml(oldStr)}</span><br><span style="color:var(--green);">${I18n.t('col_new_val') || 'بعد'}: ${UI.escapeHtml(newStr)}</span></div>`;
     } else if (l.new_value) {
       const newStr = JSON.stringify(l.new_value).slice(0, 80);
-      html += `<div style="font-size:0.68rem;color:var(--green);margin-top:3px;">جديد: ${UI.escapeHtml(newStr)}</div>`;
+      html += `<div style="font-size:0.68rem;color:var(--green);margin-top:3px;">${I18n.t('col_new_val') || 'جديد'}: ${UI.escapeHtml(newStr)}</div>`;
     }
   }
   return html || '—';
@@ -294,14 +315,15 @@ function _buildDetails(l) {
 
 function renderPage() {
   const total      = _filtered.length;
-  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
-  const start      = (_page-1)*PAGE_SIZE;
-  const page       = _printMode ? _filtered : _filtered.slice(start, start+PAGE_SIZE);
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  const start      = (_page - 1) * PAGE_SIZE;
+  const page       = _printMode ? _filtered : _filtered.slice(start, start + PAGE_SIZE);
+  const labels     = _getActionLabels();
 
   document.getElementById('audit-tbody').innerHTML = page.length
     ? page.map(l => {
-        const cls   = actionClass[l.action]||'act-other';
-        const label = actionLabels[l.action]||l.action;
+        const cls   = actionClass[l.action] || 'act-other';
+        const label = labels[l.action] || l.action;
         return `<tr>
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(l.created_at)}</td>
           <td><span class="action-badge ${cls}">${label}</span></td>
@@ -310,29 +332,34 @@ function renderPage() {
           <td style="font-size:0.75rem;color:var(--text2);">${_buildDetails(l)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="5" class="empty-state"><div class="empty-icon">🔍</div>لا توجد سجلات</td></tr>';
+    : `<tr><td colspan="5" class="empty-state"><div class="empty-icon">🔍</div>${I18n.t('no_logs') || 'لا توجد سجلات'}</td></tr>`;
 
-  document.getElementById('audit-count').textContent = _printMode
-    ? `${total} إجراء`
-    : `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} إجراء`;
+  const fromN = start + 1;
+  const toN   = Math.min(start + PAGE_SIZE, total);
+  document.getElementById('audit-count').textContent = !total ? '' :
+    _printMode
+      ? `${total} ${I18n.t('action') || 'إجراء'}`
+      : `${fromN}–${toN} ${I18n.t('of_lbl') || 'من'} ${total} ${I18n.t('action') || 'إجراء'}`;
 
   const pg = document.getElementById('audit-pages');
-  if (totalPages<=1){pg.innerHTML='';return;}
-  let html=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
-  const sp=Math.max(1,_page-2),ep=Math.min(totalPages,_page+2);
-  if(sp>1) html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
-  if(sp>2) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  for(let i=sp;i<=ep;i++)
-    html+=`<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
-  if(ep<totalPages-1) html+=`<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  if(ep<totalPages)   html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
-  html+=`<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
-  pg.innerHTML=html;
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+  let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp = Math.max(1, _page-2), ep = Math.min(totalPages, _page+2);
+  if (sp > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if (sp > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for (let i = sp; i <= ep; i++)
+    html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+  if (ep < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if (ep < totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML = html;
 }
 
-function goPage(p){
-  const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;
-  if(p<1||p>t)return; _page=p; renderPage();
+function goPage(p) {
+  const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > t) return;
+  _page = p;
+  renderPage();
 }
 </script>
 </body>
