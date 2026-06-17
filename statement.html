@@ -87,11 +87,11 @@
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c9a84c;padding-bottom:12px;">
         <div>
           <h1 id="print-brand-name" style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
-          <p id="print-brand-tagline" style="font-size:0.75rem;color:#555;margin-top:3px;">نظام إدارة الخزينة المزدوجة</p>
+          <p id="print-brand-tagline" style="font-size:0.75rem;color:#555;margin-top:3px;" data-i18n="brand_tagline">نظام إدارة الخزينة المزدوجة</p>
         </div>
         <div style="text-align:left;">
-          <p style="font-size:0.75rem;color:#555;">تاريخ الطباعة: <b id="print-date"></b></p>
-          <p style="font-size:0.75rem;color:#555;margin-top:2px;">بواسطة: <b id="print-user"></b></p>
+          <p style="font-size:0.75rem;color:#555;"><span data-i18n="print_date_lbl2">تاريخ الطباعة:</span> <b id="print-date"></b></p>
+          <p style="font-size:0.75rem;color:#555;margin-top:2px;"><span data-i18n="by_lbl">بواسطة:</span> <b id="print-user"></b></p>
         </div>
       </div>
     </div>
@@ -103,9 +103,9 @@
     <!-- اختيار الحساب -->
     <div class="card acc-selector" style="margin-bottom:16px;">
       <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
-        <label>ابحث عن حساب <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <label data-i18n="search_account_enter">ابحث عن حساب <span style="color:var(--text3);font-size:0.7rem;" data-i18n="enter_to_select">(Enter لاختيار أول نتيجة)</span></label>
         <div class="search-wrap">
-          <input type="text" id="stmt-search" placeholder="اسم أو كود الحساب…" autocomplete="off">
+          <input type="text" id="stmt-search" data-i18n-placeholder="search_acc_name_code" placeholder="اسم أو كود الحساب…" autocomplete="off">
           <div id="stmt-res" class="search-dropdown"></div>
         </div>
         <input type="hidden" id="stmt-acc-id">
@@ -133,25 +133,25 @@
       <div class="card filter-section" style="padding:14px 16px;margin-bottom:14px;">
         <!-- أزرار سريعة -->
         <div class="quick-filters no-print">
-          <button class="qf-btn" onclick="setQuick('today')">اليوم</button>
-          <button class="qf-btn active" id="qf-month" onclick="setQuick('month')">هذا الشهر</button>
-          <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-          <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+          <button class="qf-btn" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+          <button class="qf-btn active" id="qf-month" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+          <button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev">الشهر السابق</button>
+          <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px;">
           <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="col_type_lbl">النوع</label>
             <select id="f-type" onchange="renderRows()">
-              <option value="all">الكل</option>
-              <option value="dep">إيداع</option>
-              <option value="wit">سحب</option>
-              <option value="trf">تحويل</option>
+              <option value="all" data-i18n="filter_all">الكل</option>
+              <option value="dep" data-i18n="filter_deposit">إيداع</option>
+              <option value="wit" data-i18n="filter_withdraw">سحب</option>
+              <option value="trf" data-i18n="filter_transfer">تحويل</option>
             </select>
           </div>
           <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
             <select id="f-cur" onchange="renderRows()">
-              <option value="all">الكل</option>
-              <option value="usd">دولار</option>
-              <option value="eur">يورو</option>
+              <option value="all" data-i18n="filter_all">الكل</option>
+              <option value="usd" data-i18n="filter_usd">دولار</option>
+              <option value="eur" data-i18n="filter_eur">يورو</option>
             </select>
           </div>
           <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -161,8 +161,8 @@
             <input type="date" id="f-to" onchange="clearQuick();renderRows()">
           </div>
           <div style="display:flex;gap:8px;align-self:flex-end;flex-wrap:wrap;" class="no-print">
-            <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
-            <button class="btn btn-primary btn-sm" onclick="exportStatement()">📊 Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn">🖨️ طباعة</button>
+            <button class="btn btn-primary btn-sm" onclick="exportStatement()" data-i18n="excel_btn">📊 Excel</button>
           </div>
         </div>
       </div>
@@ -179,7 +179,7 @@
               </tr>
             </thead>
             <tbody id="stmt-tbody">
-              <tr><td colspan="8" class="empty-state">اختر حساباً أولاً</td></tr>
+              <tr><td colspan="8" class="empty-state" data-i18n="choose_account">اختر حساباً أولاً</td></tr>
             </tbody>
           </table>
         </div>
@@ -190,7 +190,7 @@
     <!-- تذييل الطباعة -->
     <div class="print-footer" style="display:none;margin-top:20px;border-top:1px solid #ddd;
          padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
-      <span id="print-brand-footer">SM-Group</span> — <span id="print-brand-footer-tag">نظام إدارة الخزينة المزدوجة</span> · طُبع بتاريخ <span id="print-date-footer"></span>
+      <span id="print-brand-footer">SM-Group</span> — <span id="print-brand-footer-tag" data-i18n="brand_tagline">نظام إدارة الخزينة المزدوجة</span> · <span data-i18n="printed_on_lbl">طُبع بتاريخ</span> <span id="print-date-footer"></span>
       <div style="margin-top:4px;font-size:0.65rem;color:#aaa;" id="print-dawtech-footer"></div>
     </div>
   </main>
@@ -202,12 +202,12 @@
     <h3 data-i18n="edit_note_title">✏️ تعديل الملاحظة</h3>
     <div class="form-group">
       <label data-i18n="note_label">الملاحظة</label>
-      <input type="text" id="edit-note-input" placeholder="أدخل ملاحظة…">
+      <input type="text" id="edit-note-input" data-i18n-placeholder="note_ph" placeholder="أدخل ملاحظة…">
     </div>
     <input type="hidden" id="edit-txn-id">
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeEdit()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveNote()">💾 حفظ</button>
+      <button class="btn btn-ghost" onclick="closeEdit()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveNote()" data-i18n="save_btn">💾 حفظ</button>
     </div>
   </div>
 </div>
@@ -218,13 +218,13 @@
     <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
     <h3 data-i18n="delete_op_title">تأكيد إلغاء العملية</h3>
     <p style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;">
-      سيتم إلغاء العملية وعكس تأثيرها على الرصيد تلقائياً.<br>
-      <b style="color:var(--text2);">تبقى العملية محفوظة في السجلات.</b>
+      <span data-i18n="delete_op_desc">سيتم إلغاء العملية وعكس تأثيرها على الرصيد تلقائياً.</span><br>
+      <b style="color:var(--text2);" data-i18n="delete_op_note">تبقى العملية محفوظة في السجلات.</b>
     </p>
     <input type="hidden" id="del-txn-id">
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
-      <button class="btn btn-danger" onclick="doDelete()">🗑️ حذف نهائي</button>
+      <button class="btn btn-ghost" onclick="closeDel()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelete()" data-i18n="delete_final_btn">🗑️ حذف نهائي</button>
     </div>
   </div>
 </div>
@@ -240,7 +240,10 @@
 let _currentAccId = null;
 let _allTxns      = [];
 let _allAccounts  = [];
-const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحويل', fee:'💰 عمولة' };
+function typeLabel(type) {
+  const map = { dep:t('type_dep'), wit:t('type_wit'), trf:t('type_trf'), fee:t('type_fee') };
+  return map[type] || map.fee;
+}
 
 (async () => {
   if (!await initApp('statement')) return;
@@ -255,7 +258,7 @@ const typeLabel   = { dep:'💵 إيداع', wit:'💸 سحب', trf:'🔄 تحو
   document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
 
   // بيانات الطباعة
-  const now = new Date().toLocaleDateString('ar-SA');
+  const now = new Date().toLocaleDateString();
   ['print-date','print-date-footer'].forEach(id => {
     const el=document.getElementById(id); if(el) el.textContent=now;
   });
@@ -307,7 +310,7 @@ function clearQuick() {
 // ── Load Statement ────────────────────────────────────
 async function loadStatement() {
   const id = document.getElementById('stmt-acc-id').value;
-  if (!id) { UI.toast('اختر حساباً أولاً','error'); return; }
+  if (!id) { UI.toast(t('choose_account'),'error'); return; }
   _currentAccId = id;
   UI.showLoading(true);
   const acc = _allAccounts.find(a=>a.id===id) || await Accounts.getById(id);
@@ -322,7 +325,7 @@ async function loadStatement() {
   // header
   document.getElementById('acc-header-name').textContent = acc.name + ' (' + acc.id + ')';
   document.getElementById('acc-header-meta').textContent =
-    (acc.type==='company'?'شركة':'زبون') + ' · تاريخ الإنشاء: ' + (acc.created_at ? UI.formatDate(acc.created_at) : '—');
+    (acc.type==='company'?t('company_type_lbl'):t('customer_type_lbl')) + ' · ' + t('created_at_lbl') + ' ' + (acc.created_at ? UI.formatDate(acc.created_at) : '—');
 
   // رصيد chips
   const setChip = (chipId, valId, val, sym, posColor) => {
@@ -385,7 +388,7 @@ function renderRows() {
         ` : '—';
         return `<tr class="stmt-row">
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
-          <td><span class="badge badge-${t.type||'fee'}">${typeLabel[t.type]||'💰 عمولة'}</span></td>
+          <td><span class="badge badge-${t.type||'fee'}">${typeLabel(t.type)}</span></td>
           <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
           <td>${t.cur.toUpperCase()}</td>
           <td>${debitCell}</td>
@@ -398,9 +401,9 @@ function renderRows() {
           <td class="no-print" style="white-space:nowrap;">${editBtns}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>لا توجد حركات مطابقة</td></tr>';
+    : `<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>${t('no_movements_match')}</td></tr>`;
 
-  document.getElementById('stmt-count').textContent = rows.length + ' حركة';
+  document.getElementById('stmt-count').textContent = rows.length + ' ' + t('movement_unit');
 }
 
 // ── Edit / Delete ─────────────────────────────────────
@@ -418,9 +421,9 @@ async function saveNote() {
   const r = await Transactions.updateNote(id, note);
   UI.showLoading(false);
   if (r.ok) {
-    closeEdit(); UI.toast('تم الحفظ ✅');
-    const t = _allTxns.find(x => String(x.id)===String(id));
-    if (t) t.note = note;
+    closeEdit(); UI.toast(t('saved_toast'));
+    const txn = _allTxns.find(x => String(x.id)===String(id));
+    if (txn) txn.note = note;
     renderRows();
   } else { UI.toast(r.error,'error'); }
 }
@@ -437,7 +440,7 @@ async function doDelete() {
   const r = await Transactions.deleteTxn(id);
   UI.showLoading(false);
   if (r.ok) {
-    closeDel(); UI.toast('تم الحذف ✅');
+    closeDel(); UI.toast(t('deleted_toast'));
     await loadStatement();
     await UI.updateTreasury();
   } else { UI.toast(r.error,'error'); }
@@ -445,10 +448,10 @@ async function doDelete() {
 
 // ── Export ────────────────────────────────────────────
 function exportStatement() {
-  if (typeof XLSX === 'undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
-  const wb = XLSX.utils.table_to_book(document.getElementById('stmt-table'), { sheet:'كشف الحساب' });
+  if (typeof XLSX === 'undefined') { UI.toast(t('excel_not_loaded'),'error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById('stmt-table'), { sheet:t('statement_sheet_name') });
   const name = document.getElementById('acc-header-name').textContent;
-  XLSX.writeFile(wb, 'كشف_' + name + '_' + UI.todayStr() + '.xlsx');
+  XLSX.writeFile(wb, t('statement_file_prefix') + name + '_' + UI.todayStr() + '.xlsx');
 }
 </script>
 </body>
