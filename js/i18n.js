@@ -462,11 +462,18 @@ const I18n = (() => {
     col_page:           { ar: 'الصفحة', en: 'Page', tr: 'Sayfa' },
     col_details:        { ar: 'التفاصيل', en: 'Details', tr: 'Detaylar' },
     no_logs:            { ar: 'لا توجد سجلات', en: 'No logs', tr: 'Kayıt yok' },
+    of_lbl:             { ar: 'من', en: 'of', tr: '/' },
+    col_target:         { ar: 'المستهدف', en: 'Target', tr: 'Hedef' },
+    action_balance_mismatch: { ar: 'تعارض في الرصيد', en: 'Balance Mismatch', tr: 'Bakiye Uyuşmazlığı' },
 
     // ── سجل التعديلات ────────────────────────────────────
     history_title:      { ar: '📝 سجل التعديلات', en: '📝 Edit History', tr: '📝 Düzenleme Geçmişi' },
     history_subtitle:   { ar: 'تتبع جميع التغييرات على البيانات', en: 'Track all data changes', tr: 'Tüm veri değişikliklerini takip et' },
     edit_type:          { ar: 'نوع التعديل', en: 'Edit Type', tr: 'Düzenleme Türü' },
+    edit_type_name:     { ar: 'تعديل الاسم', en: 'Edit Name', tr: 'Adı Düzenle' },
+    edit_type_commission: { ar: 'تعديل العمولة', en: 'Edit Commission', tr: 'Komisyonu Düzenle' },
+    edit_type_note:     { ar: 'تعديل ملاحظة', en: 'Edit Note', tr: 'Notu Düzenle' },
+    edit_type_account:  { ar: 'تعديل حساب', en: 'Edit Account', tr: 'Hesabı Düzenle' },
     col_old_val:        { ar: 'القيمة القديمة', en: 'Old Value', tr: 'Eski Değer' },
     col_new_val:        { ar: 'القيمة الجديدة', en: 'New Value', tr: 'Yeni Değer' },
     no_edits:           { ar: 'لا توجد تعديلات مسجّلة', en: 'No recorded edits', tr: 'Kayıtlı düzenleme yok' },
