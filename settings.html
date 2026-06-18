@@ -290,22 +290,20 @@ async function savePersonal() {
   const newPass2    = document.getElementById('new-pass2').value;
 
   if (!currentPass) { UI.toast(I18n.t('err_enter_current_pass'), 'error'); return; }
-  const user     = Auth.getUser();
-  const verified = await Storage.findUser(user.user, currentPass);
-  if (!verified) { UI.toast(I18n.t('err_wrong_pass'), 'error'); return; }
+  const user = Auth.getUser();
   if (newPass && newPass !== newPass2) {
     UI.toast(I18n.t('err_pass_mismatch'), 'error'); return;
   }
   UI.showLoading(true);
   let ok = true;
-  if (newPass) ok = await Storage.updateUserPass(user.id, newPass);
+  if (newPass) ok = await Storage.updateOwnPass(user.user, currentPass, newPass);
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('change_own_password', { username: user.user });
     UI.toast(I18n.t('saved_logout'));
     setTimeout(() => { Auth.logout(); navTo('login.html'); }, 1500);
   } else {
-    UI.toast(I18n.t('error_save'), 'error');
+    UI.toast(I18n.t('err_wrong_pass'), 'error');
   }
 }
 
