@@ -624,6 +624,8 @@ const I18n = (() => {
     err_update:         { ar: 'خطأ في التحديث', en: 'Update error', tr: 'Güncelleme hatası' },
     err_enter_current_pass: { ar: 'أدخل كلمة المرور الحالية للتحقق', en: 'Enter current password to verify', tr: 'Doğrulamak için mevcut şifreyi girin' },
     err_wrong_pass:     { ar: 'كلمة المرور الحالية خاطئة', en: 'Current password is incorrect', tr: 'Mevcut şifre yanlış' },
+    confirm_admin_password_prompt: { ar: 'أدخل كلمة مرورك للتأكيد:', en: 'Enter your password to confirm:', tr: 'Onaylamak için şifrenizi girin:' },
+    password_required_msg: { ar: 'يلزم تأكيد كلمة المرور لعرض الموظفين', en: 'Password confirmation required to view employees', tr: 'Çalışanları görüntülemek için şifre onayı gerekli' },
     err_pass_mismatch:  { ar: 'كلمتا المرور الجديدتان غير متطابقتين', en: 'New passwords do not match', tr: 'Yeni şifreler eşleşmiyor' },
     saved_logout:       { ar: 'تم الحفظ ✅ — سيتم تسجيل الخروج', en: 'Saved ✅ — Logging out', tr: 'Kaydedildi ✅ — Çıkış yapılıyor' },
     err_invalid_backup: { ar: 'ملف غير صالح — تأكد أنه نسخة احتياطية من النظام', en: 'Invalid file — make sure it is a system backup', tr: 'Geçersiz dosya — bir sistem yedeği olduğundan emin olun' },

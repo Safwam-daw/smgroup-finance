@@ -216,61 +216,101 @@ const Storage = (() => {
   }
 
   // ══ Users ══════════════════════════════════════════════
-  async function getUsers() {
-    if (_fresh('users')) return _cache.users.data;
-    const { data, error } = await _sb.from('users').select('*');
-    if (error) return _cache.users.data || [];
-    _set('users', data || []);
-    return _cache.users.data;
-  }
+  // ملاحظة V17: لا يمكن بعد الآن قراءة/كتابة جدول users مباشرة
+  // (RLS تمنع ذلك). كل تعامل يمر عبر RPC تتحقق من الهوية داخلياً.
+  // عمليات admin (saveUser/deleteUser/updateUserPermissions/
+  // updateUserRole/updateUserPass-على-غيرك) تتطلب تمرير بيانات
+  // اعتماد الـ admin الحالي (caller) للتحقق منها في كل استدعاء.
 
-  async function saveUser(user) {
-    // كلمة المرور تصل إما كـ plaintext (من employees.html الجديد)
-    // أو مشفرة مسبقاً — نتحقق من الطول لتجنب التشفير المزدوج
-    const pass = user.pass.length === 64 ? user.pass : await hashPassword(user.pass);
-    const { error } = await _sb.from('users').insert({
-      username: user.user, pass,
-      role: user.role, permissions: user.permissions || null
+  async function getUsers(callerUsername, callerPassword) {
+    const { data, error } = await _sb.rpc('admin_list_users', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword
     });
-    if (!error) invalidate('users');
-    return !error;
-  }
-
-  async function deleteUser(id) {
-    const { error } = await _sb.from('users').delete().eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
-  }
-
-  async function updateUserPass(id, plainText) {
-    const pass = await hashPassword(plainText);
-    const { error } = await _sb.from('users').update({ pass }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
-  }
-
-  async function updateUserPermissions(id, permissions) {
-    const { error } = await _sb.from('users').update({ permissions }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
-  }
-
-  async function updateUserRole(id, role) {
-    const { error } = await _sb.from('users').update({ role }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
-  }
-
-  async function findUser(username, plainText) {
-    const pass = await hashPassword(plainText);
-    if (_fresh('users')) {
-      const u = _cache.users.data.find(x => x.username === username && x.pass === pass);
-      if (u) return { user: u.username, role: u.role, id: u.id, permissions: u.permissions || null };
-      return null;
+    if (error) {
+      console.error('admin_list_users:', error);
+      const result = [];
+      result.error = true;
+      return result;
     }
-    const { data, error } = await _sb.from('users')
-      .select('*').eq('username', username).eq('pass', pass).single();
-    if (error || !data) return null;
+    return data || [];
+  }
+
+  async function saveUser(callerUsername, callerPassword, user) {
+    const { data, error } = await _sb.rpc('admin_create_user', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword,
+      p_new_username:    user.user,
+      p_new_password:     user.pass,
+      p_new_role:         user.role,
+      p_new_permissions:  user.permissions || null
+    });
+    if (error) { console.error('admin_create_user:', error); return false; }
+    return !!data?.ok;
+  }
+
+  async function deleteUser(callerUsername, callerPassword, id) {
+    const { data, error } = await _sb.rpc('admin_delete_user', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword,
+      p_target_id:        id
+    });
+    if (error) { console.error('admin_delete_user:', error); return false; }
+    return !!data?.ok;
+  }
+
+  // تغيير كلمة مرور مستخدم آخر (بصفتك admin)
+  async function updateUserPass(callerUsername, callerPassword, id, plainText) {
+    const { data, error } = await _sb.rpc('admin_set_user_password', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword,
+      p_target_id:        id,
+      p_new_password:     plainText
+    });
+    if (error) { console.error('admin_set_user_password:', error); return false; }
+    return !!data?.ok;
+  }
+
+  // تغيير كلمة مرورك الخاصة (يتطلب كلمة مرورك الحالية، لا admin)
+  async function updateOwnPass(username, currentPass, newPass) {
+    const { data, error } = await _sb.rpc('self_set_password', {
+      p_username:     username,
+      p_current_pass: currentPass,
+      p_new_pass:     newPass
+    });
+    if (error) { console.error('self_set_password:', error); return false; }
+    return !!data?.ok;
+  }
+
+  async function updateUserPermissions(callerUsername, callerPassword, id, permissions) {
+    const { data, error } = await _sb.rpc('admin_set_user_permissions', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword,
+      p_target_id:        id,
+      p_permissions:      permissions
+    });
+    if (error) { console.error('admin_set_user_permissions:', error); return false; }
+    return !!data?.ok;
+  }
+
+  async function updateUserRole(callerUsername, callerPassword, id, role) {
+    const { data, error } = await _sb.rpc('admin_set_user_role', {
+      p_caller_username: callerUsername,
+      p_caller_password: callerPassword,
+      p_target_id:        id,
+      p_role:             role
+    });
+    if (error) { console.error('admin_set_user_role:', error); return false; }
+    return !!data?.ok;
+  }
+
+  // تسجيل الدخول — يتحقق من كلمة المرور داخل قاعدة البيانات
+  async function findUser(username, plainText) {
+    const { data, error } = await _sb.rpc('login_verify', {
+      p_username: username,
+      p_password: plainText
+    });
+    if (error || !data?.ok) return null;
     return { user: data.username, role: data.role, id: data.id, permissions: data.permissions || null };
   }
 
@@ -593,7 +633,7 @@ const Storage = (() => {
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
 
   // users
-  getUsers, saveUser, deleteUser, updateUserPass,
+  getUsers, saveUser, deleteUser, updateUserPass, updateOwnPass,
   updateUserPermissions, updateUserRole, findUser, hashPassword,
 
   // settings
