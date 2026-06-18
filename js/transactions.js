@@ -154,41 +154,43 @@ const Transactions = (() => {
     return { ok:true, commission, netReceived };
   }
 
-  // ══ إلغاء عملية (soft delete + عكس الرصيد) ══════════════
+  // ══ إلغاء عملية (soft delete + عكس الرصيد — ذري بالكامل) ══
   async function deleteTxn(txnId) {
     if (!Auth.can('canDelete')) return { ok:false, error:'ليس لديك صلاحية الحذف' };
+
+    // تحقق مبدئي: هل العملية موجودة وليست حركة عمولة
     const t = await Storage.getTxnById(txnId);
-    if (!t) return { ok:false, error:'العملية غير موجودة' };
-    if (t.is_commission_entry) return { ok:false, error:'لا يمكن حذف حركة عمولة مباشرة — احذف العملية الأصلية' };
+    if (!t)                  return { ok:false, error:'العملية غير موجودة' };
+    if (t.is_commission_entry)
+      return { ok:false, error:'لا يمكن حذف حركة عمولة مباشرة — احذف العملية الأصلية' };
 
-    const commission = parseFloat(t.commission_amt || 0);
+    const by = Auth.getUser()?.user || '?';
 
-    // عكس تأثير العملية على الرصيد
-    if (t.type === 'dep') {
-      const net = parseFloat(t.amt) - commission;
-      await Storage.updateBalance(t.acc, t.cur, -net);
-      if (commission > 0) await Storage.updateBalance('9999', t.cur, -commission);
+    // اختر الدالة الذرية المناسبة حسب نوع العملية
+    const rpcMap = {
+      dep: 'atomic_reverse_deposit',
+      wit: 'atomic_reverse_withdraw',
+      trf: 'atomic_reverse_transfer',
+    };
+    const fn = rpcMap[t.type];
+    if (!fn) return { ok:false, error:`نوع عملية غير معروف: ${t.type}` };
+
+    const { data, error } = await window._sb.rpc(fn, {
+      p_txn_id:     parseInt(txnId),
+      p_deleted_by: by,
+    });
+
+    if (error) {
+      console.error(`${fn}:`, error);
+      return { ok:false, error: error.message || 'خطأ في الإلغاء' };
     }
-    if (t.type === 'wit') {
-      await Storage.updateBalance(t.acc, t.cur, parseFloat(t.amt));
-    }
-    if (t.type === 'trf') {
-      const r     = parseFloat(t.rate) || 1;
-      const gross = parseFloat(t.amt) * r;
-      const net   = gross - commission;
-      await Storage.updateBalance(t.from, t.cur,  parseFloat(t.amt));
-      await Storage.updateBalance(t.to,   t.cur, -net);
-      if (commission > 0) await Storage.updateBalance('9999', t.cur, -commission);
-    }
 
-    // إلغاء حركة العمولة المرتبطة إن وجدت
-    const linked = await Storage.getTxnByParent(txnId);
-    if (linked) await Storage.deleteTxn(linked.id);
+    const result = typeof data === 'string' ? JSON.parse(data) : data;
+    if (!result?.ok) return { ok:false, error: result?.error || 'خطأ في الإلغاء' };
 
-    const ok = await Storage.deleteTxn(txnId);
-    await Storage.logAction('delete', { txnId, type:t.type });
+    await Storage.logAction('delete', { txnId, type: t.type });
     Storage.invalidate();
-    return ok ? { ok:true } : { ok:false, error:'خطأ في الإلغاء' };
+    return { ok:true };
   }
 
   async function updateNote(txnId, note) {
