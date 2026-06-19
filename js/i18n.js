@@ -543,6 +543,13 @@ const I18n = (() => {
     chart_companies:       { ar: 'شركات', en: 'Companies', tr: 'Şirketler' },
     chart_debtors_lbl:     { ar: 'مدينون', en: 'Debtors', tr: 'Borçlular' },
     emp_ops_summary:       { ar: 'إيداع {dep} · سحب {wit} · تحويل {trf}', en: 'Deposit {dep} · Withdraw {wit} · Transfer {trf}', tr: 'Yatırma {dep} · Çekim {wit} · Transfer {trf}' },
+
+    // ── إحصائيات ديناميكية ────────────────────────────────
+    kpi_treasury_cur:       { ar: 'خزينة {name} ({code})', en: '{name} Treasury ({code})', tr: '{name} Hazinesi ({code})' },
+    kpi_profit_cur:         { ar: 'أرباح {name} ({code})', en: '{name} Profit ({code})', tr: '{name} Kârı ({code})' },
+    kpi_total_accounts_sub: { ar: '{c} عميل • {co} شركة', en: '{c} clients • {co} companies', tr: '{c} müşteri • {co} şirket' },
+    top_clients_cur:        { ar: '🏆 أكبر 3 عملاء ({sym} {code})', en: '🏆 Top 3 Clients ({sym} {code})', tr: '🏆 En Büyük 3 Müşteri ({sym} {code})' },
+    no_creditors_cur:       { ar: 'لا توجد حسابات دائنة بهذه العملة', en: 'No credit accounts for this currency', tr: 'Bu para biriminde alacaklı hesap yok' },
     col_account:        { ar: 'الحساب', en: 'Account', tr: 'Hesap' },
     col_amount:         { ar: 'المبلغ', en: 'Amount', tr: 'Tutar' },
     col_by:             { ar: 'بواسطة', en: 'By', tr: 'Tarafından' },
