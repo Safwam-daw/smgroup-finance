@@ -46,7 +46,6 @@ viewAnalytics:false, viewNotifications:false, viewHistory:false
     if (user) {
       _activeUser = user;
       _saveSession(user);
-      sessionStorage.setItem('_sp', password.trim());
       return { ok:true, user };
     }
     return { ok:false, error:'بيانات الدخول خاطئة' };
@@ -55,7 +54,7 @@ viewAnalytics:false, viewNotifications:false, viewHistory:false
   function logout() {
     _activeUser=null;
     _clearSession();
-    sessionStorage.removeItem('_sp');
+
   }
 
   function getUser()      { return _activeUser; }
