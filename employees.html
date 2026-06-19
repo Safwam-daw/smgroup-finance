@@ -203,11 +203,7 @@ function getPermDefs() {
 }
 
 // V17: يستخدم بيانات الجلسة الحالية للتحقق في RPC
-function _ensureAdminPass() { return true; }
-
-function _callerCreds() {
-  const u = Auth.getUser();
-  return { username: u?.user, password: sessionStorage.getItem('_sp') };
+;
 }
 
 (async () => {
@@ -274,18 +270,16 @@ async function doAdd() {
   }
   const perms = getGridPerms('np'); // الصلاحيات دائماً محددة يدوياً
 
-  const pass3 = await _ensureAdminPass();
-  if (!pass3) return;
-  const creds = _callerCreds();
-
+  
+  
   UI.showLoading(true);
-  const users = await Storage.getUsers(creds.username, creds.password);
+  const users = await Storage.getUsers();
   if (users.error) { UI.showLoading(false); UI.toast(t('err_wrong_pass'),'error'); return;
   }
   if (users.find(x=>x.username===u)) {
     UI.showLoading(false); UI.toast(t('username_exists'),'error'); return;
   }
-  const ok = await Storage.saveUser(creds.username, creds.password, { user:u, pass:p, role:r, permissions:perms });
+  const ok = await Storage.saveUser( { user:u, pass:p, role:r, permissions:perms });
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('add_employee',
@@ -302,14 +296,8 @@ async function doAdd() {
 
 // ── عرض الموظفين ───────────────────────────────────────
 async function renderEmployees() {
-  const pass = await _ensureAdminPass();
-  if (!pass) {
-    document.getElementById('emp-list').innerHTML =
-      `<div class="empty-state">${t('password_required_msg')}</div>`;
-    return;
-  }
-  const creds = _callerCreds();
-  const users = await Storage.getUsers(creds.username, creds.password);
+  
+  const users = await Storage.getUsers();
   if (users.error) { // كلمة المرور كانت خاطئة — اطلبها مجدداً لاحقاً
     UI.toast(t('err_wrong_pass'), 'error');
     document.getElementById('emp-list').innerHTML =
@@ -368,9 +356,8 @@ async function openPermModal(id, username) {
   _permUid = id;
   document.getElementById('perm-uid').value = id;
   document.getElementById('perm-emp-name').textContent = username;
-  if (!await _ensureAdminPass()) return;
-  const creds = _callerCreds();
-  const users = await Storage.getUsers(creds.username, creds.password);
+  
+  const users = await Storage.getUsers();
   if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const u = users.find(x=>x.id===id);
   const currentPerms = u?.permissions || Auth.DEFAULT_PERMS;
@@ -381,14 +368,13 @@ function closePermModal() { document.getElementById('perm-modal').classList.remo
 
 async function savePerms() {
   const perms = getGridPerms('ep');
-  if (!await _ensureAdminPass()) return;
-  const creds = _callerCreds();
-  const users = await Storage.getUsers(creds.username, creds.password);
+  
+  const users = await Storage.getUsers();
   if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const targetUser = users.find(x => x.id === _permUid);
   const oldPerms = targetUser?.permissions || Auth.DEFAULT_PERMS;
   UI.showLoading(true);
-  const ok = await Storage.updateUserPermissions(creds.username, creds.password, _permUid, perms);
+  const ok = await Storage.updateUserPermissions( _permUid, perms);
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('change_permissions',
@@ -415,13 +401,12 @@ async function savePass() {
   const p2 = document.getElementById('pass-new2').value;
   if (!p) { UI.toast(t('enter_password_err'),'error'); return; }
   if (p!==p2) { UI.toast(t('passwords_mismatch'),'error'); return; }
-  if (!await _ensureAdminPass()) return;
-  const creds = _callerCreds();
-  const users = await Storage.getUsers(creds.username, creds.password);
+  
+  const users = await Storage.getUsers();
   if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const targetUser = users.find(x => x.id === _passUid);
   UI.showLoading(true);
-  const ok = await Storage.updateUserPass(creds.username, creds.password, _passUid, p);
+  const ok = await Storage.updateUserPass( _passUid, p);
   UI.showLoading(false);
   if (ok) {
     await Storage.logAction('change_password',
@@ -441,13 +426,12 @@ function confirmDel(id, username) {
 }
 function closeDel() { document.getElementById('del-modal').classList.remove('open'); }
 async function doDelete() {
-  if (!await _ensureAdminPass()) { closeDel(); return; }
-  const creds = _callerCreds();
-  const users = await Storage.getUsers(creds.username, creds.password);
+  
+  const users = await Storage.getUsers();
   if (users.error) { UI.toast(t('err_wrong_pass'),'error'); closeDel(); return; }
   const targetUser = users.find(x => x.id === _delId);
   UI.showLoading(true);
-  const ok = await Storage.deleteUser(creds.username, creds.password, _delId);
+  const ok = await Storage.deleteUser( _delId);
   UI.showLoading(false);
   if (!ok) { UI.toast(t('save_error'),'error'); return; }
   await Storage.logAction('delete_employee',
