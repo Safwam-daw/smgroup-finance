@@ -410,7 +410,7 @@ let _allAccounts = [];
 let _filtered    = [];
 let _page        = 1;
 let _opType      = null; // 'dep' | 'wit' | 'trf'
-const typeLabel  = () => ({dep: t('type_dep'), wit: t('type_wit'), trf: t('type_trf')});
+const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf: I18n.t('type_trf')});
 
 // ── Init ──────────────────────────────────────────────
 (async () => {
@@ -587,11 +587,11 @@ function renderPage() {
       other = UI.escapeHtml(oa?oa.name:oid);
       other = isFrom?('← '+other):('→ '+other);
     }
-    if (isFee) other = t('profit_account_lbl');
+    if (isFee) other = I18n.t('profit_account_lbl');
     const dCell = debit>0  ? `<span class="cell-debit">${sym}${debit.toFixed(2)}</span>`   : '—';
     const cCell = credit>0 ? `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>` : '—';
     const badgeClass = isFee ? 'badge-fee' : `badge-${t.type}`;
-    const badgeLabel = isFee ? t('type_fee') : (typeLabel()[t.type]||t.type);
+    const badgeLabel = isFee ? I18n.t('type_fee') : (typeLabel()[t.type]||t.type);
     // إضافة حدود ذهبية للعمولة
     const editBtns = (!forPrint && !isFee)
       ? [
