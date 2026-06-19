@@ -246,7 +246,7 @@ function renderKPIs(data) {
     <div class="kpi-card">
       <div class="kpi-label">👥 إجمالي الحسابات</div>
       <div class="kpi-value" style="color:var(--gold);">${totalAccounts}</div>
-      <div class="kpi-sub">${totalCustomers} عميل • ${totalCompanies} شركة</div>
+      <div class="kpi-sub">${t("kpi_total_accounts_sub", {c: totalCustomers, co: totalCompanies})}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">⚠️ حسابات مدينة</div>
@@ -258,41 +258,42 @@ function renderKPIs(data) {
   _currencies.forEach(cur => {
     const code    = cur.code.toLowerCase();
     const sym     = cur.symbol || cur.code;
-    const col     = `treasury_${code}`;
+    const col     = 'treasury_' + code;
     const clr     = _curColor(code);
     const val     = latest ? (latest[col] || 0) : _calcLiveTreasury(cur.code);
     const oldVal  = oldest ? (oldest[col] || 0) : 0;
     const diff    = parseFloat((val - oldVal).toFixed(2));
     const diffTxt = (diff >= 0 ? '▲ +' : '▼ ') + sym + Math.abs(diff).toFixed(0);
     const diffClr = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    const lbl     = t('kpi_treasury_cur', { name: cur.name, code: cur.code });
 
-    html += `
-      <div class="kpi-card">
-        <div class="kpi-label">💰 خزينة ${cur.name} (${cur.code})</div>
-        <div class="kpi-value" style="color:${clr.line};">${sym}${parseFloat(val).toLocaleString('en', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
-        <div class="kpi-sub" style="color:${diffClr};">${diffTxt}</div>
-      </div>`;
+    html += '<div class="kpi-card">'
+      + '<div class="kpi-label">💰 ' + lbl + '</div>'
+      + '<div class="kpi-value" style="color:' + clr.line + ';">' + sym + parseFloat(val).toLocaleString('en', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</div>'
+      + '<div class="kpi-sub" style="color:' + diffClr + ';">' + diffTxt + '</div>'
+      + '</div>';
   });
 
-  // بطاقة أرباح لكل عملة مفعّلة
+  // بطاقة أرباح — تقرأ مباشرة من رصيد حساب الأرباح (9999) دائماً
+  const profAcc = _accounts.find(a => a.id === '9999');
   _currencies.forEach(cur => {
     const code    = cur.code.toLowerCase();
     const sym     = cur.symbol || cur.code;
-    const col     = `profit_${code}`;
     const clr     = _curColor(code);
-    const profAcc = _accounts.find(a => a.id === '9999');
-    const val     = latest ? (latest[col] || 0) : parseFloat(profAcc?.[`bal_${code}`] || 0);
-    const oldVal  = oldest ? (oldest[col] || 0) : 0;
+    // الأرباح الحقيقية = رصيد حساب 9999 الحالي (يتغير عند صرف الرواتب والمصاريف)
+    const val     = parseFloat(profAcc?.['bal_' + code] || 0);
+    const colSnap = 'profit_' + code;
+    const oldVal  = oldest ? (oldest[colSnap] || 0) : 0;
     const diff    = parseFloat((val - oldVal).toFixed(2));
     const diffTxt = (diff >= 0 ? '▲ +' : '▼ ') + sym + Math.abs(diff).toFixed(0);
     const diffClr = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    const lbl     = t('kpi_profit_cur', { name: cur.name, code: cur.code });
 
-    html += `
-      <div class="kpi-card">
-        <div class="kpi-label">📈 أرباح ${cur.name} (${cur.code})</div>
-        <div class="kpi-value" style="color:${clr.line};">${sym}${parseFloat(val).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
-        <div class="kpi-sub" style="color:${diffClr};">${diffTxt} ${t('since_period')}</div>
-      </div>`;
+    html += '<div class="kpi-card">'
+      + '<div class="kpi-label">📈 ' + lbl + '</div>'
+      + '<div class="kpi-value" style="color:' + clr.line + ';">' + sym + val.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>'
+      + '<div class="kpi-sub" style="color:' + diffClr + ';">' + diffTxt + ' ' + t('since_period') + '</div>'
+      + '</div>';
   });
 
   grid.innerHTML = html;
@@ -412,13 +413,12 @@ function renderTopCustomers() {
             <div class="top-name">${UI.escapeHtml(a.name)} <span style="color:var(--text3);font-size:0.7rem;">#${a.id}</span></div>
             <div class="top-val" style="color:${clr.line};">${sym}${parseFloat(a[col]).toFixed(2)}</div>
           </div>`).join('')
-      : `<div class="no-data">لا يوجد عملاء دائنون</div>`;
+      : '<div class="no-data">' + t('no_creditors_cur') + '</div>';
 
-    html += `
-      <div class="chart-card">
-        <h3>🏆 أكبر 3 عملاء (${sym} ${cur.code})</h3>
-        <div class="top-list">${rows}</div>
-      </div>`;
+    html += '<div class="chart-card">'
+      + '<h3>' + t('top_clients_cur', { sym: sym, code: cur.code }) + '</h3>'
+      + '<div class="top-list">' + rows + '</div>'
+      + '</div>';
   });
 
   grid.innerHTML = html;
