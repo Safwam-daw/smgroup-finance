@@ -490,6 +490,7 @@ const I18n = (() => {
     col_debit_lbl:      { ar: 'دين', en: 'Debit', tr: 'Borç' },
     col_credit_lbl:     { ar: 'دائن', en: 'Credit', tr: 'Alacak' },
     no_movements_acc:   { ar: 'لا توجد حركات', en: 'No movements', tr: 'Hareket yok' },
+    profit_account_lbl: { ar: '🏦 حساب الأرباح', en: '🏦 Profit Account', tr: '🏦 Kâr Hesabı' },
 
     // ── الحساب المؤرشف ───────────────────────────────────
     archived_banner:    { ar: 'هذا حساب مؤرشف — للعرض فقط، لا يمكن إجراء أي عمليات عليه', en: 'Archived account — view only, no operations allowed', tr: 'Arşivlenmiş hesap — yalnızca görüntüleme' },

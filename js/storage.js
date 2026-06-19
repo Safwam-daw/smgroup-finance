@@ -210,9 +210,9 @@ const Storage = (() => {
 
   async function getTxnByParent(parentId) {
     const { data, error } = await _sb.from('transactions')
-      .select('*').eq('parent_id', parentId).eq('is_commission_entry', true).single();
-    if (error || !data) return null;
-    return data;
+      .select('*').eq('parent_id', parentId).eq('is_commission_entry', true);
+    if (error) return [];
+    return data || [];
   }
 
   // ══ Users ══════════════════════════════════════════════
