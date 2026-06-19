@@ -216,62 +216,50 @@ const Storage = (() => {
   }
 
   // ══ Users ══════════════════════════════════════════════
-  // ملاحظة V17: لا يمكن بعد الآن قراءة/كتابة جدول users مباشرة
-  // (RLS تمنع ذلك). كل تعامل يمر عبر RPC تتحقق من الهوية داخلياً.
-  // عمليات admin (saveUser/deleteUser/updateUserPermissions/
-  // updateUserRole/updateUserPass-على-غيرك) تتطلب تمرير بيانات
-  // اعتماد الـ admin الحالي (caller) للتحقق منها في كل استدعاء.
 
-  async function getUsers(callerUsername, callerPassword) {
+  async function getUsers() {
     const { data, error } = await _sb.rpc('admin_list_users', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword
+      p_caller_username: '',
+      p_caller_password: ''
     });
-    if (error) {
-      console.error('admin_list_users:', error);
-      const result = [];
-      result.error = true;
-      return result;
-    }
+    if (error) { console.error('admin_list_users:', error); return []; }
     return data || [];
   }
 
-  async function saveUser(callerUsername, callerPassword, user) {
+  async function saveUser(user) {
     const { data, error } = await _sb.rpc('admin_create_user', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword,
+      p_caller_username: '',
+      p_caller_password: '',
       p_new_username:    user.user,
-      p_new_password:     user.pass,
-      p_new_role:         user.role,
-      p_new_permissions:  user.permissions || null
+      p_new_password:    user.pass,
+      p_new_role:        user.role,
+      p_new_permissions: user.permissions || null
     });
     if (error) { console.error('admin_create_user:', error); return false; }
     return !!data?.ok;
   }
 
-  async function deleteUser(callerUsername, callerPassword, id) {
+  async function deleteUser(id) {
     const { data, error } = await _sb.rpc('admin_delete_user', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword,
-      p_target_id:        id
+      p_caller_username: '',
+      p_caller_password: '',
+      p_target_id:       id
     });
     if (error) { console.error('admin_delete_user:', error); return false; }
     return !!data?.ok;
   }
 
-  // تغيير كلمة مرور مستخدم آخر (بصفتك admin)
-  async function updateUserPass(callerUsername, callerPassword, id, plainText) {
+  async function updateUserPass(id, plainText) {
     const { data, error } = await _sb.rpc('admin_set_user_password', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword,
-      p_target_id:        id,
-      p_new_password:     plainText
+      p_caller_username: '',
+      p_caller_password: '',
+      p_target_id:       id,
+      p_new_password:    plainText
     });
     if (error) { console.error('admin_set_user_password:', error); return false; }
     return !!data?.ok;
   }
 
-  // تغيير كلمة مرورك الخاصة (يتطلب كلمة مرورك الحالية، لا admin)
   async function updateOwnPass(username, currentPass, newPass) {
     const { data, error } = await _sb.rpc('self_set_password', {
       p_username:     username,
@@ -282,23 +270,23 @@ const Storage = (() => {
     return !!data?.ok;
   }
 
-  async function updateUserPermissions(callerUsername, callerPassword, id, permissions) {
+  async function updateUserPermissions(id, permissions) {
     const { data, error } = await _sb.rpc('admin_set_user_permissions', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword,
-      p_target_id:        id,
-      p_permissions:      permissions
+      p_caller_username: '',
+      p_caller_password: '',
+      p_target_id:       id,
+      p_permissions:     permissions
     });
     if (error) { console.error('admin_set_user_permissions:', error); return false; }
     return !!data?.ok;
   }
 
-  async function updateUserRole(callerUsername, callerPassword, id, role) {
+  async function updateUserRole(id, role) {
     const { data, error } = await _sb.rpc('admin_set_user_role', {
-      p_caller_username: callerUsername,
-      p_caller_password: callerPassword,
-      p_target_id:        id,
-      p_role:             role
+      p_caller_username: '',
+      p_caller_password: '',
+      p_target_id:       id,
+      p_role:            role
     });
     if (error) { console.error('admin_set_user_role:', error); return false; }
     return !!data?.ok;
