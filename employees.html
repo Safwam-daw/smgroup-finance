@@ -202,23 +202,12 @@ function getPermDefs() {
   ];
 }
 
-// ══ V17: كل عمليات الإدارة تتطلب تأكيد كلمة مرور الـ admin
-// الحالي مرة واحدة عند فتح الصفحة. تُحفظ في الذاكرة فقط (لا
-// sessionStorage ولا localStorage) وتُمحى تلقائياً عند مغادرة
-// الصفحة. لو كانت خاطئة، أول عملية ستفشل برسالة "forbidden"
-// وسيُطلب إعادة إدخالها.
-let _adminPass = null;
-
-async function _ensureAdminPass() {
-  if (_adminPass) return _adminPass;
-  const p = prompt(t('confirm_admin_password_prompt'));
-  if (!p) return null;
-  _adminPass = p;
-  return _adminPass;
-}
+// V17: يستخدم بيانات الجلسة الحالية للتحقق في RPC
+function _ensureAdminPass() { return true; }
 
 function _callerCreds() {
-  return { username: Auth.getUser()?.user, password: _adminPass };
+  const u = Auth.getUser();
+  return { username: u?.user, password: sessionStorage.getItem('_sp') };
 }
 
 (async () => {
@@ -291,9 +280,7 @@ async function doAdd() {
 
   UI.showLoading(true);
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) {
-    _adminPass = null;
-    UI.showLoading(false); UI.toast(t('err_wrong_pass'),'error'); return;
+  if (users.error) { UI.showLoading(false); UI.toast(t('err_wrong_pass'),'error'); return;
   }
   if (users.find(x=>x.username===u)) {
     UI.showLoading(false); UI.toast(t('username_exists'),'error'); return;
@@ -323,8 +310,7 @@ async function renderEmployees() {
   }
   const creds = _callerCreds();
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) {
-    _adminPass = null; // كلمة المرور كانت خاطئة — اطلبها مجدداً لاحقاً
+  if (users.error) { // كلمة المرور كانت خاطئة — اطلبها مجدداً لاحقاً
     UI.toast(t('err_wrong_pass'), 'error');
     document.getElementById('emp-list').innerHTML =
       `<div class="empty-state">${t('password_required_msg')}</div>`;
@@ -385,7 +371,7 @@ async function openPermModal(id, username) {
   if (!await _ensureAdminPass()) return;
   const creds = _callerCreds();
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) { _adminPass = null; UI.toast(t('err_wrong_pass'),'error'); return; }
+  if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const u = users.find(x=>x.id===id);
   const currentPerms = u?.permissions || Auth.DEFAULT_PERMS;
   buildPermGrid('edit-perm-grid', currentPerms, 'ep');
@@ -398,7 +384,7 @@ async function savePerms() {
   if (!await _ensureAdminPass()) return;
   const creds = _callerCreds();
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) { _adminPass = null; UI.toast(t('err_wrong_pass'),'error'); return; }
+  if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const targetUser = users.find(x => x.id === _permUid);
   const oldPerms = targetUser?.permissions || Auth.DEFAULT_PERMS;
   UI.showLoading(true);
@@ -432,7 +418,7 @@ async function savePass() {
   if (!await _ensureAdminPass()) return;
   const creds = _callerCreds();
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) { _adminPass = null; UI.toast(t('err_wrong_pass'),'error'); return; }
+  if (users.error) { UI.toast(t('err_wrong_pass'),'error'); return; }
   const targetUser = users.find(x => x.id === _passUid);
   UI.showLoading(true);
   const ok = await Storage.updateUserPass(creds.username, creds.password, _passUid, p);
@@ -458,7 +444,7 @@ async function doDelete() {
   if (!await _ensureAdminPass()) { closeDel(); return; }
   const creds = _callerCreds();
   const users = await Storage.getUsers(creds.username, creds.password);
-  if (users.error) { _adminPass = null; UI.toast(t('err_wrong_pass'),'error'); closeDel(); return; }
+  if (users.error) { UI.toast(t('err_wrong_pass'),'error'); closeDel(); return; }
   const targetUser = users.find(x => x.id === _delId);
   UI.showLoading(true);
   const ok = await Storage.deleteUser(creds.username, creds.password, _delId);
