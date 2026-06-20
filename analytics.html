@@ -428,7 +428,7 @@ function renderTopCustomers() {
 function renderTopEmployees() {
   const stats = {};
   _txns.forEach(tx => {
-    const by = tx.by || 'غير محدد';
+    const by = tx.by || t('restore_unknown');
     if (!stats[by]) stats[by] = { dep:0, wit:0, trf:0, total:0 };
     if (tx.type==='dep') stats[by].dep++;
     else if (tx.type==='wit') stats[by].wit++;

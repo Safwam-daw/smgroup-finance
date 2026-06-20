@@ -142,25 +142,25 @@
     <!-- فلاتر -->
     <div class="card filter-card" style="padding:14px 16px;margin-bottom:14px;">
       <div class="quick-filters">
-        <button class="qf-btn active" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
-        <button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev">الشهر السابق</button>
-        <button class="qf-btn" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
-        <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
+        <button class="qf-btn active" onclick="setQuick('month')">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
+        <button class="qf-btn" onclick="setQuick('today')">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
         <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="col_type_lbl">النوع</label>
           <select id="f-type" onchange="renderRows()">
-            <option value="all" data-i18n="filter_all">الكل</option>
-            <option value="dep" data-i18n="filter_deposit">إيداع</option>
-            <option value="wit" data-i18n="filter_withdraw">سحب</option>
-            <option value="trf" data-i18n="filter_transfer">تحويل</option>
+            <option value="all">الكل</option>
+            <option value="dep">إيداع</option>
+            <option value="wit">سحب</option>
+            <option value="trf">تحويل</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
           <select id="f-cur" onchange="renderRows()">
-            <option value="all" data-i18n="filter_all">الكل</option>
-            <option value="usd" data-i18n="filter_usd">دولار</option>
-            <option value="eur" data-i18n="filter_eur">يورو</option>
+            <option value="all">الكل</option>
+            <option value="usd">دولار</option>
+            <option value="eur">يورو</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -233,7 +233,7 @@
       <div class="form-group">
         <label>إلى حساب <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
         <div class="search-wrap">
-          <input type="text" id="op-to-search" placeholder="ابحث بالاسم أو الكود…" autocomplete="off">
+          <input type="text" id="op-to-search" placeholder="ابحث بالاسم أو الكود…" data-i18n-placeholder="search_placeholder" autocomplete="off">
           <div id="op-to-res" class="search-dropdown"></div>
         </div>
         <input type="hidden" id="op-to-id">
@@ -289,7 +289,7 @@
     <input type="hidden" id="edit-id">
     <div class="form-group">
       <label>الملاحظة</label>
-      <input type="text" id="edit-note" placeholder="أدخل ملاحظة…"
+      <input type="text" id="edit-note" placeholder="أدخل ملاحظة…" data-i18n-placeholder="note_ph"
              onkeydown="if(event.key==='Enter') saveNote()">
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
@@ -347,7 +347,7 @@
 
     <div class="form-group">
       <label>اسم الحساب</label>
-      <input type="text" id="edit-acc-name" placeholder="اسم الزبون أو الشركة">
+      <input type="text" id="edit-acc-name" placeholder="اسم الزبون أو الشركة" data-i18n-placeholder="account_name_ph">
     </div>
 
     <!-- PIN الزبون -->
@@ -430,7 +430,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   ]);
   UI.showLoading(false);
 
-  if (!acc) { UI.toast('الحساب غير موجود','error'); navTo('accounts.html'); return; }
+  if (!acc) { UI.toast(I18n.t('acc_not_found'),'error'); navTo('accounts.html'); return; }
 
   _accObj      = acc;
   _allTxns     = txns;
@@ -439,7 +439,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   document.title = 'SM-Group — ' + acc.name;
   document.getElementById('hero-name').textContent = acc.name + ' · ' + acc.id;
   document.getElementById('hero-meta').textContent =
-    (acc.type==='company'?'شركة':'زبون') + ' · ' + txns.length + ' حركة إجمالاً';
+    (acc.type==='company'? I18n.t('type_company') : I18n.t('type_customer')) + ' · ' + txns.length + ' ' + I18n.t('movement_total');
 
   updateBalBoxes(usd, eur);
   UI.updateTreasury();
@@ -464,7 +464,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
       Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
     ]);
     const box = document.getElementById('op-to-bal');
-    box.innerHTML = `رصيد المستقبل: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
+    box.innerHTML = `${I18n.t('receiver_bal_lbl')}: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
                      &nbsp;|&nbsp; <b style="color:var(--euro);">€${be.toFixed(2)}</b>`;
     box.style.display = 'block';
   });
@@ -627,10 +627,10 @@ function renderPage() {
           return `<tr class="print-only-row" style="display:none;">${stripped}</tr>`;
         })
       ].join('')
-    : `<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>${t('no_movements_acc')}</td></tr>`;
+    : `<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>${I18n.t('no_movements_acc')}</td></tr>`;
 
   document.getElementById('mov-count').textContent =
-    total ? t('showing_range', { from: start+1, to: Math.min(start+PAGE_SIZE,total), total, unit: t('movement_unit') }) : t('no_movements_acc');
+    total ? I18n.t('showing_range', { from: start+1, to: Math.min(start+PAGE_SIZE,total), total, unit: I18n.t('movement_unit') }) : I18n.t('no_movements_acc');
 
   const pg = document.getElementById('mov-pages');
   if (totalPages<=1){ pg.innerHTML=''; return; }
@@ -656,7 +656,7 @@ function goPage(p) {
 // ── أزرار العمليات ────────────────────────────────────
 function openOp(type) {
   _opType = type;
-  const titles = {dep:'💵 إيداع لـ ', wit:'💸 سحب من ', trf:'🔄 تحويل من '};
+  const titles = {dep: I18n.t('dep_prefix'), wit: I18n.t('wit_prefix'), trf: I18n.t('trf_prefix')};
   document.getElementById('op-title').textContent = titles[type] + _accObj.name;
 
   // إظهار/إخفاء الأقسام
@@ -762,12 +762,12 @@ async function confirmOp(forceOverdraft=false) {
   if (result.ok) {
     closeOp();
     closeOverdraft();
-    let msg = 'تمت العملية بنجاح ✅';
+    let msg = I18n.t('op_success');
     if (result.commission > 0) {
       const sym = _opType==='trf'
         ? ({'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'}[document.getElementById('op-trf-cur').value]||document.getElementById('op-trf-cur').value)
         : document.getElementById('op-cur').value==='usd'?'$':'€';
-      msg += ` · عمولة: ${sym}${result.commission.toFixed(2)}`;
+      msg += ` ${I18n.t('commission_detail')}: ${sym}${result.commission.toFixed(2)}`;
     }
     UI.toast(msg);
     // أعد تحميل البيانات
@@ -778,7 +778,7 @@ async function confirmOp(forceOverdraft=false) {
     ]);
     _allTxns = txns;
     document.getElementById('hero-meta').textContent =
-      (_accObj.type==='company'?'شركة':'زبون') + ' · ' + txns.length + ' حركة إجمالاً';
+      (_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')) + ' · ' + txns.length + ' ' + I18n.t('movement_total');
     updateBalBoxes(usd, eur);
     await UI.updateTreasury();
     renderRows();
@@ -809,29 +809,29 @@ async function publishClient() {
   const ok = await Storage.publishClientView(_accId, Auth.getUser().user);
   UI.showLoading(false);
   if (ok) {
-    UI.toast('تم نشر الكشف ✅ — الزبون يستطيع رؤية الحركات الآن');
+    UI.toast(I18n.t('publish_ok_acc'));
     _accObj.client_published_at = new Date().toISOString();
-  } else { UI.toast('خطأ في النشر','error'); }
+  } else { UI.toast(I18n.t('publish_error'),'error'); }
 }
 
 function copyPin() {
   const pin = document.getElementById('acc-pin-display').textContent.trim();
-  if (!pin || pin === '—') { UI.toast('لا يوجد PIN', 'error'); return; }
+  if (!pin || pin === '—') { UI.toast(I18n.t('pin_none'), 'error'); return; }
   const accId = _accId;
   const text  = `رقم الحساب: ${accId}
 كلمة السر: ${pin}
 رابط البوابة: ${location.origin}/client.html`;
   navigator.clipboard.writeText(text).then(() => {
-    UI.toast('تم نسخ بيانات الزبون ✅');
+    UI.toast(I18n.t('copy_client_ok'));
     const btn = document.getElementById('copy-pin-btn');
-    if (btn) { btn.textContent = '✅ تم النسخ'; setTimeout(()=>btn.textContent='📋 نسخ', 2000); }
+    if (btn) { btn.textContent = I18n.t('copy_ok'); setTimeout(()=>btn.textContent=I18n.t('copy_btn'), 2000); }
   }).catch(() => {
     // fallback for older browsers
     const el = document.createElement('textarea');
     el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
     document.body.appendChild(el); el.select();
     document.execCommand('copy'); document.body.removeChild(el);
-    UI.toast('تم نسخ بيانات الزبون ✅');
+    UI.toast(I18n.t('copy_client_ok'));
   });
 }
 
@@ -841,8 +841,8 @@ async function regenPin() {
   UI.showLoading(false);
   if (newPin) {
     document.getElementById('acc-pin-display').textContent = newPin;
-    UI.toast('تم توليد PIN جديد: ' + newPin);
-  } else { UI.toast('خطأ في التوليد','error'); }
+    UI.toast(I18n.t('pin_generated') + ': ' + newPin);
+  } else { UI.toast(I18n.t('gen_error'),'error'); }
 }
 
 // ── حذف الحساب ───────────────────────────────────────
@@ -851,20 +851,20 @@ function openDelAcc() {
   const eur = parseFloat(_accObj.bal_eur || 0);
   document.getElementById('del-acc-info').innerHTML = `
     <div><b>الحساب:</b> ${UI.escapeHtml(_accObj.name)} (${_accId})</div>
-    <div><b>النوع:</b> ${_accObj.type==='company'?'شركة':'زبون'}</div>
+    <div><b>النوع:</b> ${_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')}</div>
     <div><b>رصيد الدولار:</b>
       <span style="color:${usd<0?'var(--red)':usd>0?'var(--green)':'var(--text2)'};">
         $${usd.toFixed(2)}
       </span>
-      ${usd > 0 ? '← <span style="color:var(--gold);">سيُحوَّل لحساب الأرباح</span>' :
-        usd < 0 ? '← <span style="color:var(--red);">سيُخصم من حساب الأرباح</span>' : ''}
+      ${usd > 0 ? `← <span style="color:var(--gold);">${I18n.t('profit_will_move')}</span>` :
+        usd < 0 ? `← <span style="color:var(--red);">${I18n.t('profit_will_deduct')}</span>` : ''}
     </div>
     <div><b>رصيد اليورو:</b>
       <span style="color:${eur<0?'var(--red)':eur>0?'var(--green)':'var(--text2)'};">
         €${eur.toFixed(2)}
       </span>
-      ${eur > 0 ? '← <span style="color:var(--gold);">سيُحوَّل لحساب الأرباح</span>' :
-        eur < 0 ? '← <span style="color:var(--red);">سيُخصم من حساب الأرباح</span>' : ''}
+      ${eur > 0 ? `← <span style="color:var(--gold);">${I18n.t('profit_will_move')}</span>` :
+        eur < 0 ? `← <span style="color:var(--red);">${I18n.t('profit_will_deduct')}</span>` : ''}
     </div>`;
   document.getElementById('del-acc-modal').classList.add('open');
 }
@@ -880,9 +880,9 @@ async function doDelAcc() {
   if (result.ok) {
     closeDelAcc();
     await UI.updateTreasury();
-    let msg = 'تم حذف الحساب ✅';
+    let msg = I18n.t('acc_deleted_ok');
     if (result.usd !== 0 || result.eur !== 0) {
-      msg += ` · رصيد $${result.usd.toFixed(2)} / €${result.eur.toFixed(2)} حُوِّل للأرباح`;
+      msg += ` · رصيد $${result.usd.toFixed(2)} / €${result.eur.toFixed(2)} ${I18n.t('profit_moved_msg')}`;
     }
     UI.toast(msg);
     setTimeout(() => navTo('accounts.html'), 1500);
@@ -919,7 +919,7 @@ function updateCommPreview(rate) {
   const box = document.getElementById('edit-commission-preview');
   if (!box) return;
   const r = parseFloat(rate) || 0;
-  if (!r) { box.textContent = 'بلا عمولة — الإيداع الكامل يدخل الحساب'; return; }
+  if (!r) { box.textContent = I18n.t('no_comm_note'); return; }
   const ex1000 = (1000 * r / 100).toFixed(2);
   const ex5000 = (5000 * r / 100).toFixed(2);
   box.innerHTML = `مثال: إيداع <b>$1,000</b> → عمولة <b style="color:var(--gold);">$${ex1000}</b>
@@ -930,14 +930,14 @@ function updateCommPreview(rate) {
 
 async function saveEditAcc() {
   const newName = document.getElementById('edit-acc-name').value.trim();
-  if (!newName) { UI.toast('أدخل اسم الحساب','error'); return; }
+  if (!newName) { UI.toast(I18n.t('acc_name_ph'),'error'); return; }
 
   const changes = { name: newName };
 
   if (_accObj.type === 'customer') {
     const rate = parseFloat(document.getElementById('edit-acc-commission').value);
     if (isNaN(rate) || rate < 0 || rate > 100) {
-      UI.toast('نسبة العمولة يجب أن تكون بين 0 و 100','error'); return;
+      UI.toast(I18n.t('comm_rate_err'),'error'); return;
     }
     changes.commission_rate = rate;
   }
@@ -952,8 +952,8 @@ async function saveEditAcc() {
     _accObj.name = newName;
     if (changes.commission_rate !== undefined) _accObj.commission_rate = changes.commission_rate;
     document.getElementById('hero-name').textContent = _accObj.name + ' · ' + _accId;
-    UI.toast('تم الحفظ ✅');
-  } else { UI.toast('خطأ في الحفظ','error'); }
+    UI.toast(I18n.t('save_ok'));
+  } else { UI.toast(I18n.t('save_error'),'error'); }
 }
 
 // ── تعديل / حذف ───────────────────────────────────────
@@ -971,7 +971,7 @@ async function saveNote() {
   const r = await Transactions.updateNote(id, note);
   UI.showLoading(false);
   if (r.ok) {
-    closeEdit(); UI.toast('تم الحفظ ✅');
+    closeEdit(); UI.toast(I18n.t('save_ok'));
     const t = _allTxns.find(x=>String(x.id)===String(id));
     if (t) t.note = note;
     renderRows();
@@ -990,7 +990,7 @@ async function doDelete() {
   const r = await Transactions.deleteTxn(id);
   UI.showLoading(false);
   if (r.ok) {
-    closeDel(); UI.toast('تم الحذف ✅');
+    closeDel(); UI.toast(I18n.t('deleted_toast'));
     _allTxns = _allTxns.filter(x=>String(x.id)!==String(id));
     const [usd,eur] = await Promise.all([
       Storage.getBalance(_accId,'usd'),
@@ -1004,15 +1004,15 @@ async function doDelete() {
 
 // ── Export ─────────────────────────────────────────────
 function exportMovements() {
-  if (typeof XLSX==='undefined') { UI.toast('مكتبة Excel غير محملة','error'); return; }
-  const wb = XLSX.utils.table_to_book(document.getElementById('mov-table'),{sheet:'الحركات'});
-  XLSX.writeFile(wb, 'حركات_'+_accObj.name+'_'+UI.todayStr()+'.xlsx');
+  if (typeof XLSX==='undefined') { UI.toast(I18n.t('excel_not_loaded'),'error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById('mov-table'),{sheet: I18n.t('movements_export')});
+  XLSX.writeFile(wb, I18n.t('movements_prefix')+_accObj.name+'_'+UI.todayStr()+'.xlsx');
 }
 
 // ── فحص تطابق الأرصدة ──────────────────────────────────
 async function checkBalance() {
   document.getElementById('check-modal').classList.add('open');
-  document.getElementById('check-result').innerHTML = '⏳ جاري الفحص…';
+  document.getElementById('check-result').innerHTML = I18n.t('checking_bal');
 
   // جلب جميع العمليات بدون فلتر
   const allTxns = await Storage.getTxns({ acc: _accId });
@@ -1066,16 +1066,16 @@ async function checkBalance() {
       <span style="font-size:0.78rem;color:var(--text2);">محسوب: <b>${calc.toFixed(2)}</b></span>
       <span style="font-size:0.78rem;color:var(--text2);">مخزّن: <b>${stored.toFixed(2)}</b></span>
       <span style="font-weight:700;color:${ok?'var(--green)':'var(--red)'};">
-        ${ok ? '✅ متطابق' : '⚠️ فرق: ' + diff.toFixed(2)}
+        ${ok ? I18n.t('bal_match_lbl') : I18n.t('bal_diff_lbl') + ': ' + diff.toFixed(2)}
       </span>
     </div>`;
   });
 
-  if (!html) html = '<p style="color:var(--text3);">لا توجد عمليات لهذا الحساب</p>';
+  if (!html) html = `<p style="color:var(--text3);">${I18n.t('no_ops_acc')}</p>`;
 
   const summary = hasIssue
-    ? '<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--red);font-weight:700;">⚠️ يوجد فرق في الأرصدة — يُنصح بمراجعة العمليات</div>'
-    : '<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--green);font-weight:700;">✅ جميع الأرصدة متطابقة</div>';
+    ? `<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--red);font-weight:700;">${I18n.t('bal_mismatch')}</div>`
+    : `<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--green);font-weight:700;">${I18n.t('bal_match')}</div>`;
 
   document.getElementById('check-result').innerHTML = summary + html;
 
