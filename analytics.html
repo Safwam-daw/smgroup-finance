@@ -244,12 +244,12 @@ function renderKPIs(data) {
 
   let html = `
     <div class="kpi-card">
-      <div class="kpi-label">👥 إجمالي الحسابات</div>
+      <div class="kpi-label">👥 ${t('kpi_total_accounts_lbl')}</div>
       <div class="kpi-value" style="color:var(--gold);">${totalAccounts}</div>
       <div class="kpi-sub">${t("kpi_total_accounts_sub", {c: totalCustomers, co: totalCompanies})}</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">⚠️ حسابات مدينة</div>
+      <div class="kpi-label">⚠️ ${t('kpi_total_debtors_lbl')}</div>
       <div class="kpi-value" style="color:var(--red);">${totalDebtors}</div>
       <div class="kpi-sub">${t('of_total_accounts', { n: totalAccounts })}</div>
     </div>`;

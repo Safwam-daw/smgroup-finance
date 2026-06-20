@@ -100,15 +100,15 @@
     <div class="acc-hero" id="acc-hero">
       <div class="acc-hero-top">
         <div>
-          <div class="acc-hero-name" id="hero-name">جاري التحميل…</div>
+          <div class="acc-hero-name" id="hero-name" data-i18n="loading">جاري التحميل…</div>
           <div class="acc-hero-meta" id="hero-meta"></div>
         </div>
         <div class="btn-group no-print" style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-ghost btn-sm" id="edit-acc-btn" onclick="openEditAcc()" style="display:none;">✏️ تعديل</button>
+          <button class="btn btn-ghost btn-sm" id="edit-acc-btn" onclick="openEditAcc()" style="display:none;" data-i18n="edit_acc_btn_lbl">✏️ تعديل</button>
           <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)" data-i18n="full_statement">📋 كشف كامل</button>
-          <button class="btn btn-danger btn-sm" id="del-acc-btn" onclick="openDelAcc()" style="display:none;">🗑️ حذف الحساب</button>
-          <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;">📤 نشر الكشف</button>
-          <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;">🔍 فحص الرصيد</button>
+          <button class="btn btn-danger btn-sm" id="del-acc-btn" onclick="openDelAcc()" style="display:none;" data-i18n="delete_acc_btn_lbl">🗑️ حذف الحساب</button>
+          <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;" data-i18n="publish_stmt_btn">📤 نشر الكشف</button>
+          <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;" data-i18n="check_bal_btn_lbl">🔍 فحص الرصيد</button>
           <button class="btn btn-ghost btn-sm" onclick="history.back()" data-i18n="go_back">← رجوع</button>
         </div>
       </div>
@@ -142,25 +142,25 @@
     <!-- فلاتر -->
     <div class="card filter-card" style="padding:14px 16px;margin-bottom:14px;">
       <div class="quick-filters">
-        <button class="qf-btn active" onclick="setQuick('month')">هذا الشهر</button>
-        <button class="qf-btn" onclick="setQuick('prev')">الشهر السابق</button>
-        <button class="qf-btn" onclick="setQuick('today')">اليوم</button>
-        <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+        <button class="qf-btn active" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev_month">الشهر السابق</button>
+        <button class="qf-btn" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
         <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="col_type_lbl">النوع</label>
           <select id="f-type" onchange="renderRows()">
-            <option value="all">الكل</option>
-            <option value="dep">إيداع</option>
-            <option value="wit">سحب</option>
-            <option value="trf">تحويل</option>
+            <option value="all" data-i18n="op_type_all">الكل</option>
+            <option value="dep" data-i18n="op_type_dep">إيداع</option>
+            <option value="wit" data-i18n="op_type_wit">سحب</option>
+            <option value="trf" data-i18n="op_type_trf">تحويل</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
           <select id="f-cur" onchange="renderRows()">
-            <option value="all">الكل</option>
-            <option value="usd">دولار</option>
-            <option value="eur">يورو</option>
+            <option value="all" data-i18n="op_type_all">الكل</option>
+            <option value="usd" data-i18n="cur_usd_full">دولار</option>
+            <option value="eur" data-i18n="cur_eur_full">يورو</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -170,7 +170,7 @@
           <input type="date" id="f-to" onchange="clearQuick();renderRows()">
         </div>
         <div class="no-print" style="align-self:flex-end;">
-          <button class="btn btn-primary btn-sm" onclick="exportMovements()">📊 Excel</button>
+          <button class="btn btn-primary btn-sm" onclick="exportMovements()" data-i18n="export_excel_btn">📊 Excel</button>
         </div>
       </div>
     </div>
@@ -185,7 +185,7 @@
             <th class="no-print" data-i18n="col_note">ملاحظة</th><th class="no-print" data-i18n="col_action">إجراء</th>
           </tr></thead>
           <tbody id="mov-tbody">
-            <tr><td colspan="8" class="empty-state">جاري التحميل…</td></tr>
+            <tr><td colspan="8" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
           </tbody>
         </table>
       </div>
@@ -203,7 +203,7 @@
 <div id="op-modal" class="modal-back">
   <div class="modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 id="op-title" style="margin-bottom:0;">عملية</h3>
+      <h3 id="op-title" style="margin-bottom:0;" data-i18n="op_modal_title">عملية</h3>
       <button onclick="closeOp()" style="background:none;border:none;color:var(--text2);
         font-size:1.3rem;cursor:pointer;padding:4px;">✕</button>
     </div>
@@ -211,14 +211,14 @@
     <!-- إيداع / سحب -->
     <div id="op-dep-wit">
       <div class="form-group">
-        <label>العملة</label>
+        <label data-i18n="currency_lbl">العملة</label>
         <select id="op-cur">
-          <option value="usd">🇺🇸 دولار USD</option>
-          <option value="eur">🇪🇺 يورو EUR</option>
+          <option value="usd" data-i18n="cur_usd_flag_code">🇺🇸 دولار USD</option>
+          <option value="eur" data-i18n="cur_eur_flag_code">🇪🇺 يورو EUR</option>
         </select>
       </div>
       <div class="form-group">
-        <label>المبلغ</label>
+        <label data-i18n="amount_lbl">المبلغ</label>
         <input type="number" id="op-amount" placeholder="0.00" min="0" step="0.01"
                onkeydown="if(event.key==='Enter') confirmOp()">
       </div>
@@ -231,7 +231,7 @@
     <!-- تحويل -->
     <div id="op-trf" style="display:none;">
       <div class="form-group">
-        <label>إلى حساب <span style="color:var(--text3);font-size:0.7rem;">(Enter لاختيار أول نتيجة)</span></label>
+        <label data-i18n="to_account_lbl">إلى حساب</label> <span style="color:var(--text3);font-size:0.7rem;" data-i18n="enter_first_result">(Enter لاختيار أول نتيجة)</span>
         <div class="search-wrap">
           <input type="text" id="op-to-search" placeholder="ابحث بالاسم أو الكود…" data-i18n-placeholder="search_placeholder" autocomplete="off">
           <div id="op-to-res" class="search-dropdown"></div>
@@ -244,27 +244,27 @@
            font-size:0.82rem;margin-bottom:12px;"></div>
       <div class="grid-2">
         <div class="form-group">
-          <label>العملة</label>
+          <label data-i18n="currency_lbl">العملة</label>
           <select id="op-trf-cur">
-            <option value="usd">🇺🇸 دولار</option>
-            <option value="eur">🇪🇺 يورو</option>
+            <option value="usd" data-i18n="cur_usd_flag">🇺🇸 دولار</option>
+            <option value="eur" data-i18n="cur_eur_flag">🇪🇺 يورو</option>
           </select>
         </div>
         <div class="form-group">
-          <label>سعر الصرف</label>
+          <label data-i18n="exchange_rate_lbl">سعر الصرف</label>
           <input type="number" id="op-rate" value="1" step="0.0001" min="0">
         </div>
       </div>
       <div class="form-group">
-        <label>المبلغ</label>
+        <label data-i18n="amount_lbl">المبلغ</label>
         <input type="number" id="op-trf-amount" placeholder="0.00" min="0" step="0.01"
                onkeydown="if(event.key==='Enter') confirmOp()">
       </div>
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
-      <button class="btn btn-ghost" onclick="closeOp()">إلغاء</button>
-      <button class="btn btn-primary" id="op-confirm-btn" onclick="confirmOp()">تأكيد</button>
+      <button class="btn btn-ghost" onclick="closeOp()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-primary" id="op-confirm-btn" onclick="confirmOp()" data-i18n="confirm_btn">تأكيد</button>
     </div>
   </div>
 </div>
@@ -273,11 +273,11 @@
 <div id="overdraft-modal" class="modal-back">
   <div class="modal-box" style="text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
-    <h3>رصيد غير كافٍ</h3>
+    <h3 data-i18n="insufficient_balance_title">رصيد غير كافٍ</h3>
     <p id="overdraft-msg" style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.7;"></p>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeOverdraft()">إلغاء</button>
-      <button class="btn btn-danger" onclick="confirmOp(true)">المتابعة بالسالب</button>
+      <button class="btn btn-ghost" onclick="closeOverdraft()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-danger" onclick="confirmOp(true)" data-i18n="continue_negative_btn">المتابعة بالسالب</button>
     </div>
   </div>
 </div>
@@ -285,16 +285,16 @@
 <!-- Modal تعديل ملاحظة -->
 <div id="edit-modal" class="modal-back">
   <div class="modal-box">
-    <h3>✏️ تعديل الملاحظة</h3>
+    <h3 data-i18n="edit_note_title">✏️ تعديل الملاحظة</h3>
     <input type="hidden" id="edit-id">
     <div class="form-group">
-      <label>الملاحظة</label>
+      <label data-i18n="note_lbl">الملاحظة</label>
       <input type="text" id="edit-note" placeholder="أدخل ملاحظة…" data-i18n-placeholder="note_ph"
              onkeydown="if(event.key==='Enter') saveNote()">
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeEdit()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveNote()">💾 حفظ</button>
+      <button class="btn btn-ghost" onclick="closeEdit()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveNote()" data-i18n="save_btn2">💾 حفظ</button>
     </div>
   </div>
 </div>
@@ -303,15 +303,15 @@
 <div id="del-modal" class="modal-back">
   <div class="modal-box" style="text-align:center;">
     <div style="font-size:2rem;margin-bottom:12px;">🗑️</div>
-    <h3>تأكيد إلغاء العملية</h3>
+    <h3 data-i18n="confirm_cancel_op_title">تأكيد إلغاء العملية</h3>
     <p style="color:var(--text2);margin:14px 0;font-size:0.87rem;line-height:1.6;">
-      سيتم إلغاء العملية وعكس تأثيرها على الرصيد.<br>
-      <b style="color:var(--text2);">تبقى العملية محفوظة في السجلات.</b>
+      <span data-i18n="cancel_op_warning">سيتم إلغاء العملية وعكس تأثيرها على الرصيد.</span><br>
+      <b style="color:var(--text2);" data-i18n="cancel_op_stays_logged">تبقى العملية محفوظة في السجلات.</b>
     </p>
     <input type="hidden" id="del-id">
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="closeDel()">إلغاء</button>
-      <button class="btn btn-danger" onclick="doDelete()">🗑️ حذف</button>
+      <button class="btn btn-ghost" onclick="closeDel()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelete()" data-i18n="delete_btn2">🗑️ حذف</button>
     </div>
   </div>
 </div>
@@ -320,19 +320,19 @@
 <div id="del-acc-modal" class="modal-back">
   <div class="modal-box" style="text-align:center;">
     <div style="font-size:2.5rem;margin-bottom:12px;">⚠️</div>
-    <h3 style="color:var(--red);">تأكيد حذف الحساب</h3>
+    <h3 style="color:var(--red);" data-i18n="confirm_delete_acc_title">تأكيد حذف الحساب</h3>
     <div id="del-acc-info" style="background:var(--surface2);border:1px solid var(--border2);
          border-radius:8px;padding:14px;margin:16px 0;text-align:right;font-size:0.84rem;line-height:1.8;">
     </div>
     <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;
          padding:12px;margin-bottom:16px;font-size:0.8rem;color:var(--red);text-align:right;">
-      ⚠️ سيتم تحويل الرصيد تلقائياً لحساب الأرباح لضمان توازن الخزينة.<br>
-      جميع حركات هذا الحساب ستبقى في السجل المحاسبي للمراجعة.<br>
-      <b>رقم الحساب سيُعاد استخدامه لاحقاً لزبون جديد.</b>
+      <span data-i18n="delete_acc_warning">⚠️ سيتم تحويل الرصيد تلقائياً لحساب الأرباح لضمان توازن الخزينة.</span><br>
+      <span data-i18n="delete_acc_history_note">جميع حركات هذا الحساب ستبقى في السجل المحاسبي للمراجعة.</span><br>
+      <b data-i18n="delete_acc_id_reuse">رقم الحساب سيُعاد استخدامه لاحقاً لزبون جديد.</b>
     </div>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button class="btn btn-ghost" onclick="closeDelAcc()">إلغاء</button>
-      <button class="btn btn-danger" onclick="doDelAcc()">🗑️ حذف نهائي</button>
+      <button class="btn btn-ghost" onclick="closeDelAcc()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-danger" onclick="doDelAcc()" data-i18n="delete_final_btn">🗑️ حذف نهائي</button>
     </div>
   </div>
 </div>
@@ -341,46 +341,44 @@
 <div id="edit-acc-modal" class="modal-back">
   <div class="modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-      <h3 style="margin-bottom:0;">✏️ تعديل معلومات الحساب</h3>
+      <h3 style="margin-bottom:0;" data-i18n="edit_acc_info_title">✏️ تعديل معلومات الحساب</h3>
       <button onclick="closeEditAcc()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
     </div>
 
     <div class="form-group">
-      <label>اسم الحساب</label>
+      <label data-i18n="account_name_lbl">اسم الحساب</label>
       <input type="text" id="edit-acc-name" placeholder="اسم الزبون أو الشركة" data-i18n-placeholder="account_name_ph">
     </div>
 
     <!-- PIN الزبون -->
     <div id="edit-pin-box" style="display:none;">
       <div style="height:1px;background:var(--border);margin:14px 0;"></div>
-      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;">🔑 بوابة الزبون</div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;" data-i18n="client_portal_lbl">🔑 بوابة الزبون</div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
              padding:10px 16px;font-size:1.1rem;font-weight:700;letter-spacing:4px;color:var(--gold);"
              id="acc-pin-display">—</div>
-        <button class="btn btn-ghost btn-sm" onclick="regenPin()">🔄 PIN جديد</button>
-        <button class="btn btn-ghost btn-sm" onclick="copyPin()" id="copy-pin-btn">📋 نسخ</button>
+        <button class="btn btn-ghost btn-sm" onclick="regenPin()" data-i18n="new_pin_btn">🔄 PIN جديد</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyPin()" id="copy-pin-btn" data-i18n="copy_btn">📋 نسخ</button>
         <a id="client-portal-link" href="client.html" target="_blank"
-           style="font-size:0.75rem;color:var(--blue);text-decoration:none;">🔗 رابط البوابة</a>
+           style="font-size:0.75rem;color:var(--blue);text-decoration:none;" data-i18n="portal_link_btn">🔗 رابط البوابة</a>
       </div>
-      <p style="font-size:0.71rem;color:var(--text3);margin-top:8px;">
+      <p style="font-size:0.71rem;color:var(--text3);margin-top:8px;" data-i18n="give_client_pin_note">
         أعطِ الزبون رقم حسابه + هذا الـ PIN للدخول لبوابته
       </p>
     </div>
 
     <div id="edit-commission-box">
       <div style="height:1px;background:var(--border);margin:14px 0;"></div>
-      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;">💰 إعدادات العمولة</div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;" data-i18n="commission_settings_lbl">💰 إعدادات العمولة</div>
       <div class="form-group">
-        <label>نسبة العمولة على الإيداع <span style="color:var(--text3);">(0 = معفى)</span></label>
+        <label data-i18n="deposit_commission_pct_lbl">نسبة العمولة على الإيداع</label> <span style="color:var(--text3);" data-i18n="exempt_zero_note">(0 = معفى)</span>
         <div style="display:flex;align-items:center;gap:10px;">
           <input type="number" id="edit-acc-commission" placeholder="0.025"
                  min="0" max="100" step="0.001" style="flex:1;">
-          <span style="font-size:0.82rem;color:var(--text2);white-space:nowrap;">% من المبلغ</span>
+          <span style="font-size:0.82rem;color:var(--text2);white-space:nowrap;" data-i18n="pct_of_amount_lbl">% من المبلغ</span>
         </div>
-        <div style="font-size:0.71rem;color:var(--text3);margin-top:5px;">
-          مثال: <b>0.025</b> تعني ربع سنت لكل 1000 دولار ·
-          <b>1</b> تعني 1% · <b>0</b> تعني بلا عمولة
+        <div style="font-size:0.71rem;color:var(--text3);margin-top:5px;" id="commission-example-note">
         </div>
       </div>
       <div id="edit-commission-preview" style="font-size:0.8rem;color:var(--text3);
@@ -388,8 +386,8 @@
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
-      <button class="btn btn-ghost" onclick="closeEditAcc()">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveEditAcc()">💾 حفظ التعديلات</button>
+      <button class="btn btn-ghost" onclick="closeEditAcc()" data-i18n="cancel_btn">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveEditAcc()" data-i18n="save_edits_btn">💾 حفظ التعديلات</button>
     </div>
   </div>
 </div>
@@ -398,6 +396,7 @@
 <script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
+
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/i18n.js"></script>
@@ -705,14 +704,14 @@ async function updateOpPreview() {
     const after      = parseFloat((before+net).toFixed(2));
     box.innerHTML = `
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div><div style="font-size:0.67rem;color:var(--text3);">المودع</div>
+        <div><div style="font-size:0.67rem;color:var(--text3);">${t('depositor_lbl')}</div>
              <b style="color:var(--gold);">${sym}${amt.toFixed(2)}</b></div>
-        ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">عمولة (${ratePct}%)</div>
+        ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">${t('commission_pct_lbl',{pct:ratePct})}</div>
              <b style="color:var(--red);">-${sym}${commission.toFixed(2)}</b></div>`:''}
-        <div><div style="font-size:0.67rem;color:var(--text3);">يدخل الحساب</div>
+        <div><div style="font-size:0.67rem;color:var(--text3);">${t('enters_account_lbl')}</div>
              <b style="color:var(--green);">${sym}${net.toFixed(2)}</b></div>
         <div style="color:var(--text3);align-self:center;">→</div>
-        <div><div style="font-size:0.67rem;color:var(--text3);">الرصيد الجديد</div>
+        <div><div style="font-size:0.67rem;color:var(--text3);">${t('new_balance_lbl')}</div>
              <b>${sym}${after.toFixed(2)}</b></div>
       </div>`;
     box.style.background='var(--surface2)'; box.style.border='1px solid var(--border2)';
@@ -721,10 +720,10 @@ async function updateOpPreview() {
     const neg   = after < 0;
     box.innerHTML = `
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div><div style="font-size:0.67rem;color:var(--text3);">الرصيد الحالي</div>
+        <div><div style="font-size:0.67rem;color:var(--text3);">${t('current_balance_lbl')}</div>
              <b>${sym}${before.toFixed(2)}</b></div>
         <div style="color:var(--text3);align-self:center;">→</div>
-        <div><div style="font-size:0.67rem;color:var(--text3);">بعد السحب</div>
+        <div><div style="font-size:0.67rem;color:var(--text3);">${t('after_withdrawal_lbl')}</div>
              <b style="color:${neg?'var(--red)':'var(--text)'};">${sym}${after.toFixed(2)}
              ${neg?' ⚠️':''}</b></div>
       </div>`;
@@ -793,9 +792,9 @@ async function confirmOp(forceOverdraft=false) {
       : parseFloat(document.getElementById('op-amount').value);
     const sym = cur==='usd'?'$':'€';
     document.getElementById('overdraft-msg').innerHTML =
-      `الرصيد الحالي: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
-       المبلغ المطلوب: <b>${sym}${amt.toFixed(2)}</b><br>
-       سيصبح: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+      `${t('current_balance_lbl')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
+       ${t('required_amount_lbl')}: <b>${sym}${amt.toFixed(2)}</b><br>
+       ${t('will_become_lbl')}: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
     document.getElementById('overdraft-modal').classList.add('open');
   } else {
     UI.toast(result.error,'error');
@@ -818,9 +817,9 @@ function copyPin() {
   const pin = document.getElementById('acc-pin-display').textContent.trim();
   if (!pin || pin === '—') { UI.toast(I18n.t('pin_none'), 'error'); return; }
   const accId = _accId;
-  const text  = `رقم الحساب: ${accId}
-كلمة السر: ${pin}
-رابط البوابة: ${location.origin}/client.html`;
+  const text  = `${t('account_id_lbl')}: ${accId}
+${t('pin_password_lbl')}: ${pin}
+${t('portal_link_lbl')}: ${location.origin}/client.html`;
   navigator.clipboard.writeText(text).then(() => {
     UI.toast(I18n.t('copy_client_ok'));
     const btn = document.getElementById('copy-pin-btn');
@@ -850,16 +849,16 @@ function openDelAcc() {
   const usd = parseFloat(_accObj.bal_usd || 0);
   const eur = parseFloat(_accObj.bal_eur || 0);
   document.getElementById('del-acc-info').innerHTML = `
-    <div><b>الحساب:</b> ${UI.escapeHtml(_accObj.name)} (${_accId})</div>
-    <div><b>النوع:</b> ${_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')}</div>
-    <div><b>رصيد الدولار:</b>
+    <div><b>${t('col_account_lbl')}:</b> ${UI.escapeHtml(_accObj.name)} (${_accId})</div>
+    <div><b>${t('col_type_lbl')}:</b> ${_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')}</div>
+    <div><b>${t('usd_balance_lbl')}:</b>
       <span style="color:${usd<0?'var(--red)':usd>0?'var(--green)':'var(--text2)'};">
         $${usd.toFixed(2)}
       </span>
       ${usd > 0 ? `← <span style="color:var(--gold);">${I18n.t('profit_will_move')}</span>` :
         usd < 0 ? `← <span style="color:var(--red);">${I18n.t('profit_will_deduct')}</span>` : ''}
     </div>
-    <div><b>رصيد اليورو:</b>
+    <div><b>${t('eur_balance_lbl')}:</b>
       <span style="color:${eur<0?'var(--red)':eur>0?'var(--green)':'var(--text2)'};">
         €${eur.toFixed(2)}
       </span>
@@ -907,6 +906,12 @@ function openEditAcc() {
   // إخفاء خانة العمولة للشركات وحساب الأرباح
   const showComm = _accObj.type === 'customer';
   document.getElementById('edit-commission-box').style.display = showComm ? 'block' : 'none';
+  const exNote = document.getElementById('commission-example-note');
+  if (exNote) {
+    exNote.innerHTML = t('comm_static_example', {
+      ex1: '<b>0.025</b>', ex2: '<b>1</b>', ex3: '<b>0</b>'
+    });
+  }
   updateCommPreview(rate);
   document.getElementById('edit-acc-modal').classList.add('open');
 }
@@ -922,10 +927,10 @@ function updateCommPreview(rate) {
   if (!r) { box.textContent = I18n.t('no_comm_note'); return; }
   const ex1000 = (1000 * r / 100).toFixed(2);
   const ex5000 = (5000 * r / 100).toFixed(2);
-  box.innerHTML = `مثال: إيداع <b>$1,000</b> → عمولة <b style="color:var(--gold);">$${ex1000}</b>
-    · يدخل الحساب <b style="color:var(--green);">$${(1000-parseFloat(ex1000)).toFixed(2)}</b>
-    <br>مثال: إيداع <b>$5,000</b> → عمولة <b style="color:var(--gold);">$${ex5000}</b>
-    · يدخل الحساب <b style="color:var(--green);">$${(5000-parseFloat(ex5000)).toFixed(2)}</b>`;
+  box.innerHTML = `${t('example_deposit_commission',{amt1:'$1,000',fee1:`<b style="color:var(--gold);">$${ex1000}</b>`})}
+    · ${t('enters_account_lbl')} <b style="color:var(--green);">$${(1000-parseFloat(ex1000)).toFixed(2)}</b>
+    <br>${t('example_deposit_commission',{amt1:'$5,000',fee1:`<b style="color:var(--gold);">$${ex5000}</b>`})}
+    · ${t('enters_account_lbl')} <b style="color:var(--green);">$${(5000-parseFloat(ex5000)).toFixed(2)}</b>`;
 }
 
 async function saveEditAcc() {
@@ -1063,8 +1068,8 @@ async function checkBalance() {
       background:${ok?'var(--green-dim)':'var(--red-dim)'};
       border:1px solid ${ok?'var(--green)':'var(--red)'};">
       <span style="font-weight:700;">${sym}</span>
-      <span style="font-size:0.78rem;color:var(--text2);">محسوب: <b>${calc.toFixed(2)}</b></span>
-      <span style="font-size:0.78rem;color:var(--text2);">مخزّن: <b>${stored.toFixed(2)}</b></span>
+      <span style="font-size:0.78rem;color:var(--text2);">${t('calculated_lbl')}: <b>${calc.toFixed(2)}</b></span>
+      <span style="font-size:0.78rem;color:var(--text2);">${t('stored_lbl')}: <b>${stored.toFixed(2)}</b></span>
       <span style="font-weight:700;color:${ok?'var(--green)':'var(--red)'};">
         ${ok ? I18n.t('bal_match_lbl') : I18n.t('bal_diff_lbl') + ': ' + diff.toFixed(2)}
       </span>
@@ -1095,11 +1100,11 @@ async function checkBalance() {
 <div id="check-modal" class="modal-back">
   <div class="modal-box" style="max-width:500px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="margin-bottom:0;">🔍 فحص تطابق الأرصدة</h3>
+      <h3 style="margin-bottom:0;" data-i18n="check_balance_title">🔍 فحص تطابق الأرصدة</h3>
       <button onclick="document.getElementById('check-modal').classList.remove('open')"
         style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
     </div>
-    <div id="check-result" style="font-size:0.85rem;line-height:2;">
+    <div id="check-result" style="font-size:0.85rem;line-height:2;" data-i18n="checking_lbl">
       جاري الفحص…
     </div>
   </div>
