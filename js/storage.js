@@ -217,10 +217,19 @@ const Storage = (() => {
 
   // ══ Users ══════════════════════════════════════════════
 
+  function _callerCreds() {
+    try {
+      const u = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+      return {
+        p_caller_username: u?.user || '',
+        p_caller_password: u?._pass || ''
+      };
+    } catch(e) { return { p_caller_username: '', p_caller_password: '' }; }
+  }
+
   async function getUsers() {
     const { data, error } = await _sb.rpc('admin_list_users', {
-      p_caller_username: '',
-      p_caller_password: ''
+      ..._callerCreds()
     });
     if (error) { console.error('admin_list_users:', error); return []; }
     return data || [];
@@ -228,8 +237,7 @@ const Storage = (() => {
 
   async function saveUser(user) {
     const { data, error } = await _sb.rpc('admin_create_user', {
-      p_caller_username: '',
-      p_caller_password: '',
+      ..._callerCreds(),
       p_new_username:    user.user,
       p_new_password:    user.pass,
       p_new_role:        user.role,
@@ -241,9 +249,8 @@ const Storage = (() => {
 
   async function deleteUser(id) {
     const { data, error } = await _sb.rpc('admin_delete_user', {
-      p_caller_username: '',
-      p_caller_password: '',
-      p_target_id:       id
+      ..._callerCreds(),
+      p_target_id: id
     });
     if (error) { console.error('admin_delete_user:', error); return false; }
     return !!data?.ok;
@@ -251,10 +258,9 @@ const Storage = (() => {
 
   async function updateUserPass(id, plainText) {
     const { data, error } = await _sb.rpc('admin_set_user_password', {
-      p_caller_username: '',
-      p_caller_password: '',
-      p_target_id:       id,
-      p_new_password:    plainText
+      ..._callerCreds(),
+      p_target_id:   id,
+      p_new_password: plainText
     });
     if (error) { console.error('admin_set_user_password:', error); return false; }
     return !!data?.ok;
@@ -272,10 +278,9 @@ const Storage = (() => {
 
   async function updateUserPermissions(id, permissions) {
     const { data, error } = await _sb.rpc('admin_set_user_permissions', {
-      p_caller_username: '',
-      p_caller_password: '',
-      p_target_id:       id,
-      p_permissions:     permissions
+      ..._callerCreds(),
+      p_target_id:   id,
+      p_permissions: permissions
     });
     if (error) { console.error('admin_set_user_permissions:', error); return false; }
     return !!data?.ok;
@@ -283,10 +288,9 @@ const Storage = (() => {
 
   async function updateUserRole(id, role) {
     const { data, error } = await _sb.rpc('admin_set_user_role', {
-      p_caller_username: '',
-      p_caller_password: '',
-      p_target_id:       id,
-      p_role:            role
+      ..._callerCreds(),
+      p_target_id: id,
+      p_role:      role
     });
     if (error) { console.error('admin_set_user_role:', error); return false; }
     return !!data?.ok;

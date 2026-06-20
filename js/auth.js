@@ -42,11 +42,13 @@ viewAnalytics:false, viewNotifications:false, viewHistory:false
   }
 
   async function login(username, password) {
-    const user = await Storage.findUser(username.trim(), password.trim());
+    const trimUser = username.trim();
+    const trimPass = password.trim();
+    const user = await Storage.findUser(trimUser, trimPass);
     if (user) {
-      _activeUser = user;
-      _saveSession(user);
-      return { ok:true, user };
+      _activeUser = { ...user, _pass: trimPass };
+      _saveSession(_activeUser);
+      return { ok:true, user: _activeUser };
     }
     return { ok:false, error:'بيانات الدخول خاطئة' };
   }
