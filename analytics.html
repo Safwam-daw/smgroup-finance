@@ -69,13 +69,39 @@
   #treasury-bar,#treasury-placeholder,
   .no-print,.period-btns { display:none !important; }
   .print-header { display:block !important; border-bottom:3px solid #c9a84c; padding-bottom:12px; margin-bottom:16px; }
-  body { background:#fff !important; color:#111 !important; }
+  body { background:#fff !important; color:#111 !important; font-family:'IBM Plex Sans Arabic',sans-serif !important; }
   #main { margin:0 !important; padding:16px !important; }
   .analytics-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
   .kpi-grid { grid-template-columns:repeat(4,1fr) !important; gap:8px !important; }
-  .chart-card { background:#fff !important; border:1px solid #ccc !important; break-inside:avoid; padding:12px !important; }
+  .chart-card {
+    background:#fff !important; border:1px solid #d4b896 !important;
+    border-radius:8px !important; break-inside:avoid; padding:14px !important;
+  }
+  .chart-card h3 {
+    color:#555 !important; font-size:0.82rem !important;
+    border-bottom:1px solid #e8d5b7 !important;
+    padding-bottom:8px !important; margin-bottom:10px !important;
+  }
   .chart-wrap { height:150px !important; }
-  .kpi-card { background:#fffbef !important; border:1px solid #c9a84c !important; break-inside:avoid; padding:10px !important; }
+  .kpi-card { background:#fffbef !important; border:1px solid #c9a84c !important; border-radius:8px !important; break-inside:avoid; padding:10px !important; }
+  .kpi-label { color:#777 !important; }
+  .kpi-sub   { color:#888 !important; }
+  .top-list  { display:flex !important; flex-direction:column !important; gap:6px !important; }
+  .top-item {
+    background:#fafafa !important; border:1px solid #e0d0b8 !important;
+    border-radius:6px !important; padding:8px 12px !important;
+    display:flex !important; align-items:center !important; gap:10px !important;
+  }
+  .top-rank {
+    background:#f5e6c8 !important; color:#8a6a1f !important;
+    border-radius:50% !important; width:22px !important; height:22px !important;
+    font-size:0.68rem !important; font-weight:700 !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    flex-shrink:0 !important;
+  }
+  .top-name { color:#222 !important; font-size:0.8rem !important; font-weight:600 !important; flex:1 !important; }
+  .top-val  { font-size:0.8rem !important; font-weight:700 !important; }
+  .no-data  { color:#999 !important; font-size:0.78rem !important; text-align:center !important; padding:20px !important; }
   * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
 }
 </style>
