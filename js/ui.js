@@ -96,9 +96,7 @@ const UI = (() => {
 
   function closeSidebarOnNav() {
     document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (window.innerWidth <= 640) toggleSidebar(false);
-      });
+      btn.addEventListener('click', () => toggleSidebar(false));
     });
   }
 

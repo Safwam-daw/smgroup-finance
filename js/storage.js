@@ -210,67 +210,99 @@ const Storage = (() => {
 
   async function getTxnByParent(parentId) {
     const { data, error } = await _sb.from('transactions')
-      .select('*').eq('parent_id', parentId).eq('is_commission_entry', true).single();
-    if (error || !data) return null;
-    return data;
+      .select('*').eq('parent_id', parentId).eq('is_commission_entry', true);
+    if (error) return [];
+    return data || [];
   }
 
   // ══ Users ══════════════════════════════════════════════
+
+  function _callerCreds() {
+    try {
+      const u = typeof Auth !== 'undefined' ? Auth.getUser() : null;
+      return {
+        p_caller_username: u?.user || '',
+        p_caller_password: u?._pass || ''
+      };
+    } catch(e) { return { p_caller_username: '', p_caller_password: '' }; }
+  }
+
   async function getUsers() {
-    if (_fresh('users')) return _cache.users.data;
-    const { data, error } = await _sb.from('users').select('*');
-    if (error) return _cache.users.data || [];
-    _set('users', data || []);
-    return _cache.users.data;
+    const { data, error } = await _sb.rpc('admin_list_users', {
+      ..._callerCreds()
+    });
+    if (error) { console.error('admin_list_users:', error); return []; }
+    return data || [];
   }
 
   async function saveUser(user) {
-    // كلمة المرور تصل إما كـ plaintext (من employees.html الجديد)
-    // أو مشفرة مسبقاً — نتحقق من الطول لتجنب التشفير المزدوج
-    const pass = user.pass.length === 64 ? user.pass : await hashPassword(user.pass);
-    const { error } = await _sb.from('users').insert({
-      username: user.user, pass,
-      role: user.role, permissions: user.permissions || null
+    const { data, error } = await _sb.rpc('admin_create_user', {
+      ..._callerCreds(),
+      p_new_username:    user.user,
+      p_new_password:    user.pass,
+      p_new_role:        user.role,
+      p_new_permissions: user.permissions || null
     });
-    if (!error) invalidate('users');
-    return !error;
+    if (error) { console.error('admin_create_user:', error); return false; }
+    return !!data?.ok;
   }
 
   async function deleteUser(id) {
-    const { error } = await _sb.from('users').delete().eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
+    const { data, error } = await _sb.rpc('admin_delete_user', {
+      ..._callerCreds(),
+      p_target_id: id
+    });
+    if (error) { console.error('admin_delete_user:', error); return false; }
+    return !!data?.ok;
   }
 
   async function updateUserPass(id, plainText) {
-    const pass = await hashPassword(plainText);
-    const { error } = await _sb.from('users').update({ pass }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
+    const { data, error } = await _sb.rpc('admin_set_user_password', {
+      ..._callerCreds(),
+      p_target_id:   id,
+      p_new_password: plainText
+    });
+    if (error) { console.error('admin_set_user_password:', error); return false; }
+    return !!data?.ok;
+  }
+
+  async function updateOwnPass(username, currentPass, newPass) {
+    const { data, error } = await _sb.rpc('self_set_password', {
+      p_username:     username,
+      p_current_pass: currentPass,
+      p_new_pass:     newPass
+    });
+    if (error) { console.error('self_set_password:', error); return false; }
+    return !!data?.ok;
   }
 
   async function updateUserPermissions(id, permissions) {
-    const { error } = await _sb.from('users').update({ permissions }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
+    const { data, error } = await _sb.rpc('admin_set_user_permissions', {
+      ..._callerCreds(),
+      p_target_id:   id,
+      p_permissions: permissions
+    });
+    if (error) { console.error('admin_set_user_permissions:', error); return false; }
+    return !!data?.ok;
   }
 
   async function updateUserRole(id, role) {
-    const { error } = await _sb.from('users').update({ role }).eq('id', id);
-    if (!error) invalidate('users');
-    return !error;
+    const { data, error } = await _sb.rpc('admin_set_user_role', {
+      ..._callerCreds(),
+      p_target_id: id,
+      p_role:      role
+    });
+    if (error) { console.error('admin_set_user_role:', error); return false; }
+    return !!data?.ok;
   }
 
+  // تسجيل الدخول — يتحقق من كلمة المرور داخل قاعدة البيانات
   async function findUser(username, plainText) {
-    const pass = await hashPassword(plainText);
-    if (_fresh('users')) {
-      const u = _cache.users.data.find(x => x.username === username && x.pass === pass);
-      if (u) return { user: u.username, role: u.role, id: u.id, permissions: u.permissions || null };
-      return null;
-    }
-    const { data, error } = await _sb.from('users')
-      .select('*').eq('username', username).eq('pass', pass).single();
-    if (error || !data) return null;
+    const { data, error } = await _sb.rpc('login_verify', {
+      p_username: username,
+      p_password: plainText
+    });
+    if (error || !data?.ok) return null;
     return { user: data.username, role: data.role, id: data.id, permissions: data.permissions || null };
   }
 
@@ -593,7 +625,7 @@ const Storage = (() => {
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
 
   // users
-  getUsers, saveUser, deleteUser, updateUserPass,
+  getUsers, saveUser, deleteUser, updateUserPass, updateOwnPass,
   updateUserPermissions, updateUserRole, findUser, hashPassword,
 
   // settings

@@ -281,7 +281,10 @@ async function initApp(pageId) {
 
   if (permMap[pageId] !== undefined && permMap[pageId] !== null) {
     if (!Auth.can(permMap[pageId])) {
-      window.location.href = 'deposit.html'; // توجيه للصفحة الأساسية
+      // توجيه لأول صفحة يملك المستخدم صلاحيتها
+      const fallbackOrder = ['dashboard','deposit','withdraw','transfer','accounts','ledger','reports'];
+      const fallback = fallbackOrder.find(p => Auth.can(p));
+      window.location.href = fallback ? fallback + '.html' : 'login.html';
       return false;
     }
   }
