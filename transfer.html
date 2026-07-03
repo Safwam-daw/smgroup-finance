@@ -226,7 +226,7 @@ async function doTransfer(force) {
     await UI.updateTreasury();
     await renderRecent();
   } else if (result.needsConfirm) {
-    const sym = cur==='usd'?'$':'€';
+    const sym = await Currency.symbol(cur.toUpperCase());
     document.getElementById('overdraft-msg').innerHTML =
       `${I18n.t('sender_balance_lbl')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
        ${I18n.t('required_amount')}: <b>${sym}${amt.toFixed(2)}</b><br>

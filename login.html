@@ -119,7 +119,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   // فحص الاتصال
   (async () => {
     try {
-      await Storage.getUsers();
+      // فحص اتصال خفيف لا يتطلب بيانات اعتماد (login_verify بقيم
+      // فارغة سترجع invalid_credentials بدل خطأ شبكي — يكفي للتأكد
+      // أن قاعدة البيانات تستجيب)
+      await window._sb.rpc('login_verify', { p_username: '', p_password: '' });
       document.getElementById('conn-status').innerHTML =
         `<span class="conn-ok">${t('db_connected')}</span>`;
     } catch(e) {

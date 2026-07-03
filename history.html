@@ -55,46 +55,55 @@
 <div class="print-header">
   <div style="display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — سجل التعديلات</h1>
+      <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;"></h1>
       <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
     </div>
-    <div style="font-size:0.75rem;color:#555;">طُبع بتاريخ: <b id="print-date"></b></div>
+    <div style="font-size:0.75rem;color:#555;">
+      <span id="print-on-lbl"></span> <b id="print-date"></b>
+    </div>
   </div>
   <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-history"></div>
 </div>
 
 <div class="page-header">
-  <div><h2 data-i18n="history_title">📝 سجل التعديلات</h2><p data-i18n="history_subtitle">تتبع جميع التغييرات على البيانات</p></div>
+  <div>
+    <h2 data-i18n="history_title">📝 سجل التعديلات</h2>
+    <p data-i18n="history_subtitle">تتبع جميع التغييرات على البيانات</p>
+  </div>
   <div style="display:flex;gap:8px;" class="no-print">
-    <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
-    <button class="btn btn-primary btn-sm" onclick="UI.exportExcel('history-table','History_Log')">📊 Excel</button>
+    <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn">🖨️ طباعة</button>
+    <button class="btn btn-primary btn-sm" onclick="exportHistoryExcel()">📊 Excel</button>
   </div>
 </div>
 
 <!-- فلاتر -->
 <div class="card filter-card" style="padding:14px 16px;margin-bottom:14px;">
   <div class="quick-filters">
-    <button class="qf-btn active" onclick="setQuick('today')">اليوم</button>
-    <button class="qf-btn" onclick="setQuick('month')">هذا الشهر</button>
-    <button class="qf-btn" onclick="setQuick('all')">الكل</button>
+    <button class="qf-btn active" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+    <button class="qf-btn" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+    <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
-    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="edit_type">نوع التعديل</label>
+    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+      <label data-i18n="edit_type">نوع التعديل</label>
       <select id="f-type" onchange="applyFilter()">
-        <option value="all">الكل</option>
-        <option value="edit_name">تعديل الاسم</option>
-        <option value="edit_commission">تعديل العمولة</option>
-        <option value="edit_note">تعديل ملاحظة</option>
-        <option value="edit_account">تعديل حساب</option>
+        <option value="all" data-i18n="qf_all">الكل</option>
+        <option value="edit_name" data-i18n="edit_type_name">تعديل الاسم</option>
+        <option value="edit_commission" data-i18n="edit_type_commission">تعديل العمولة</option>
+        <option value="edit_note" data-i18n="edit_type_note">تعديل ملاحظة</option>
+        <option value="edit_account" data-i18n="edit_type_account">تعديل حساب</option>
       </select>
     </div>
-    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="filter_user">المستخدم</label>
-      <input type="text" id="f-user" placeholder="اسم المستخدم…" oninput="applyFilter()">
+    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+      <label data-i18n="filter_user">المستخدم</label>
+      <input type="text" id="f-user" data-i18n-placeholder="username_placeholder" placeholder="اسم المستخدم…" oninput="applyFilter()">
     </div>
-    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
+    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+      <label data-i18n="from_date">من تاريخ</label>
       <input type="date" id="f-from" onchange="clearQuick();loadHistory()">
     </div>
-    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
+    <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+      <label data-i18n="to_date">إلى تاريخ</label>
       <input type="date" id="f-to" onchange="clearQuick();loadHistory()">
     </div>
   </div>
@@ -113,7 +122,7 @@
         <th data-i18n="col_by_lbl">بواسطة</th>
       </tr></thead>
       <tbody id="history-tbody">
-        <tr><td colspan="6" class="empty-state">جاري التحميل…</td></tr>
+        <tr><td colspan="6" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
       </tbody>
     </table>
   </div>
@@ -147,13 +156,18 @@ let _printMode = false;
   await UI.updateTreasury();
 
   document.getElementById('print-date').textContent = new Date().toLocaleDateString('ar-SA');
-  document.getElementById('print-report-brand').textContent = brandName() + ' — سجل التعديلات';
+  document.getElementById('print-report-brand').textContent =
+    brandName() + ' — ' + I18n.t('history_title');
+  document.getElementById('print-on-lbl').textContent = I18n.t('printed_on_lbl');
   document.getElementById('print-dawtech-history').textContent = brandPrintCopyright();
+
   window.addEventListener('beforeprint', () => {
     const from = document.getElementById('f-from').value;
     const to   = document.getElementById('f-to').value;
+    const periodLabel = I18n.t('period_lbl');
+    const allTimeLabel = I18n.t('qf_all');
     document.getElementById('print-period').textContent =
-      (from || to) ? `الفترة: ${from} — ${to}` : 'كل الوقت';
+      (from || to) ? `${periodLabel} ${from} — ${to}` : allTimeLabel;
     _printMode = true; renderPage();
   });
   window.addEventListener('afterprint', () => {
@@ -164,18 +178,19 @@ let _printMode = false;
   document.getElementById('f-from').value = today;
   document.getElementById('f-to').value   = today;
   await loadHistory();
-I18n.apply();
+  I18n.apply();
 })();
+
+function exportHistoryExcel() {
+  UI.exportExcel('history-table', I18n.t('history_title') || 'History_Log');
+}
 
 async function loadHistory() {
   UI.showLoading(true);
   const from = document.getElementById('f-from').value;
   const to   = document.getElementById('f-to').value;
   _allLogs   = await Storage.getAuditLogs({ from, to });
-  // فلترة العمليات التي هي تعديلات فقط
-  _allLogs = _allLogs.filter(l =>
-    l.action && l.action.startsWith('edit_')
-  );
+  _allLogs   = _allLogs.filter(l => l.action && l.action.startsWith('edit_'));
   UI.showLoading(false);
   applyFilter();
 }
@@ -184,9 +199,9 @@ function setQuick(key) {
   document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
   const today = UI.todayStr();
   const map = {
-    today: { from: today, to: today },
+    today: { from: today,              to: today },
     month: { from: UI.firstOfMonth(0), to: UI.lastOfMonth(0) },
-    all:   { from: '', to: '' }
+    all:   { from: '',                 to: '' }
   };
   const r = map[key] || map.today;
   document.getElementById('f-from').value = r.from;
@@ -212,18 +227,21 @@ function applyFilter() {
   renderPage();
 }
 
-const typeLabels = {
-  edit_name:       '✏️ تعديل الاسم',
-  edit_commission: '💰 تعديل العمولة',
-  edit_note:       '📝 تعديل ملاحظة',
-  edit_account:    '🔧 تعديل حساب',
-};
+function _getTypeLabels() {
+  return {
+    edit_name:       '✏️ ' + (I18n.t('edit_type_name')       || 'تعديل الاسم'),
+    edit_commission: '💰 ' + (I18n.t('edit_type_commission') || 'تعديل العمولة'),
+    edit_note:       '📝 ' + (I18n.t('edit_type_note')       || 'تعديل ملاحظة'),
+    edit_account:    '🔧 ' + (I18n.t('edit_type_account')    || 'تعديل حساب'),
+  };
+}
 
 function renderPage() {
   const total      = _filtered.length;
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
   const start      = (_page - 1) * PAGE_SIZE;
   const page       = _printMode ? _filtered : _filtered.slice(start, start + PAGE_SIZE);
+  const typeLabels = _getTypeLabels();
 
   document.getElementById('history-tbody').innerHTML = page.length
     ? page.map(l => {
@@ -247,28 +265,32 @@ function renderPage() {
           <td style="font-size:0.75rem;color:var(--text2);font-weight:600;">${UI.escapeHtml(l.username||'—')}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" class="empty-state"><div class="empty-icon">📝</div>لا توجد تعديلات مسجّلة</td></tr>';
+    : `<tr><td colspan="6" class="empty-state"><div class="empty-icon">📝</div>${I18n.t('no_edits') || 'لا توجد تعديلات مسجّلة'}</td></tr>`;
 
-  document.getElementById('history-count').textContent =
-    !total ? '' : _printMode ? `${total} تعديل` : `${start+1}–${Math.min(start+PAGE_SIZE,total)} من ${total} تعديل`;
+  const fromN = start + 1;
+  const toN   = Math.min(start + PAGE_SIZE, total);
+  document.getElementById('history-count').textContent = !total ? '' :
+    _printMode
+      ? `${total} ${I18n.t('edit_type') || 'تعديل'}`
+      : `${fromN}–${toN} ${I18n.t('of_lbl') || 'من'} ${total} ${I18n.t('edit_type') || 'تعديل'}`;
 
   const pg = document.getElementById('history-pages');
   if (totalPages <= 1) { pg.innerHTML = ''; return; }
   let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
-  const sp = Math.max(1,_page-2), ep = Math.min(totalPages,_page+2);
-  if (sp>1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
-  if (sp>2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  for (let i=sp;i<=ep;i++)
+  const sp = Math.max(1, _page-2), ep = Math.min(totalPages, _page+2);
+  if (sp > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if (sp > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for (let i = sp; i <= ep; i++)
     html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
-  if (ep<totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
-  if (ep<totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  if (ep < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if (ep < totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
   pg.innerHTML = html;
 }
 
 function goPage(p) {
-  const t = Math.ceil(_filtered.length/PAGE_SIZE)||1;
-  if (p<1||p>t) return;
+  const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > t) return;
   _page = p;
   renderPage();
 }

@@ -100,7 +100,7 @@ async function updatePreview() {
   const amt = parseFloat(document.getElementById('dep-amount').value) || 0;
   const box = document.getElementById('dep-preview');
   if (!id || amt <= 0) { box.style.display='none'; return; }
-  const sym    = cur==='usd' ? '$' : '€';
+  const sym    = await Currency.symbol(cur.toUpperCase());
   const before = await Storage.getBalance(id, cur);
   const accounts  = await Storage.getAccounts();
   const acc       = accounts.find(a => a.id === id);
@@ -162,7 +162,7 @@ async function renderRecent() {
   document.getElementById('recent-dep-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
         const acc = await Accounts.getById(t.acc);
-        const sym = t.cur==='usd'?'$':'€';
+        const sym = await Currency.symbol((t.cur||'USD').toUpperCase());
         return `<tr>
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>

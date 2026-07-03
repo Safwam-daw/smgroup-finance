@@ -106,7 +106,7 @@ const cur = document.getElementById('wit-cur').value;
 const amt = parseFloat(document.getElementById('wit-amount').value) || 0;
 const box = document.getElementById('wit-preview');
 if (!id) { box.style.display='none'; return; }
-const sym    = cur==='usd'?'$':'€';
+const sym    = await Currency.symbol(cur.toUpperCase());
 const before = await Storage.getBalance(id, cur);
 const after  = before - amt;
 const over   = after < 0;
@@ -143,7 +143,7 @@ if (result.ok) {
   await UI.updateTreasury();
   await renderRecent();
 } else if (result.needsConfirm) {
-  const sym = cur==='usd'?'$':'€';
+  const sym = await Currency.symbol(cur.toUpperCase());
   document.getElementById('overdraft-msg').innerHTML =
     `${I18n.t('current_balance')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
      ${I18n.t('overdraft_amount')}: <b>${sym}${amt.toFixed(2)}</b><br>
@@ -161,7 +161,7 @@ async function renderRecent() {
   document.getElementById('recent-wit-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
         const acc = await Accounts.getById(t.acc);
-        const sym = t.cur==='usd'?'$':'€';
+        const sym = await Currency.symbol((t.cur||'USD').toUpperCase());
         return `<tr>
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>
