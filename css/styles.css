@@ -39,7 +39,10 @@ body {
   display:flex; flex-direction:column;
   height:100vh; position:fixed; right:0; top:0; z-index:300;
   transition:transform var(--transition); overflow:hidden;
+  transform:translateX(100%);
+  box-shadow:-4px 0 30px rgba(0,0,0,0.5);
 }
+#sidebar.open { transform:translateX(0); }
 .sidebar-logo { padding:22px 18px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
 .sidebar-logo h1 { font-size:1.2rem; font-weight:700; color:var(--gold); }
 .sidebar-logo p  { font-size:0.65rem; color:var(--text3); margin-top:3px; }
@@ -152,9 +155,9 @@ body {
 
 #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:250; }
 
-/* Topbar — hidden on desktop */
+/* Topbar — now shown on all screen sizes since the sidebar is an off-canvas drawer everywhere */
 #topbar {
-  display:none; position:fixed;
+  display:flex; position:fixed;
   top:0; left:0; right:0; height:var(--topbar-h);
   background:var(--surface); border-bottom:1px solid var(--border);
   z-index:200; align-items:center; padding:0 16px; gap:0;
@@ -168,7 +171,7 @@ body {
 }
 
 #main {
-  margin-right:var(--sidebar-w); flex:1;
+  margin-right:0; margin-top:var(--topbar-h); flex:1;
   min-height:100vh; padding:24px; overflow-x:hidden;
 }
 
@@ -335,15 +338,10 @@ tr:hover td { background:var(--gold-dim2); }
 /* ══ MOBILE ≤ 640px ════════════════════════════════════════ */
 @media (max-width:640px) {
   #sidebar {
-    transform:translateX(100%);
-    box-shadow:-4px 0 30px rgba(0,0,0,0.5);
     width:80vw; min-width:unset; max-width:290px;
     height:100dvh;
   }
-  #sidebar.open { transform:translateX(0); }
-  #sidebar-overlay.open { display:block; }
-  #topbar { display:flex; }
-  #main { margin-right:0; margin-top:var(--topbar-h); padding:12px 12px 32px; }
+  #main { padding:12px 12px 32px; }
   #treasury-bar { flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; gap:10px; padding-bottom:6px; scrollbar-width:none; }
   #treasury-bar::-webkit-scrollbar { display:none; }
   #treasury-bar .stat-card { min-width:150px; flex-shrink:0; padding:13px 15px; }
