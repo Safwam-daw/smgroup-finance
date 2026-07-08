@@ -33,8 +33,11 @@
             </select>
           </div>
           <div class="form-group">
-            <label data-i18n="account_code_auto">كود الحساب (تلقائي)</label>
-            <input type="text" id="acc-code" readonly>
+            <label data-i18n="account_code_auto">كود الحساب (تلقائي — قابل للتعديل)</label>
+            <input type="text" id="acc-code">
+            <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;" data-i18n="account_code_hint">
+              يقترح النظام الكود التالي تلقائياً، ويمكنك تغييره لكود مميز
+            </div>
           </div>
         </div>
         <div>
@@ -73,6 +76,14 @@
             <option value="debtor" data-i18n="filter_debtors">مدينون ⚠️</option>
           </select>
         </div>
+        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+          <label data-i18n="sort_by">الترتيب حسب</label>
+          <select id="sort-by" onchange="applyFilter()">
+            <option value="seq" data-i18n="sort_seq">الرقم التسلسلي</option>
+            <option value="code" data-i18n="sort_code">كود الحساب</option>
+            <option value="created" data-i18n="sort_created">تاريخ الإنشاء</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -85,6 +96,7 @@
       <div class="tbl-wrap">
         <table id="acc-table">
           <thead><tr>
+            <th data-i18n="col_seq" style="width:44px;">#</th>
             <th data-i18n="col_code">الكود</th>
             <th data-i18n="col_name">الاسم</th>
             <th data-i18n="col_type">النوع</th>
@@ -93,7 +105,7 @@
             <th data-i18n="col_actions">إجراءات</th>
           </tr></thead>
           <tbody id="acc-tbody">
-            <tr><td colspan="6" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
+            <tr><td colspan="7" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
           </tbody>
         </table>
       </div>
@@ -166,8 +178,9 @@ async function refreshCode() {
 async function doCreate() {
   const type = document.getElementById('acc-type').value;
   const name = document.getElementById('acc-name').value;
+  const code = document.getElementById('acc-code').value;
   UI.showLoading(true);
-  const result = await Accounts.create(type, name);
+  const result = await Accounts.create(type, name, code);
   UI.showLoading(false);
   if (result.ok) {
     UI.toast(I18n.t('account_created') + ': ' + result.id);
@@ -179,15 +192,23 @@ async function doCreate() {
 }
 
 function applyFilter() {
-  const q    = document.getElementById('filter-input').value.toLowerCase().trim();
-  const type = document.getElementById('filter-type').value;
-  const bal  = document.getElementById('filter-bal').value;
+  const q      = document.getElementById('filter-input').value.toLowerCase().trim();
+  const type   = document.getElementById('filter-type').value;
+  const bal    = document.getElementById('filter-bal').value;
+  const sortBy = document.getElementById('sort-by').value;
   _filtered = _allAccounts.filter(a => {
     if (q && !a.id.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
     if (type !== 'all' && a.type !== type) return false;
     if (bal === 'debtor' && a.usd >= 0 && a.eur >= 0) return false;
     return true;
   });
+  if (sortBy === 'code') {
+    _filtered.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric:true }));
+  } else if (sortBy === 'created') {
+    // ملاحظة: يعتمد على عمود created_at في جدول accounts — إن لم يكن موجوداً يبقى الترتيب كما هو
+    _filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  }
+  // 'seq' = الترتيب الطبيعي كما وصل من قاعدة البيانات (بدون فرز إضافي)
   _page = 1;
   renderPage();
 }
@@ -202,13 +223,13 @@ function renderPage() {
 
   const tbody = document.getElementById('acc-tbody');
   if (!pagItems.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-icon">👥</div>${I18n.t('no_results')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-icon">👥</div>${I18n.t('no_results')}</td></tr>`;
     document.getElementById('acc-pages').innerHTML = '';
     return;
   }
 
   const isAdminUser = Auth.isAdmin();
-  tbody.innerHTML = pagItems.map(a => {
+  tbody.innerHTML = pagItems.map((a, idx) => {
     const debtor   = a.usd < 0 || a.eur < 0;
     const isProfit = a.id === '9999';
     const canDel   = isAdminUser && !isProfit;
@@ -219,6 +240,7 @@ function renderPage() {
     const safeName = a.name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
     return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
               onclick="navTo('account-view.html?acc=${safeId}')">
+      <td style="color:var(--text3);">${start + idx + 1}</td>
       <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}</td>
       <td>${UI.escapeHtml(a.name)}</td>
       <td><span class="badge-type">${typeLabel}</span></td>

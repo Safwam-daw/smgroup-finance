@@ -231,6 +231,19 @@
     <!-- تحويل -->
     <div id="op-trf" style="display:none;">
       <div class="form-group">
+        <label data-i18n="from_account_lbl">من حساب</label>
+        <div class="search-wrap">
+          <input type="text" id="op-from-search" placeholder="ابحث بالاسم أو الكود…" data-i18n-placeholder="search_placeholder" autocomplete="off">
+          <div id="op-from-res" class="search-dropdown"></div>
+        </div>
+        <input type="hidden" id="op-from-id">
+      </div>
+      <!-- رصيد المرسل -->
+      <div id="op-from-bal" style="display:none;padding:8px 12px;border-radius:8px;
+           background:var(--surface2);border:1px solid var(--border2);
+           font-size:0.82rem;margin-bottom:12px;"></div>
+
+      <div class="form-group">
         <label data-i18n="to_account_lbl">إلى حساب</label> <span style="color:var(--text3);font-size:0.7rem;" data-i18n="enter_first_result">(Enter لاختيار أول نتيجة)</span>
         <div class="search-wrap">
           <input type="text" id="op-to-search" placeholder="ابحث بالاسم أو الكود…" data-i18n-placeholder="search_placeholder" autocomplete="off">
@@ -457,7 +470,18 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
     }
   }
 
-  // تهيئة بحث التحويل
+  // تهيئة بحث التحويل — من حساب
+  UI.initSearch('op-from', async (id) => {
+    const [bu, be] = await Promise.all([
+      Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
+    ]);
+    const box = document.getElementById('op-from-bal');
+    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${be.toFixed(2)}</b>`;
+    box.style.display = 'block';
+  });
+
+  // تهيئة بحث التحويل — إلى حساب
   UI.initSearch('op-to', async (id) => {
     const [bu, be] = await Promise.all([
       Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
@@ -674,6 +698,16 @@ function openOp(type) {
   document.getElementById('op-to-bal').style.display = 'none';
   document.getElementById('op-trf-amount').value = '';
 
+  if (type === 'trf') {
+    // تعبئة "من حساب" تلقائياً بالحساب الحالي، مع إمكانية تغييره
+    document.getElementById('op-from-search').value = _accId + ' — ' + _accObj.name;
+    document.getElementById('op-from-id').value = _accId;
+    const box = document.getElementById('op-from-bal');
+    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">$${parseFloat(_accObj.bal_usd||0).toFixed(2)}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${parseFloat(_accObj.bal_eur||0).toFixed(2)}</b>`;
+    box.style.display = 'block';
+  }
+
   document.getElementById('op-modal').classList.add('open');
   setTimeout(() => {
     const inp = type==='trf'
@@ -749,11 +783,12 @@ async function confirmOp(forceOverdraft=false) {
     result = await Transactions.withdraw(_accId, cur, amt, forceOverdraft);
 
   } else if (_opType==='trf') {
+    const fromId = document.getElementById('op-from-id').value || _accId;
     const toId = document.getElementById('op-to-id').value;
     const cur  = document.getElementById('op-trf-cur').value;
     const amt  = parseFloat(document.getElementById('op-trf-amount').value);
     const rate = parseFloat(document.getElementById('op-rate').value)||1;
-    result = await Transactions.transfer(_accId, toId, cur, amt, rate, forceOverdraft);
+    result = await Transactions.transfer(fromId, toId, cur, amt, rate, forceOverdraft);
   }
 
   UI.showLoading(false);
