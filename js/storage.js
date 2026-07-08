@@ -51,12 +51,15 @@ const Storage = (() => {
   }
 
   async function saveAccount(account) {
-    const { error } = await _sb.from('accounts').upsert({
+    const { error } = await _sb.from('accounts').insert({
       id: account.id, name: account.name, type: account.type,
       bal_usd: 0, bal_eur: 0, commission_rate: account.type === 'customer' ? 0.025 : 0
     });
-    if (!error) invalidate('accounts');
-    return !error;
+    if (!error) { invalidate('accounts'); return { ok:true }; }
+    // 23505 = unique_violation (Postgres) — الكود مستخدم مسبقاً من قبل حساب موجود
+    if (error.code === '23505') return { ok:false, error:'duplicate' };
+    console.error('saveAccount:', error);
+    return { ok:false, error:'generic' };
   }
 
   async function updateAccount(id, changes) {

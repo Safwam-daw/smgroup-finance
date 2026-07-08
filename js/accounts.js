@@ -35,15 +35,41 @@ const Accounts = (() => {
     }
   }
 
-  async function create(type, name) {
+  // يتحقق أن الكود اليدوي يطابق نمط الكود المتوقع لهذا النوع
+  // (نفس نطاقات الأرقام المستخدمة في generateCode) قبل محاولة الحفظ
+  function _validManualCode(type, code) {
+    code = String(code || '').trim();
+    if (!code) return { ok:false, error:'أدخل كود الحساب' };
+    if (type === 'customer') {
+      // لا يُسمح بأكواد تتقاطع مع نطاقات محجوزة لأنواع أخرى (شركات 4xxx، أرباح 9xxx، 7xxx)
+      if (code.startsWith('4') || code.startsWith('9') || code.startsWith('7')) {
+        return { ok:false, error:'هذا النطاق محجوز لنوع حساب آخر' };
+      }
+    } else {
+      if (!code.startsWith('4')) return { ok:false, error:'كود حساب الشركات يجب أن يبدأ بـ 4' };
+    }
+    return { ok:true, code };
+  }
+
+  async function create(type, name, code) {
     if (!Auth.requireLogin()) return { ok:false, error:'يجب تسجيل الدخول' };
     if (!Auth.can('accounts')) return { ok:false, error:'ليس لديك صلاحية فتح الحسابات' };
     name = name.trim();
     if (!name) return { ok:false, error:'أدخل اسم الحساب' };
 
-    const id = await generateCode(type);
-    const ok = await Storage.saveAccount({ id, name, type });
-    if (!ok) return { ok:false, error:'خطأ في الحفظ' };
+    const check = _validManualCode(type, code);
+    if (!check.ok) return check;
+    const id = check.code;
+
+    const result = await Storage.saveAccount({ id, name, type });
+    if (!result.ok) {
+      return {
+        ok:false,
+        error: result.error === 'duplicate'
+          ? 'هذا الكود مستخدم بالفعل من قبل حساب آخر'
+          : 'خطأ في الحفظ'
+      };
+    }
 
     await Storage.logAction('create_account', { accountId:id, name, type });
     return { ok:true, id };
