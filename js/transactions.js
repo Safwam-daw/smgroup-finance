@@ -15,6 +15,9 @@ const Transactions = (() => {
 
   // ── حساب العمولة ─────────────────────────────────────
   async function _calcCommission(accountId, amount) {
+    // حساب الأرباح لا يُفرض عليه عمولة أبداً — بغض النظر عن قيمة
+    // حقل type في قاعدة البيانات (حماية إضافية بجانب التحقق من النوع)
+    if (accountId === CONFIG.PROFIT_ACCOUNT_ID) return 0;
     const accounts = await Storage.getAccounts();
     const acc = accounts.find(a => a.id === accountId);
     if (!acc || acc.type !== 'customer') return 0;
