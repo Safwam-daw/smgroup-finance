@@ -100,6 +100,29 @@
   </div>
 </div>
 
+<!-- نمط التنقل -->
+<div class="card settings-section">
+  <h3 data-i18n="nav_style_section">🧭 نمط التنقل</h3>
+  <p style="font-size:0.78rem;color:var(--text3);margin-bottom:12px;" data-i18n="nav_style_hint">
+    اختر كيف تظهر لك قائمة الصفحات
+  </p>
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <button class="btn" id="nav-style-btn-sidebar" onclick="setNavStyleChoice('sidebar')" style="min-width:150px;">
+      <span data-i18n="nav_style_sidebar">☰ قائمة جانبية</span>
+    </button>
+    <button class="btn" id="nav-style-btn-topbar" onclick="setNavStyleChoice('topbar')" style="min-width:150px;">
+      <span data-i18n="nav_style_topbar">▬ شريط علوي ثابت</span>
+    </button>
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text2);cursor:pointer;">
+    <input type="checkbox" id="nav-style-sync">
+    <span data-i18n="nav_style_sync_all">احفظ هذا الاختيار على جميع أجهزتي</span>
+  </label>
+  <p style="font-size:0.72rem;color:var(--text3);margin-top:6px;" data-i18n="nav_style_sync_hint">
+    بدون هذا الخيار، يبقى الاختيار خاصاً بهذا الجهاز فقط — كل جهاز يمكن أن يكون له نمط مختلف
+  </p>
+</div>
+
 <!-- إدارة العملات (أدمن فقط) -->
 <div class="card settings-section" id="currency-section" style="display:none;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -201,6 +224,31 @@ function applyLang(lang) {
   location.reload();
 }
 
+async function setNavStyleChoice(style) {
+  const syncAll = document.getElementById('nav-style-sync').checked;
+  localStorage.setItem('sm_nav_style', style);
+
+  const user = Auth.getUser();
+  if (syncAll) {
+    const ok = await Storage.setNavStyleRemote(user.user, style);
+    if (!ok) { UI.toast(I18n.t('nav_style_sync_error'), 'error'); return; }
+  } else if (user.nav_style) {
+    // كان مُزامناً سابقاً والآن أُلغي — كل جهاز يعتمد إعداده المحلي من الآن
+    await Storage.setNavStyleRemote(user.user, null);
+  }
+
+  UI.toast(I18n.t('nav_style_saved'));
+  setTimeout(() => location.reload(), 700);
+}
+
+function _updateNavStyleBtns() {
+  const style = UI.getEffectiveNavStyle();
+  document.getElementById('nav-style-btn-sidebar')?.classList.toggle('btn-primary', style === 'sidebar');
+  document.getElementById('nav-style-btn-topbar')?.classList.toggle('btn-primary', style === 'topbar');
+  const user = Auth.getUser();
+  document.getElementById('nav-style-sync').checked = !!(user && user.nav_style);
+}
+
 function _applyBrandInfo() {
   document.getElementById('about-brand-name').textContent =
     brandName() + ' — ' + brandTagline();
@@ -220,6 +268,7 @@ function _updateLangBtns() {
 (async () => {
   if (!await initApp('settings')) return;
   _updateLangBtns();
+  _updateNavStyleBtns();
   _applyBrandInfo();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
