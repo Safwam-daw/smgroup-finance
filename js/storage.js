@@ -136,7 +136,7 @@ const Storage = (() => {
   async function getTreasuryWithoutProfit() {
     const accounts = await getAccounts();
     const totals = {};
-    accounts.filter(a => a.id !== '9999').forEach(a => {
+    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).forEach(a => {
       Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
         const cur = k.replace('bal_', '');
         if (!isNaN(parseFloat(a[k])))
@@ -149,7 +149,7 @@ const Storage = (() => {
   // الأرباح منفصلة
   async function getProfitBalance() {
     const accounts = await getAccounts();
-    const p = accounts.find(a => a.id === '9999');
+    const p = accounts.find(a => a.id === CONFIG.PROFIT_ACCOUNT_ID);
     if (!p) return { usd:0, eur:0 };
     const result = {};
     Object.keys(p).filter(k => k.startsWith('bal_')).forEach(k => {
@@ -311,7 +311,7 @@ const Storage = (() => {
 
   // ══ حذف الحساب مع تسوية الرصيد وأرشفته ═══════════════
   async function deleteAccount(accountId, deletedBy) {
-    if (accountId === '9999') return { ok: false, error: 'لا يمكن حذف حساب الأرباح' };
+    if (accountId === CONFIG.PROFIT_ACCOUNT_ID) return { ok: false, error: 'لا يمكن حذف حساب الأرباح' };
     if (accountId.startsWith('7')) return { ok: false, error: 'هذا حساب أرشيفي محذوف مسبقاً' };
 
     const accounts = await getAccounts();
@@ -326,7 +326,7 @@ const Storage = (() => {
       const val = parseFloat(acc['bal_'+cur] || 0);
       balances[cur] = val;
       if (val !== 0) {
-        await updateBalance('9999', cur, val);
+        await updateBalance(CONFIG.PROFIT_ACCOUNT_ID, cur, val);
         transferNote.push(`${cur.toUpperCase()}:${val.toFixed(2)}`);
       }
     }
@@ -388,9 +388,9 @@ const Storage = (() => {
   // ══ إعادة إنشاء حساب الأرباح إذا حُذف ══════════════
   async function ensureProfitAccount() {
     const accounts = await getAccounts();
-    if (accounts.find(a => a.id === '9999')) return; // موجود
+    if (accounts.find(a => a.id === CONFIG.PROFIT_ACCOUNT_ID)) return; // موجود
     await _sb.from('accounts').insert({
-      id: '9999', name: 'حساب الأرباح', type: 'profit',
+      id: CONFIG.PROFIT_ACCOUNT_ID, name: 'حساب الأرباح', type: 'profit',
       bal_usd: 0, bal_eur: 0, commission_rate: 0
     });
     invalidate('accounts');
@@ -492,13 +492,13 @@ const Storage = (() => {
       getTxns()
     ]);
 
-    const profit = accounts.find(a => a.id === '9999');
+    const profit = accounts.find(a => a.id === CONFIG.PROFIT_ACCOUNT_ID);
     const customers = accounts.filter(a => a.type === 'customer');
     const companies = accounts.filter(a => a.type === 'company');
 
     // حساب الخزينة بدون الأرباح
     let tUsd = 0, tEur = 0;
-    accounts.filter(a => a.id !== '9999').forEach(a => {
+    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).forEach(a => {
       tUsd += parseFloat(a.bal_usd || 0);
       tEur += parseFloat(a.bal_eur || 0);
     });
@@ -512,7 +512,7 @@ const Storage = (() => {
       treasury_eur:    parseFloat(tEur.toFixed(2)),
       profit_usd:      parseFloat(profit?.bal_usd || 0),
       profit_eur:      parseFloat(profit?.bal_eur || 0),
-      total_accounts:  accounts.filter(a => a.id !== '9999').length,
+      total_accounts:  accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).length,
       total_customers: customers.length,
       total_companies: companies.length,
       total_txns:      txns.length,

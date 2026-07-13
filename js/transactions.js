@@ -41,14 +41,14 @@ const Transactions = (() => {
 
     // إضافة العمولة لحساب الأرباح
     await Storage.saveTxn({
-      id: feeId + 1, type: 'dep', acc: '9999',
+      id: feeId + 1, type: 'dep', acc: CONFIG.PROFIT_ACCOUNT_ID,
       cur: currency, amt: commission, commission_amt: 0,
       is_commission_entry: true, parent_id: parentId,
       by: 'system', date: now, note: 'عمولة من حساب ' + accountId
     });
 
     // تحديث رصيد الأرباح
-    await Storage.updateBalance('9999', currency, commission);
+    await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, currency, commission);
   }
 
   // ══ إيداع ════════════════════════════════════════════
@@ -200,8 +200,8 @@ const Transactions = (() => {
       for (const ce of commEntries) {
         if (ce.is_deleted) continue;
         // إذا كانت الحركة لحساب الأرباح — اعكس رصيده
-        if (ce.acc === '9999') {
-          await Storage.updateBalance('9999', cur, -parseFloat(ce.amt || 0));
+        if (ce.acc === CONFIG.PROFIT_ACCOUNT_ID) {
+          await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, cur, -parseFloat(ce.amt || 0));
         }
         await Storage.deleteTxn(ce.id, by);
       }
