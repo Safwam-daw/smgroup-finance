@@ -261,7 +261,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/realtime.js"></script>
 <script src="js/currency.js"></script>
@@ -399,7 +399,7 @@ function renderSummary() {
   const wits = _allTxns.filter(t=>t.type==='wit');
   const trfs = _allTxns.filter(t=>t.type==='trf');
   const comm = deps.reduce((s,t)=>s+parseFloat(t.commission_amt||0),0);
-  const profitAcc = _allAccounts.find(a=>a.id==='9999');
+  const profitAcc = _allAccounts.find(a=>a.id===CONFIG.PROFIT_ACCOUNT_ID);
   let depUsd=0,depEur=0,witUsd=0,witEur=0;
   deps.forEach(t=>{ if(t.cur==='usd')depUsd+=parseFloat(t.amt); else depEur+=parseFloat(t.amt); });
   wits.forEach(t=>{ if(t.cur==='usd')witUsd+=parseFloat(t.amt); else witEur+=parseFloat(t.amt); });
@@ -563,7 +563,7 @@ function renderTrf(p=null) {
 function renderCreditors() {
   const list = _allAccounts.filter(a=>
     parseFloat(a.bal_usd||0)>0 || parseFloat(a.bal_eur||0)>0
-  ).filter(a=>a.id!=='9999');
+  ).filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID);
   document.getElementById('crd-tbody').innerHTML = list.length
     ? list.map(a=>`<tr>
         <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
@@ -609,7 +609,7 @@ async function loadActivity() {
     });
   });
   const inactive = _allAccounts
-    .filter(a => a.id !== '9999')
+    .filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID)
     .map(a => ({ ...a, last: lastActivity[a.id] || null }))
     .filter(a => !a.last || a.last < cutoff)
     .sort((a,b) => (a.last||new Date(0)) - (b.last||new Date(0)));

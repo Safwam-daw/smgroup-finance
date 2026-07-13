@@ -188,7 +188,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
 <script src="js/config.js"></script>
@@ -352,8 +352,8 @@ async function doImport() {
   try {
     const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
     await sb.from('transactions').delete().neq('id', 0);
-    await sb.from('accounts').delete().neq('id', '9999');
-    await sb.from('accounts').delete().eq('id', '9999');
+    await sb.from('accounts').delete().neq('id', CONFIG.PROFIT_ACCOUNT_ID);
+    await sb.from('accounts').delete().eq('id', CONFIG.PROFIT_ACCOUNT_ID);
     await Storage.ensureProfitAccount();
     await sb.from('deleted_accounts').delete().neq('id', '');
     await sb.from('audit_log').delete().neq('id', 0);

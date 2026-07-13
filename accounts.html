@@ -134,7 +134,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
 <script src="js/config.js"></script>
@@ -231,7 +231,7 @@ function renderPage() {
   const isAdminUser = Auth.isAdmin();
   tbody.innerHTML = pagItems.map((a, idx) => {
     const debtor   = a.usd < 0 || a.eur < 0;
-    const isProfit = a.id === '9999';
+    const isProfit = a.id === CONFIG.PROFIT_ACCOUNT_ID;
     const canDel   = isAdminUser && !isProfit;
     const typeLabel = a.type === 'company' ? I18n.t('lbl_company')
                     : a.type === 'profit'  ? I18n.t('lbl_profit')

@@ -174,7 +174,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/db-config.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/accounts.js"></script>
@@ -262,7 +262,7 @@ function renderKPIs(data) {
   const latest = data.length ? data[data.length - 1] : null;
   const oldest = data.length ? data[0] : null;
 
-  const totalAccounts  = latest ? latest.total_accounts  : _accounts.filter(a=>a.id!=='9999').length;
+  const totalAccounts  = latest ? latest.total_accounts  : _accounts.filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID).length;
   const totalCustomers = latest ? latest.total_customers : _accounts.filter(a=>a.type==='customer').length;
   const totalCompanies = latest ? latest.total_companies : _accounts.filter(a=>a.type==='company').length;
   const totalDebtors   = latest ? latest.total_debtors  : 0;
@@ -301,7 +301,7 @@ function renderKPIs(data) {
   });
 
   // بطاقة أرباح — تقرأ مباشرة من رصيد حساب الأرباح (9999) دائماً
-  const profAcc = _accounts.find(a => a.id === '9999');
+  const profAcc = _accounts.find(a => a.id === CONFIG.PROFIT_ACCOUNT_ID);
   _currencies.forEach(cur => {
     const code    = cur.code.toLowerCase();
     const sym     = cur.symbol || cur.code;
@@ -329,7 +329,7 @@ function renderKPIs(data) {
 function _calcLiveTreasury(curCode) {
   const col = `bal_${curCode.toLowerCase()}`;
   return _accounts
-    .filter(a => a.id !== '9999')
+    .filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID)
     .reduce((s, a) => s + parseFloat(a[col] || 0), 0);
 }
 
