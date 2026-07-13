@@ -154,6 +154,7 @@ body {
 }
 
 #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:250; }
+#sidebar-overlay.open { display:block; }
 
 /* Topbar — now shown on all screen sizes since the sidebar is an off-canvas drawer everywhere */
 #topbar {
