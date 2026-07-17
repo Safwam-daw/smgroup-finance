@@ -156,6 +156,34 @@ body {
 #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:250; }
 #sidebar-overlay.open { display:block; }
 
+/* ══ نمط التنقل البديل: شريط أزرار ثابت أعلى النظام ══════════
+   يُفعَّل بإضافة class="nav-topbar" على body (عبر UI.applyNavStyle).
+   يُعيد استخدام نفس عناصر #sidebar/.nav-btn الموجودة أصلاً، فقط
+   يُعيد ترتيبها أفقياً بدل الدرج الجانبي المنزلق. */
+body.nav-topbar #menu-toggle    { display:none; }
+body.nav-topbar #sidebar-overlay { display:none !important; }
+body.nav-topbar #sidebar {
+  position:fixed; top:var(--topbar-h); right:0; left:0;
+  width:100%; min-width:0; height:56px;
+  flex-direction:row; align-items:center;
+  transform:none; box-shadow:none;
+  border-left:none; border-bottom:1px solid var(--border);
+  overflow-x:auto; overflow-y:hidden;
+}
+body.nav-topbar .sidebar-logo   { display:none; }
+body.nav-topbar .sidebar-nav {
+  flex:1; display:flex; flex-direction:row; align-items:center;
+  padding:0 10px; overflow-x:auto; overflow-y:hidden; gap:2px;
+  white-space:nowrap;
+}
+body.nav-topbar .nav-section-label { display:none; }
+body.nav-topbar .nav-btn { width:auto; margin-bottom:0; }
+body.nav-topbar .sidebar-footer {
+  flex-shrink:0; display:flex; flex-direction:row; align-items:center;
+  gap:8px; padding:0 12px; border-top:none; border-right:1px solid var(--border);
+}
+body.nav-topbar #main { margin-top:calc(var(--topbar-h) + 56px); }
+
 /* Topbar — now shown on all screen sizes since the sidebar is an off-canvas drawer everywhere */
 #topbar {
   display:flex; position:fixed;
