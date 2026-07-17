@@ -306,7 +306,21 @@ const Storage = (() => {
       p_password: plainText
     });
     if (error || !data?.ok) return null;
-    return { user: data.username, role: data.role, id: data.id, permissions: data.permissions || null };
+    return {
+      user: data.username, role: data.role, id: data.id,
+      permissions: data.permissions || null,
+      nav_style: data.nav_style || null
+    };
+  }
+
+  // ══ حفظ تفضيل نمط التنقل (سايدبار/توب بار) على كل الأجهزة ══
+  async function setNavStyleRemote(username, navStyle) {
+    const { data, error } = await _sb.rpc('self_set_nav_style', {
+      p_username: username,
+      p_nav_style: navStyle
+    });
+    if (error) { console.error('setNavStyleRemote:', error); return false; }
+    return !!data?.ok;
   }
 
   // ══ حذف الحساب مع تسوية الرصيد وأرشفته ═══════════════
@@ -629,7 +643,7 @@ const Storage = (() => {
 
   // users
   getUsers, saveUser, deleteUser, updateUserPass, updateOwnPass,
-  updateUserPermissions, updateUserRole, findUser, hashPassword,
+  updateUserPermissions, updateUserRole, findUser, hashPassword, setNavStyleRemote,
 
   // settings
   getAlertSettings, saveAlertSettings,

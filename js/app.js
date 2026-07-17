@@ -290,6 +290,7 @@ async function initApp(pageId) {
   }
 
   document.body.insertAdjacentHTML('afterbegin', buildSidebar(pageId));
+  UI.applyNavStyle();
   initTheme();
   UI.initSidebar();
   // تحميل الإشعارات

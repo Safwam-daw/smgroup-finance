@@ -4,6 +4,21 @@
  */
 const UI = (() => {
 
+  // ══ نمط التنقل (سايدبار / توب بار) ═══════════════════════
+  // الأولوية: تفضيل مُتزامن من القاعدة (users.nav_style) إن وُجد،
+  // وإلا القيمة المحلية لهذا الجهاز (localStorage)، وإلا 'sidebar'.
+  function getEffectiveNavStyle() {
+    const remote = Auth.getUser()?.nav_style;
+    if (remote === 'sidebar' || remote === 'topbar') return remote;
+    const local = localStorage.getItem('sm_nav_style');
+    return (local === 'sidebar' || local === 'topbar') ? local : 'sidebar';
+  }
+
+  function applyNavStyle() {
+    const style = getEffectiveNavStyle();
+    document.body.classList.toggle('nav-topbar', style === 'topbar');
+  }
+
   function toast(msg, type='success') {
     const el = document.getElementById('toast');
     if (!el) return;
@@ -234,6 +249,6 @@ const UI = (() => {
     initSidebar, toggleSidebar, closeSidebarOnNav,
     fillUserInfo, applyRoleUI, initSearch,
     escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth,
-    exportExcel
+    exportExcel, getEffectiveNavStyle, applyNavStyle
   };
 })();
