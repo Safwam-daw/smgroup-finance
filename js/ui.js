@@ -134,29 +134,45 @@ const UI = (() => {
   }
 
   /**
-   * initSearch — بحث ذكي مع:
+   * initSearch — بحث ذكي مُقسّم لحقلين منفصلين:
+   * - بحث بالكود (يطابق بداية الكود فقط)
+   * - بحث بالاسم (يحتوي على النص فقط، لا يلمس الكود)
+   * يستبدل حقل البحث المدمج القديم تلقائياً بحقلين، دون الحاجة لتعديل HTML كل صفحة.
    * - Enter يختار أول نتيجة تلقائياً
    * - يُطلق حدث 'account-selected' عند الاختيار
    * - onSelect callback اختياري
    */
   function initSearch(prefix, onSelect) {
-    const input    = document.getElementById(prefix + '-search');
+    const oldInput = document.getElementById(prefix + '-search');
     const resBox   = document.getElementById(prefix + '-res');
     const hiddenId = document.getElementById(prefix + '-id') ||
                      document.getElementById(prefix + '-acc-id');
-    if (!input || !resBox) return;
+    if (!oldInput || !resBox) return;
+
+    // استبدال الحقل الواحد بحقلين منفصلين (كود / اسم)
+    const row = document.createElement('div');
+    row.className = 'dual-search-row';
+    const codePh = (window.I18n && I18n.t('search_by_code_ph')) || 'بحث بالكود…';
+    const namePh = (window.I18n && I18n.t('search_by_name_ph')) || 'بحث بالاسم…';
+    row.innerHTML = `
+      <input type="text" id="${prefix}-search-code" placeholder="${codePh}" autocomplete="off">
+      <input type="text" id="${prefix}-search-name" placeholder="${namePh}" autocomplete="off">
+    `;
+    oldInput.replaceWith(row);
+    const codeInput = document.getElementById(prefix + '-search-code');
+    const nameInput = document.getElementById(prefix + '-search-name');
 
     let _debounce;
-    let _firstId = null; // أول نتيجة
 
-    input.addEventListener('input', () => {
+    async function runSearch(mode) {
       clearTimeout(_debounce);
       _debounce = setTimeout(async () => {
-        const q = input.value.trim();
-        if (!q) { resBox.style.display='none'; _firstId=null; return; }
-        const hits = await Accounts.search(q);
-        if (!hits.length) { resBox.style.display='none'; _firstId=null; return; }
-        _firstId = hits[0].id;
+        const q = mode === 'code' ? codeInput.value.trim() : nameInput.value.trim();
+        if (!q) { resBox.style.display='none'; return; }
+        const hits = mode === 'code'
+          ? await Accounts.searchByCode(q)
+          : await Accounts.searchByName(q);
+        if (!hits.length) { resBox.style.display='none'; return; }
         resBox.innerHTML = hits.map((a,i) =>
           `<div class="s-item${i===0?' s-item-first':''}"
                data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.name)}">
@@ -164,19 +180,22 @@ const UI = (() => {
            </div>`
         ).join('');
         resBox.style.display = 'block';
-        // تمييز أول عنصر
         const first = resBox.querySelector('.s-item-first');
         if (first) first.style.background = 'var(--gold-dim)';
       }, 180);
-    });
+    }
 
-    // Enter = اختيار أول نتيجة
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const first = resBox.querySelector('.s-item');
-        if (first) selectItem(first.dataset.id, first.dataset.name);
-      }
+    codeInput.addEventListener('input', () => { nameInput.value=''; runSearch('code'); });
+    nameInput.addEventListener('input', () => { codeInput.value=''; runSearch('name'); });
+
+    [codeInput, nameInput].forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const first = resBox.querySelector('.s-item');
+          if (first) selectItem(first.dataset.id, first.dataset.name);
+        }
+      });
     });
 
     resBox.addEventListener('click', (e) => {
@@ -186,18 +205,40 @@ const UI = (() => {
     });
 
     function selectItem(id, name) {
-      input.value = id + ' — ' + name;
+      codeInput.value = id;
+      nameInput.value = name;
       if (hiddenId) hiddenId.value = id;
       resBox.style.display = 'none';
-      _firstId = null;
-      input.dispatchEvent(new CustomEvent('account-selected', { detail: { id, name } }));
+      codeInput.dispatchEvent(new CustomEvent('account-selected', { detail: { id, name } }));
       if (onSelect) onSelect(id, name);
     }
 
     document.addEventListener('click', (e) => {
-      if (!input.contains(e.target) && !resBox.contains(e.target))
+      if (!row.contains(e.target) && !resBox.contains(e.target))
         resBox.style.display = 'none';
     });
+  }
+
+  // يملأ حقلي الكود/الاسم لبحث initSearch برمجياً (روابط مباشرة ?acc=XXXX مثلاً)
+  function setSearchValue(prefix, id, name) {
+    const codeInput = document.getElementById(prefix + '-search-code');
+    const nameInput = document.getElementById(prefix + '-search-name');
+    const hiddenId  = document.getElementById(prefix + '-id') ||
+                      document.getElementById(prefix + '-acc-id');
+    if (codeInput) codeInput.value = id;
+    if (nameInput) nameInput.value = name;
+    if (hiddenId)  hiddenId.value  = id;
+  }
+
+  // يفرّغ حقلي بحث initSearch والمعرّف المخفي (بعد إتمام عملية مثلاً)
+  function clearSearch(prefix) {
+    const codeInput = document.getElementById(prefix + '-search-code');
+    const nameInput = document.getElementById(prefix + '-search-name');
+    const hiddenId  = document.getElementById(prefix + '-id') ||
+                      document.getElementById(prefix + '-acc-id');
+    if (codeInput) codeInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (hiddenId)  hiddenId.value  = '';
   }
 
   function escapeHtml(str) {
@@ -247,7 +288,7 @@ const UI = (() => {
   return {
     toast, showLoading, updateTreasury,
     initSidebar, toggleSidebar, closeSidebarOnNav,
-    fillUserInfo, applyRoleUI, initSearch,
+    fillUserInfo, applyRoleUI, initSearch, setSearchValue, clearSearch,
     escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth,
     exportExcel, getEffectiveNavStyle, applyNavStyle
   };

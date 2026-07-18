@@ -84,6 +84,22 @@ const Accounts = (() => {
       .filter(a => a.id.includes(ql) || a.name.toLowerCase().includes(ql))
       .slice(0, limit);
   }
+  // بحث بالكود فقط — يطابق بداية الكود (بادئة) لتفادي نتائج عشوائية من البحث المدمج القديم
+  async function searchByCode(q, limit=6) {
+    const ql = String(q||'').toLowerCase().trim();
+    if (!ql) return [];
+    return (await Storage.getAccounts())
+      .filter(a => a.id.toLowerCase().startsWith(ql))
+      .slice(0, limit);
+  }
+  // بحث بالاسم فقط — لا يلمس حقل الكود إطلاقاً
+  async function searchByName(q, limit=6) {
+    const ql = String(q||'').toLowerCase().trim();
+    if (!ql) return [];
+    return (await Storage.getAccounts())
+      .filter(a => a.name.toLowerCase().includes(ql))
+      .slice(0, limit);
+  }
 
-  return { generateCode, create, getAll, getById, search };
+  return { generateCode, create, getAll, getById, search, searchByCode, searchByName };
 })();
