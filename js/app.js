@@ -9,7 +9,7 @@ function applyTheme(theme) {
   localStorage.setItem('smg_theme', theme);
   const icon = document.getElementById('theme-toggle-icon');
   if (icon) {
-    icon.textContent = theme === 'light' ? '☀️' : '🌕';
+    icon.textContent = theme === 'light' ? '☀️' : '🌑';
   }
 }
 
