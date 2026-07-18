@@ -263,6 +263,8 @@ tr:hover td { background:var(--gold-dim2); }
 
 /* Search dropdown */
 .search-wrap { position:relative; }
+.dual-search-row { display:flex; gap:8px; }
+.dual-search-row input { flex:1; min-width:0; }
 .search-dropdown {
   position:absolute; width:100%; background:var(--surface2);
   border:1px solid var(--gold); border-top:none;
