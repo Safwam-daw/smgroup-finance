@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="reports_title">📊 التقارير</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.tab-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
+.tab-btn {
+  padding:8px 16px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-family:inherit;
+  font-size:0.78rem; cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.tab-btn:hover { border-color:var(--gold); color:var(--gold); }
+.tab-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:700; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+.quick-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.qf-btn {
+  padding:6px 14px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.76rem;
+  font-family:inherit; cursor:pointer; transition:all .15s;
+}
+.qf-btn:hover,.qf-btn.active { background:var(--gold-dim); color:var(--gold); border-color:var(--gold); }
+.stat-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.stat-mini { flex:1; min-width:120px; background:var(--surface2); border:1px solid var(--border2);
+  border-radius:var(--radius-sm); padding:12px 14px; }
+.stat-mini-label { font-size:0.68rem; color:var(--text3); margin-bottom:4px; }
+.stat-mini-val   { font-size:1.1rem; font-weight:700; }
+.cell-credit { background:var(--green-dim); color:var(--green); font-weight:700;
+  padding:2px 7px; border-radius:5px; display:inline-block; }
+.cell-debit  { background:var(--red-dim); color:var(--red); font-weight:700;
+  padding:2px 7px; border-radius:5px; display:inline-block; }
+@media(max-width:640px) { .tab-bar { gap:4px; } .tab-btn { padding:7px 11px; font-size:0.73rem; } }
+@media print {
+  /* إخفاء كل عناصر التحكم */
+  #sidebar,#topbar,#sidebar-overlay,#toast,#treasury-bar,
+  #treasury-placeholder,.tab-bar,.no-print,
+  #filter-card,.qf-row,#quick-btns,
+  .page-header > div:last-child { display:none!important; }
+
+  /* إظهار التبويب النشط فقط */
+  .tab-content { display:none!important; }
+  .tab-content.active { display:block!important; }
+
+  *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  body { background:#fff!important; color:#111!important; }
+  #main { margin:0!important; padding:16px!important; }
+
+  /* ترويسة الطباعة */
+  .print-report-header { display:block!important; }
+
+  .card { background:#fff!important; border:1px solid #ccc!important; }
+  table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
+  th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; padding:7px 9px; }
+  td { background:#fffef7!important; border-bottom:1px solid #eee!important; color:#111!important; padding:6px 9px; }
+  .stat-mini { background:#fff!important; border:1px solid #ccc!important; }
+  .cell-credit { background:#e8f8ef!important; color:#16a34a!important; }
+  .cell-debit  { background:#fef2f2!important; color:#dc2626!important; }
+}
+.print-report-header { display:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div><h2 data-i18n="reports_title">📊 التقارير</h2><p data-i18n="reports_subtitle">تقارير مالية شاملة وقابلة للطباعة</p></div>
+      <div style="display:flex;gap:8px;" class="no-print">
+        <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn2">🖨️ طباعة</button>
+        <button class="btn btn-primary btn-sm" onclick="exportCurrent()" data-i18n="excel_btn">📊 Excel</button>
+      </div>
+    </div>
+
+    <!-- فلاتر مشتركة -->
+    <div class="card" style="padding:14px 16px;margin-bottom:14px;" id="filter-card">
+      <div class="quick-filters" id="quick-btns">
+        <button class="qf-btn active" onclick="setQuick('today')" data-i18n="qf_today">اليوم</button>
+        <button class="qf-btn" onclick="setQuick('month')" data-i18n="qf_month">هذا الشهر</button>
+        <button class="qf-btn" onclick="setQuick('prev')" data-i18n="qf_prev">الشهر السابق</button>
+        <button class="qf-btn" onclick="setQuick('all')" data-i18n="qf_all">الكل</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
+          <input type="date" id="r-from" onchange="clearQuick();reload()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="to_date">إلى تاريخ</label>
+          <input type="date" id="r-to" onchange="clearQuick();reload()">
+        </div>
+      </div>
+    </div>
+
+    <!-- التبويبات -->
+    <div class="tab-bar no-print">
+      <button class="tab-btn active" onclick="switchTab('summary',this)" data-i18n="tab_summary">📋 الملخص</button>
+      <button class="tab-btn" onclick="switchTab('deposits',this)" data-i18n="tab_deposits">💵 الإيداعات</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals',this)" data-i18n="tab_withdrawals">💸 السحوبات</button>
+      <button class="tab-btn" onclick="switchTab('transfers',this)" data-i18n="tab_transfers">🔄 التحويلات</button>
+      <button class="tab-btn" onclick="switchTab('creditors',this)" data-i18n="tab_creditors">✅ حسابات دائنة</button>
+      <button class="tab-btn" onclick="switchTab('debtors',this)" data-i18n="tab_debtors">⚠️ حسابات مدينة</button>
+      <button class="tab-btn" onclick="switchTab('activity',this)" data-i18n="tab_activity">🕐 آخر نشاط</button>
+      <button class="tab-btn" onclick="switchTab('employees',this)" data-i18n="tab_employees">👤 حركة الموظفين</button>
+      <button class="tab-btn" onclick="switchTab('deleted',this)" data-i18n="tab_deleted">🗑️ المحذوفات</button>
+      <button class="tab-btn" onclick="switchTab('debtLimit',this)" data-i18n="tab_debt_limit">⚙️ إعداد حد الدين</button>
+    </div>
+
+    <!-- ترويسة الطباعة -->
+    <div class="print-report-header" style="display:none;margin-bottom:16px;border-bottom:3px solid #c9a84c;padding-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h1 id="print-report-brand" style="font-size:1.3rem;color:#111;font-weight:700;">SM-Group — تقرير مالي</h1>
+          <p id="print-period" style="font-size:0.75rem;color:#555;margin-top:3px;"></p>
+        </div>
+        <div style="font-size:0.75rem;color:#555;text-align:left;">
+          <span data-i18n="printed_on_lbl">طُبع بتاريخ:</span> <b id="print-date-rep"></b>
+        </div>
+      </div>
+      <div style="margin-top:6px;font-size:0.65rem;color:#aaa;text-align:center;" id="print-dawtech-rep"></div>
+    </div>
+
+    <!-- ملخص -->
+    <div class="tab-content active" id="tab-summary">
+      <div class="stat-row" id="sum-stats"></div>
+      <div class="card" style="margin-bottom:14px;" id="sum-profit-box"></div>
+    </div>
+
+    <!-- إيداعات -->
+    <div class="tab-content" id="tab-deposits">
+      <div class="stat-row" id="dep-stats"></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="dep-table">
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_account_lbl">الحساب</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_commission">العمولة</th><th data-i18n="col_net">صافي</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
+            <tbody id="dep-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination no-print" id="dep-pages"></div>
+    </div>
+
+    <!-- سحوبات -->
+    <div class="tab-content" id="tab-withdrawals">
+      <div class="stat-row" id="wit-stats"></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="wit-table">
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_account_lbl">الحساب</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
+            <tbody id="wit-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination no-print" id="wit-pages"></div>
+    </div>
+
+    <!-- تحويلات -->
+    <div class="tab-content" id="tab-transfers">
+      <div class="stat-row" id="trf-stats"></div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="trf-table">
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_sender">المرسل</th><th data-i18n="col_receiver">المستقبل</th><th data-i18n="col_currency">العملة</th><th data-i18n="col_amount_lbl">المبلغ</th><th data-i18n="col_commission">العمولة</th><th data-i18n="col_by_lbl">بواسطة</th></tr></thead>
+            <tbody id="trf-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination no-print" id="trf-pages"></div>
+    </div>
+
+    <!-- دائنون -->
+    <div class="tab-content" id="tab-creditors">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="crd-table">
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
+            <tbody id="crd-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- مدينون -->
+    <div class="tab-content" id="tab-debtors">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="dbt-table">
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
+            <tbody id="dbt-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- آخر نشاط -->
+    <div class="tab-content" id="tab-activity">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
+        <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
+          <label data-i18n="inactive_accounts_lbl">الحسابات التي لم تتحرك منذ أكثر من</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="inactivity-days" value="30" min="1" style="flex:1;">
+            <span style="color:var(--text2);font-size:0.82rem;" data-i18n="day_unit">يوم</span>
+            <button class="btn btn-primary btn-sm" onclick="loadActivity()" data-i18n="search_btn">بحث</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="act-table">
+            <thead><tr><th data-i18n="col_code">الكود</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_bal_usd">رصيد $</th><th data-i18n="col_bal_eur">رصيد €</th><th data-i18n="last_movement_lbl">آخر حركة</th><th data-i18n="days_lbl">الأيام</th><th class="no-print" data-i18n="col_action">إجراء</th></tr></thead>
+            <tbody id="act-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- حركة الموظفين -->
+    <div class="tab-content" id="tab-employees">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="emp-act-table">
+            <thead><tr><th data-i18n="employee_lbl">الموظف</th><th data-i18n="stat_deposits">إيداعات</th><th data-i18n="stat_withdrawals">سحوبات</th><th data-i18n="stat_transfers_lbl">تحويلات</th><th data-i18n="delete_btn2">حذف</th><th data-i18n="total_lbl">المجموع</th></tr></thead>
+            <tbody id="emp-act-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- المحذوفات -->
+    <div class="tab-content" id="tab-deleted">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="del-table">
+            <thead><tr><th data-i18n="archive_no_lbl">رقم الأرشيف</th><th data-i18n="col_name">الاسم</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="bal_usd_at_delete">رصيد $ عند الحذف</th><th data-i18n="bal_eur_at_delete">رصيد € عند الحذف</th><th data-i18n="col_by_lbl">بواسطة</th><th data-i18n="delete_date_lbl">تاريخ الحذف</th><th class="no-print" data-i18n="movements_lbl">حركات</th></tr></thead>
+            <tbody id="del-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- إعداد حد الدين -->
+    <div class="tab-content" id="tab-debtLimit">
+      <div class="card" id="debt-settings-card">
+        <h3 data-i18n="debt_limit_title">⚙️ إعداد حد تنبيه الديون</h3>
+        <div class="form-group" style="max-width:300px;margin-top:10px;">
+          <label data-i18n="debt_limit_lbl">حد الدين (قيمة سالبة)</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="number" id="debt-limit-input" value="-500" max="0" step="50" style="flex:1;">
+            <button class="btn btn-primary btn-sm" onclick="saveDebtLimit()" data-i18n="save_btn">💾 حفظ</button>
+          </div>
+        </div>
+        <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;" data-i18n="debt_limit_note">
+          أي حساب يتجاوز هذا الحد يُظهر تنبيهاً في لوحة التحكم. الافتراضي: -500
+        </p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/realtime.js"></script>
+<script src="js/currency.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/i18n.js"></script>
+<script>
+const PAGE_SIZE = 20;
+let _currentTab = 'summary';
+let _allTxns = [], _allAccounts = [], _depPage=1, _witPage=1, _trfPage=1;
+let _printMode = false;
+
+function enterPrintMode() {
+  _printMode = true;
+  renderDep(); renderWit(); renderTrf();
+}
+function exitPrintMode() {
+  _printMode = false;
+  renderDep(); renderWit(); renderTrf();
+}
+window.addEventListener('beforeprint', enterPrintMode);
+window.addEventListener('afterprint', exitPrintMode);
+
+(async () => {
+  if (!await initApp('reports')) return;
+  if (!Auth.can('reports')) { navTo('accounts.html'); return; }
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  document.getElementById('print-report-brand').textContent = brandName() + ' — ' + t('financial_report_lbl');
+  document.getElementById('print-dawtech-rep').textContent = brandPrintCopyright();
+  // تاريخ الطباعة
+  const now = new Date().toLocaleDateString();
+  const prEl = document.getElementById('print-date-rep');
+  if (prEl) prEl.textContent = now;
+  window.addEventListener('beforeprint', () => {
+    const from = document.getElementById('r-from').value;
+    const to   = document.getElementById('r-to').value;
+    const pp = document.getElementById('print-period');
+    if (pp) pp.textContent = (from || to) ? `${t('period_lbl')} ${from} — ${to}` : t('all_time_lbl');
+  });
+
+  const s = await Storage.getAlertSettings();
+  document.getElementById('debt-limit-input').value = s.debt_limit || -500;
+  // تعيين اليوم كقيمة افتراضية
+  const today = UI.todayStr();
+  document.getElementById('r-from').value = today;
+  document.getElementById('r-to').value   = today;
+  document.querySelectorAll('#quick-btns .qf-btn')[0]?.classList.add('active');
+  await reload();
+})();
+
+// ── Date helpers ──────────────────────────────────────
+function setQuick(key) {
+  // إزالة كل التحديدات أولاً
+  document.querySelectorAll('#quick-btns .qf-btn').forEach(b => b.classList.remove('active'));
+  const today = UI.todayStr();
+  const map = {
+    today:{ from:today,               to:today },
+    month:{ from:UI.firstOfMonth(0),  to:UI.lastOfMonth(0) },
+    prev: { from:UI.firstOfMonth(-1), to:UI.lastOfMonth(-1) },
+    all:  { from:'',                  to:'' }
+  };
+  const r = map[key] || map.today;
+  document.getElementById('r-from').value = r.from;
+  document.getElementById('r-to').value   = r.to;
+  // تحديد الزر الصحيح فقط
+  const idx = { today:0, month:1, prev:2, all:3 }[key];
+  const btns = document.querySelectorAll('#quick-btns .qf-btn');
+  if (btns[idx]) btns[idx].classList.add('active');
+  reload();
+}
+function clearQuick() {
+  document.querySelectorAll('#quick-btns .qf-btn').forEach(b => b.classList.remove('active'));
+}
+
+function getDates() {
+  return { from: document.getElementById('r-from').value, to: document.getElementById('r-to').value };
+}
+
+// ── Tab switching ─────────────────────────────────────
+function switchTab(name, el) {
+  _currentTab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const tabEl = document.getElementById('tab-' + name);
+  if (tabEl) tabEl.classList.add('active');
+  renderCurrentTab();
+}
+
+async function reload() {
+  UI.showLoading(true);
+  try {
+    const { from, to } = getDates();
+    const filters = {};
+    if (from) filters.from_date = from;
+    if (to)   filters.to_date   = to + 'T23:59:59';
+
+    const [txns, accounts] = await Promise.all([
+      Storage.getTxns(filters),
+      Storage.getAccounts()
+    ]);
+
+    _allTxns     = txns     || [];
+    _allAccounts = accounts || [];
+
+    // debug
+    console.log('Loaded:', _allTxns.length, 'txns,', _allAccounts.length, 'accounts');
+  } catch(e) {
+    console.error('reload error:', e);
+    UI.toast(t('load_data_error') + ': ' + e.message, 'error');
+  } finally {
+    UI.showLoading(false);
+    renderCurrentTab();
+  }
+}
+
+function renderCurrentTab() {
+  const tabName = _currentTab;
+  if (tabName==='summary')     renderSummary();
+  else if (tabName==='deposits')    renderDep();
+  else if (tabName==='withdrawals') renderWit();
+  else if (tabName==='transfers')   renderTrf();
+  else if (tabName==='creditors')   renderCreditors();
+  else if (tabName==='debtors')     renderDebtors();
+  else if (tabName==='activity')    loadActivity();
+  else if (tabName==='employees')   renderEmpActivity();
+  else if (tabName==='deleted')     loadDeleted();
+}
+
+// ── Summary ───────────────────────────────────────────
+function renderSummary() {
+  if (!_allTxns) { document.getElementById('sum-stats').innerHTML=`<div class="empty-state">${t('loading')}</div>`; return; }
+  const deps = _allTxns.filter(t=>t.type==='dep');
+  const wits = _allTxns.filter(t=>t.type==='wit');
+  const trfs = _allTxns.filter(t=>t.type==='trf');
+  const comm = deps.reduce((s,t)=>s+parseFloat(t.commission_amt||0),0);
+  const profitAcc = _allAccounts.find(a=>a.id===CONFIG.PROFIT_ACCOUNT_ID);
+  let depUsd=0,depEur=0,witUsd=0,witEur=0;
+  deps.forEach(t=>{ if(t.cur==='usd')depUsd+=parseFloat(t.amt); else depEur+=parseFloat(t.amt); });
+  wits.forEach(t=>{ if(t.cur==='usd')witUsd+=parseFloat(t.amt); else witEur+=parseFloat(t.amt); });
+  document.getElementById('sum-stats').innerHTML = `
+    <div class="stat-mini" style="border-right:3px solid var(--green);">
+      <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--green);">$${depUsd.toFixed(2)}</div>
+      <div style="font-size:0.78rem;color:var(--euro);">€${depEur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini" style="border-right:3px solid var(--red);">
+      <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--red);">$${witUsd.toFixed(2)}</div>
+      <div style="font-size:0.78rem;color:var(--euro);">€${witEur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini" style="border-right:3px solid var(--blue);">
+      <div class="stat-mini-label">${t('transfer_count_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--blue);">${trfs.length}</div>
+    </div>
+    <div class="stat-mini" style="border-right:3px solid var(--gold);">
+      <div class="stat-mini-label">${t('period_commissions_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--gold);">$${comm.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini" style="border-right:3px solid var(--text2);">
+      <div class="stat-mini-label">${t('total_ops_lbl')}</div>
+      <div class="stat-mini-val">${_allTxns.length}</div>
+    </div>`;
+  if (profitAcc && Auth.can('viewProfit')) {
+    document.getElementById('sum-profit-box').innerHTML = `
+      <div style="font-weight:700;margin-bottom:10px;">📈 ${t('total_profit_calc_lbl')}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.9rem;">
+        <div>$ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_usd||0).toFixed(2)}</b></div>
+        <div>€ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_eur||0).toFixed(2)}</b></div>
+      </div>`;
+    document.getElementById('sum-profit-box').style.display='block';
+  } else {
+    document.getElementById('sum-profit-box').style.display='none';
+  }
+}
+
+// ── Pagination helper ─────────────────────────────────
+function buildPagination(containerId, total, page, onGo) {
+  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
+  const pg = document.getElementById(containerId);
+  if (totalPages<=1){pg.innerHTML='';return;}
+  let html=`<button class="btn btn-ghost btn-sm" onclick="${onGo}(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  const sp=Math.max(1,page-2),ep=Math.min(totalPages,page+2);
+  if(sp>1) html+=`<button class="btn btn-ghost btn-sm" onclick="${onGo}(1)">1</button>`;
+  if(sp>2) html+=`<span style="padding:0 4px;color:var(--text3);">…</span>`;
+  for(let i=sp;i<=ep;i++)
+    html+=`<button class="btn btn-sm ${i===page?'btn-primary':'btn-ghost'}" onclick="${onGo}(${i})">${i}</button>`;
+  if(ep<totalPages-1) html+=`<span style="padding:0 4px;color:var(--text3);">…</span>`;
+  if(ep<totalPages) html+=`<button class="btn btn-ghost btn-sm" onclick="${onGo}(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="btn btn-ghost btn-sm" onclick="${onGo}(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
+}
+
+function accName(id) {
+  const a = _allAccounts.find(x=>x.id===id);
+  return a ? UI.escapeHtml(a.name) : UI.escapeHtml(id||'—');
+}
+
+// ── Deposits ──────────────────────────────────────────
+function renderDep(p=null) {
+  if(p!==null) _depPage=p;
+  const rows = _allTxns.filter(t=>t.type==='dep');
+  let tot={usd:0,eur:0},comm={usd:0,eur:0};
+  rows.forEach(t=>{ tot[t.cur]+=parseFloat(t.amt); comm[t.cur]+=parseFloat(t.commission_amt||0); });
+  document.getElementById('dep-stats').innerHTML=`
+    <div class="stat-mini" style="border-right:3px solid var(--green);">
+      <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--green);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini" style="border-right:3px solid var(--gold);">
+      <div class="stat-mini-label">${t('total_commissions_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--gold);">$${comm.usd.toFixed(2)} | €${comm.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini"><div class="stat-mini-label">${t('deposit_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
+  const page = _printMode ? rows : rows.slice((_depPage-1)*PAGE_SIZE, _depPage*PAGE_SIZE);
+  document.getElementById('dep-tbody').innerHTML = page.length
+    ? page.map(t=>{
+        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
+        const comm=parseFloat(t.commission_amt||0);
+        const net=parseFloat(t.amt)-comm;
+        return `<tr>
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+          <td>${accName(t.acc)}</td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td><span class="cell-credit">${sym}${parseFloat(t.amt).toFixed(2)}</span></td>
+          <td style="color:var(--gold);">${comm>0?sym+comm.toFixed(2):'—'}</td>
+          <td style="font-weight:600;">${sym}${net.toFixed(2)}</td>
+          <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">💵</div>${t('no_deposits_period')}</td></tr>`;
+  buildPagination('dep-pages', rows.length, _depPage, 'renderDep');
+}
+
+// ── Withdrawals ───────────────────────────────────────
+function renderWit(p=null) {
+  if(p!==null) _witPage=p;
+  const rows = _allTxns.filter(t=>t.type==='wit');
+  let tot={usd:0,eur:0};
+  rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
+  document.getElementById('wit-stats').innerHTML=`
+    <div class="stat-mini" style="border-right:3px solid var(--red);">
+      <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--red);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini"><div class="stat-mini-label">${t('withdrawal_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
+  const page = _printMode ? rows : rows.slice((_witPage-1)*PAGE_SIZE, _witPage*PAGE_SIZE);
+  document.getElementById('wit-tbody').innerHTML = page.length
+    ? page.map(t=>{
+        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
+        return `<tr>
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+          <td>${accName(t.acc)}</td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td><span class="cell-debit">${sym}${parseFloat(t.amt).toFixed(2)}</span></td>
+          <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" class="empty-state"><div class="empty-icon">💸</div>${t('no_withdrawals_period')}</td></tr>`;
+  buildPagination('wit-pages', rows.length, _witPage, 'renderWit');
+}
+
+// ── Transfers ─────────────────────────────────────────
+function renderTrf(p=null) {
+  if(p!==null) _trfPage=p;
+  const rows = _allTxns.filter(t=>t.type==='trf');
+  let tot={usd:0,eur:0};
+  rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
+  document.getElementById('trf-stats').innerHTML=`
+    <div class="stat-mini" style="border-right:3px solid var(--blue);">
+      <div class="stat-mini-label">${t('total_transfers_lbl')}</div>
+      <div class="stat-mini-val" style="color:var(--blue);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+    </div>
+    <div class="stat-mini"><div class="stat-mini-label">${t('transfer_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
+  const page = _printMode ? rows : rows.slice((_trfPage-1)*PAGE_SIZE, _trfPage*PAGE_SIZE);
+  document.getElementById('trf-tbody').innerHTML = page.length
+    ? page.map(t=>{
+        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
+        const comm=parseFloat(t.commission_amt||0);
+        return `<tr>
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
+          <td>${accName(t.from)}</td>
+          <td>${accName(t.to)}</td>
+          <td>${t.cur.toUpperCase()}</td>
+          <td style="font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="color:var(--gold);">${comm>0?sym+comm.toFixed(2):'—'}</td>
+          <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="7" class="empty-state"><div class="empty-icon">🔄</div>${t('no_transfers_period')}</td></tr>`;
+  buildPagination('trf-pages', rows.length, _trfPage, 'renderTrf');
+}
+
+// ── Creditors / Debtors ───────────────────────────────
+function renderCreditors() {
+  const list = _allAccounts.filter(a=>
+    parseFloat(a.bal_usd||0)>0 || parseFloat(a.bal_eur||0)>0
+  ).filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID);
+  document.getElementById('crd-tbody').innerHTML = list.length
+    ? list.map(a=>`<tr>
+        <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
+        <td>${UI.escapeHtml(a.name)}</td>
+        <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
+        <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
+        <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+        <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="empty-state">${t('no_creditor_accounts')}</td></tr>`;
+}
+
+function renderDebtors() {
+  const list = _allAccounts.filter(a=>
+    parseFloat(a.bal_usd||0)<0 || parseFloat(a.bal_eur||0)<0
+  );
+  document.getElementById('dbt-tbody').innerHTML = list.length
+    ? list.map(a=>`<tr class="row-debtor">
+        <td style="font-weight:700;">${UI.escapeHtml(a.id)} ⚠️</td>
+        <td>${UI.escapeHtml(a.name)}</td>
+        <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
+        <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
+        <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+        <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="empty-state">✅ ${t('no_debtor_accounts')}</td></tr>`;
+}
+
+// ── Activity ──────────────────────────────────────────
+async function loadActivity() {
+  const days = parseInt(document.getElementById('inactivity-days')?.value || 30);
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+  UI.showLoading(true);
+  const allTxns = await Storage.getTxns({});
+  UI.showLoading(false);
+  // آخر تاريخ لكل حساب
+  const lastActivity = {};
+  allTxns.forEach(t => {
+    const ids = [t.acc, t.from, t.to].filter(Boolean);
+    ids.forEach(id => {
+      const d = new Date(t.date);
+      if (!lastActivity[id] || d > lastActivity[id]) lastActivity[id] = d;
+    });
+  });
+  const inactive = _allAccounts
+    .filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID)
+    .map(a => ({ ...a, last: lastActivity[a.id] || null }))
+    .filter(a => !a.last || a.last < cutoff)
+    .sort((a,b) => (a.last||new Date(0)) - (b.last||new Date(0)));
+  document.getElementById('act-tbody').innerHTML = inactive.length
+    ? inactive.map(a => {
+        const daysSince = a.last
+          ? Math.floor((Date.now()-a.last)/(86400000))
+          : '∞';
+        return `<tr>
+          <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
+          <td>${UI.escapeHtml(a.name)}</td>
+          <td style="color:${parseFloat(a.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
+          <td style="color:${parseFloat(a.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+          <td style="font-size:0.73rem;color:var(--text3);">${a.last ? UI.formatDate(a.last.toISOString()) : t('none_lbl')}</td>
+          <td style="color:var(--red);font-weight:700;">${daysSince} ${t('day_unit')}</td>
+          <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="7" class="empty-state">${t('no_inactive_accounts')}</td></tr>`;
+}
+
+// ── Employee Activity ─────────────────────────────────
+function renderEmpActivity() {
+  const stats = {};
+  _allTxns.forEach(t => {
+    const u = t.by || 'system';
+    if (!stats[u]) stats[u] = {dep:0,wit:0,trf:0,del:0};
+    if (t.type==='dep') stats[u].dep++;
+    if (t.type==='wit') stats[u].wit++;
+    if (t.type==='trf') stats[u].trf++;
+  });
+  const rows = Object.entries(stats).sort((a,b)=>
+    (b[1].dep+b[1].wit+b[1].trf) - (a[1].dep+a[1].wit+a[1].trf)
+  );
+  document.getElementById('emp-act-tbody').innerHTML = rows.length
+    ? rows.map(([name, s])=>`<tr>
+        <td style="font-weight:700;">${UI.escapeHtml(name)}</td>
+        <td style="color:var(--green);">${s.dep}</td>
+        <td style="color:var(--red);">${s.wit}</td>
+        <td style="color:var(--blue);">${s.trf}</td>
+        <td style="color:var(--text3);">${s.del}</td>
+        <td style="font-weight:700;">${s.dep+s.wit+s.trf+s.del}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="empty-state">${t('no_data_lbl')}</td></tr>`;
+}
+
+// ── Deleted Accounts ──────────────────────────────────
+async function loadDeleted() {
+  UI.showLoading(true);
+  const { from, to } = getDates();
+ const rows = await Storage.getDeletedAccounts({ from, to });
+UI.showLoading(false);
+  document.getElementById('del-tbody').innerHTML = rows.length
+    ? rows.map(r=>`<tr>
+        <td style="font-weight:700;color:var(--text3);">${UI.escapeHtml(r.archive_id||r.id)}</td>
+        <td>${UI.escapeHtml(r.name)}</td>
+        <td>${r.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
+        <td style="color:${parseFloat(r.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_usd||0).toFixed(2)}</td>
+        <td style="color:${parseFloat(r.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_eur||0).toFixed(2)}</td>
+        <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(r.deleted_by||'—')}</td>
+        <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(r.deleted_at)}</td>
+        <td class="no-print">
+          <button class="btn btn-ghost btn-sm"
+            onclick="navTo('archived-view.html?acc=${UI.escapeHtml(r.archive_id||r.id)}')">
+            👁️ ${t('movements_lbl')}
+          </button>
+        </td>
+      </tr>`).join('')
+    : `<tr><td colspan="8" class="empty-state">${t('no_deleted_accounts')}</td></tr>`;
+}
+
+async function showDeletedTxns(originalId, name, archiveId) {
+  UI.showLoading(true);
+  const txns = await Storage.getTxns({ acc: originalId });
+  UI.showLoading(false);
+  if (!txns.length) { UI.toast(t('no_movements_for_account'), 'error'); return; }
+
+  // فتح نافذة جديدة بالحركات
+  const win = window.open('', '_blank', 'width=900,height=600');
+  const typeLabel = {dep:t('type_dep'),wit:t('type_wit'),trf:t('type_trf'),fee:t('type_fee')};
+  win.document.write(`<!DOCTYPE html><html dir="${I18n.getLang()==='ar'?'rtl':'ltr'}"><head>
+    <meta charset="UTF-8"><title>${t('movements_lbl')} - ${name}</title>
+    <style>
+      body{font-family:sans-serif;padding:20px;direction:rtl;background:#07090f;color:#e8eaf0;}
+      h2{color:#c9a84c;} table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+      th{background:#131b27;color:#8a9bb5;padding:8px;text-align:right;border-bottom:1px solid #1e2d42;}
+      td{padding:8px;border-bottom:1px solid #1e2d42;}
+      .dep{color:#22c55e;} .wit{color:#ef4444;} .trf{color:#3b82f6;} .fee{color:#c9a84c;}
+      @media print{body{background:#fff;color:#111;} th{background:#f5f0e0;color:#333;border-bottom:2px solid #c9a84c;} td{border-bottom:1px solid #eee;color:#111;}}
+    </style>
+  </head><body>
+  <h2>📋 ${t('account_movements_title')} — ${name} (${t('archive_lbl')}: ${archiveId})</h2>
+  <p style="color:#8a9bb5;font-size:0.8rem;">${t('original_number_lbl')}: ${originalId} · ${txns.length} ${t('movement_unit')}</p>
+  <table><thead><tr><th>${t('col_date')}</th><th>${t('col_type_lbl')}</th><th>${t('col_currency')}</th><th>${t('col_amount_lbl')}</th><th>${t('col_by_lbl')}</th></tr></thead>
+  <tbody>${txns.map(t=>{
+    const sym=t.cur==='usd'?'$':'€';
+    const cls=t.type;
+    return `<tr><td style="font-size:0.75rem;">${new Date(t.date).toLocaleString()}</td>
+      <td class="${cls}">${typeLabel[t.type]||t.type}</td>
+      <td>${t.cur.toUpperCase()}</td>
+      <td class="${cls}">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+      <td>${t.by||'—'}</td></tr>`;
+  }).join('')}</tbody></table>
+  <p style="margin-top:20px;font-size:0.75rem;color:#4a5a72;">${brandName()} — ${t('archive_record_lbl')}</p>
+  <p style="margin-top:4px;font-size:0.65rem;color:#aaa;">${brandPrintCopyright()}</p>
+  <script>window.print();<\/script></body></html>`);
+}
+
+// ── Debt Limit ────────────────────────────────────────
+async function saveDebtLimit() {
+  const limit = parseFloat(document.getElementById('debt-limit-input').value);
+  if (isNaN(limit) || limit > 0) { UI.toast(t('debt_limit_must_be_negative'),'error'); return; }
+  UI.showLoading(true);
+  const ok = await Storage.saveAlertSettings({ debt_limit: limit, updated_by: Auth.getUser().user });
+  UI.showLoading(false);
+  if (ok) UI.toast(t('debt_limit_saved_toast'));
+  else UI.toast(t('save_error'),'error');
+}
+
+// ── Export ────────────────────────────────────────────
+function exportCurrent() {
+  if (typeof XLSX === 'undefined') { UI.toast(t('excel_not_loaded'),'error'); return; }
+  const tableMap = {
+    summary:'sum-stats', deposits:'dep-table', withdrawals:'wit-table',
+    transfers:'trf-table', creditors:'crd-table', debtors:'dbt-table',
+    employees:'emp-act-table', deleted:'del-table'
+  };
+  const tableId = tableMap[_currentTab];
+  if (!tableId || !document.getElementById(tableId)) { UI.toast(t('cannot_export_tab'),'error'); return; }
+  const wb = XLSX.utils.table_to_book(document.getElementById(tableId), {sheet:t('report_sheet_name')});
+  XLSX.writeFile(wb, `SMGroup_${_currentTab}_${UI.todayStr()}.xlsx`);
+}
+
+</script>
+</body>
+</html>

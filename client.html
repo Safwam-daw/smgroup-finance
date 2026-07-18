@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — بوابة الزبون</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c;--gold-light:#e8c96e;--gold-dim:rgba(201,168,76,0.15);--gold-dim2:rgba(201,168,76,0.08);
+  --bg:#07090f;--surface:#0d1117;--surface2:#131b27;--surface3:#1a2436;
+  --border:#1e2d42;--border2:#243550;
+  --text:#e8eaf0;--text2:#8a9bb5;--text3:#4a5a72;
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
+  --euro:#a78bfa;--euro-dim:rgba(167,139,250,0.12);
+  --radius:12px;--radius-sm:8px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;}
+/* ── Login ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background-image:radial-gradient(circle at 20% 20%,rgba(201,168,76,0.04) 0%,transparent 50%),
+                   radial-gradient(circle at 80% 80%,rgba(167,139,250,0.03) 0%,transparent 50%);}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:40px;width:100%;max-width:400px;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.logo{font-size:1.8rem;font-weight:700;color:var(--gold);}
+.logo-sub{font-size:0.72rem;color:var(--text3);margin-top:4px;letter-spacing:.05em;}
+.divider{width:36px;height:2px;background:var(--gold);margin:18px auto;border-radius:2px;}
+.form-group{margin-bottom:14px;text-align:right;}
+.form-group label{display:block;font-size:0.72rem;color:var(--text2);margin-bottom:6px;font-weight:500;}
+.form-group input{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);border-radius:10px;font-family:inherit;font-size:0.9rem;
+  outline:none;direction:rtl;transition:border-color .2s;}
+.form-group input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+.btn-login{width:100%;padding:13px;background:var(--gold);color:#000;border:none;border-radius:10px;
+  font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;margin-top:6px;}
+.btn-login:hover{background:var(--gold-light);}
+.btn-login:active{transform:scale(0.98);}
+.btn-login:disabled{opacity:0.6;cursor:not-allowed;}
+.error-box{background:var(--red-dim);border:1px solid var(--red);border-radius:8px;
+  padding:10px;font-size:0.8rem;color:var(--red);margin-top:12px;display:none;}
+.error-box.show{display:block;}
+/* ── Portal ── */
+#portal-screen{display:none;padding:20px;max-width:860px;margin:0 auto;padding-bottom:40px;}
+.p-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:16px;}
+.p-header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+.p-name{font-size:1.1rem;font-weight:700;}
+.p-meta{font-size:0.73rem;color:var(--text3);margin-top:3px;}
+.bal-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.bal-box{flex:1;min-width:130px;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid;display:flex;flex-direction:column;gap:4px;}
+.bal-label{font-size:0.67rem;color:var(--text3);}
+.bal-val{font-size:1.2rem;font-weight:700;}
+/* Quick filters */
+.qf-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.qf-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);font-size:0.75rem;font-family:inherit;
+  cursor:pointer;transition:all .15s;}
+.qf-btn:hover,.qf-btn.active{background:var(--gold-dim);color:var(--gold);border-color:var(--gold);}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.card h3{font-size:0.9rem;font-weight:600;margin-bottom:12px;}
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border);margin-top:8px;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;min-width:440px;}
+th{padding:9px 12px;text-align:right;background:var(--surface2);color:var(--text2);
+  border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.67rem;font-weight:600;}
+.badge-dep{background:var(--green-dim);color:var(--green);}
+.badge-wit{background:var(--red-dim);color:var(--red);}
+.badge-trf{background:var(--blue-dim);color:var(--blue);}
+.badge-fee{background:var(--gold-dim);color:var(--gold);}
+.cell-credit{background:var(--green-dim);color:var(--green);font-weight:700;padding:2px 7px;border-radius:5px;display:inline-block;}
+.cell-debit{background:var(--red-dim);color:var(--red);font-weight:700;padding:2px 7px;border-radius:5px;display:inline-block;}
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.pg-btn{padding:5px 11px;border-radius:6px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);font-family:inherit;font-size:0.76rem;cursor:pointer;transition:all .15s;}
+.pg-btn:hover,.pg-btn.active{background:var(--gold);color:#000;border-color:var(--gold);}
+.pg-btn:disabled{opacity:0.4;cursor:not-allowed;}
+/* Pub note */
+.pub-note{font-size:0.72rem;color:var(--text3);text-align:center;padding:8px;
+  background:var(--surface2);border-radius:6px;margin-bottom:10px;}
+/* أزرار اللغة */
+.lang-bar { display:flex; justify-content:center; gap:8px; margin-bottom:16px; }
+.client-lang-btn {
+  padding:4px 12px; border-radius:20px; border:1px solid var(--border2);
+  background:transparent; color:var(--text2); font-size:0.72rem;
+  font-family:inherit; cursor:pointer; transition:all .15s;
+}
+.client-lang-btn:hover { border-color:var(--gold); color:var(--gold); }
+.client-lang-btn.active-lang { background:var(--gold); color:#000; border-color:var(--gold); font-weight:700; }
+.btn{padding:8px 16px;border:none;border-radius:var(--radius-sm);cursor:pointer;
+  font-family:inherit;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;
+  gap:6px;transition:all .15s;white-space:nowrap;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);
+  border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:0.8rem;
+  z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;}
+#toast.success{border-color:var(--green);color:var(--green);}
+#toast.error{border-color:var(--red);color:var(--red);}
+@media(max-width:600px){
+  body{overflow-x:hidden;}
+  #portal-screen{padding:10px 8px 32px;max-width:100%;}
+  .p-header{padding:14px;}
+  .p-header-top{flex-direction:column;align-items:stretch;}
+  .p-header-top > div:last-child{display:flex;justify-content:space-between;width:100%;}
+  .bal-row{gap:8px;}
+  .bal-box{min-width:calc(50% - 4px);padding:12px 10px;}
+  .bal-val{font-size:0.95rem;}
+  .login-box{padding:24px 16px;}
+  .card{padding:10px;}
+  .qf-row{gap:6px;}
+  .qf-btn{padding:6px 10px;font-size:0.7rem;}
+  .lang-bar{gap:4px;}
+  .client-lang-btn{padding:3px 9px;font-size:0.68rem;}
+  /* جدول مضغوط حقيقي بدل التمرير الأفقي الطويل */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:0;width:100%;font-size:0.68rem;}
+  th,td{padding:6px 5px;}
+  th{font-size:0.62rem;}
+  .badge{font-size:0.62rem;padding:2px 6px;}
+  /* عمود الملاحظة أقل أهمية على الجوال */
+  th:last-child,td:last-child{display:none;}
+}
+@media print{
+  #login-screen,#toast{display:none!important;}
+  .btn,.qf-row,.pagination,.pub-note,
+  .card:has(#p-from){display:none!important;}
+  #print-header,#print-footer{display:block!important;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:#fff!important;color:#111!important;}
+  #portal-screen{padding:16px!important;max-width:none!important;}
+  .p-header{background:#fff!important;border:2px solid #c9a84c!important;}
+  .p-name{color:#111!important;}
+  .bal-box{background:#fffbef!important;border-color:#c9a84c!important;}
+  .bal-val,.bal-label{color:#111!important;}
+  .card{background:#fff!important;border:1px solid #ccc!important;}
+  .tbl-wrap{border:1px solid #ccc!important;overflow:visible!important;}
+  table{min-width:unset!important;width:100%!important;font-size:0.79rem;}
+  th{background:#f5f0e0!important;color:#333!important;border-bottom:2px solid #c9a84c!important;padding:7px 9px;}
+  td{background:#fffef7!important;border-bottom:1px solid #eee!important;color:#111!important;padding:6px 9px;}
+  .badge-dep{background:#e8f8ef!important;color:#16a34a!important;}
+  .badge-wit{background:#fef2f2!important;color:#dc2626!important;}
+  .badge-trf{background:#eff6ff!important;color:#2563eb!important;}
+  .badge-fee{background:#fffbef!important;color:#a16207!important;border:1px solid #c9a84c!important;}
+  .cell-credit{background:#e8f8ef!important;color:#16a34a!important;}
+  .cell-debit{background:#fef2f2!important;color:#dc2626!important;}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- شاشة الدخول -->
+<div id="login-screen">
+  <div class="login-box">
+    <!-- أزرار اللغة المستقلة -->
+    <div class="lang-bar">
+      <button class="client-lang-btn active-lang" data-lang="ar" onclick="ClientI18n.setLang('ar')">ع</button>
+      <button class="client-lang-btn" data-lang="en" onclick="ClientI18n.setLang('en')">EN</button>
+      <button class="client-lang-btn" data-lang="tr" onclick="ClientI18n.setLang('tr')">TR</button>
+    </div>
+    <div class="logo" id="client-brand-name">SM-Group</div>
+    <div class="logo-sub" data-ct="portal_title">بوابة الزبون</div>
+    <div class="divider"></div>
+    <div class="form-group">
+      <label data-ct="acc_number">رقم الحساب</label>
+      <input type="text" id="c-acc" data-ct-placeholder="acc_ph" placeholder="0001" maxlength="6"
+             onkeydown="if(event.key==='Enter') document.getElementById('c-pin').focus()">
+    </div>
+    <div class="form-group">
+      <label data-ct="pin_label">كلمة المرور (6 أرقام)</label>
+      <input type="password" id="c-pin" data-ct-placeholder="pin_ph" placeholder="••••••" maxlength="6" inputmode="numeric"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="btn-login" id="login-btn" onclick="doLogin()" data-ct="login_btn">دخول</button>
+    <div class="error-box" id="login-err" data-ct="login_error">رقم الحساب أو كلمة المرور غير صحيحة</div>
+    <p style="font-size:0.67rem;color:var(--text3);margin-top:16px;" data-ct="contact_admin">
+      للحصول على كلمة المرور تواصل مع الإدارة
+    </p>
+  </div>
+</div>
+
+<!-- شاشة البوابة -->
+<div id="portal-screen">
+
+  <!-- ترويسة الطباعة -->
+  <div id="print-header" style="display:none;margin-bottom:18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+         border-bottom:3px solid #c9a84c;padding-bottom:12px;">
+      <div>
+        <h1 id="print-brand-name" style="font-size:1.4rem;color:#111;font-weight:700;">SM-Group</h1>
+        <p style="font-size:0.73rem;color:#555;margin-top:3px;" data-ct="stmt_title">كشف حساب الزبون</p>
+      </div>
+      <div style="text-align:left;">
+        <p style="font-size:0.73rem;color:#555;"><span data-ct="print_date_lbl">تاريخ الطباعة:</span> <b id="print-date"></b></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- رأس الصفحة -->
+  <div class="p-header">
+    <div class="p-header-top">
+      <div>
+        <div class="p-name" id="p-name">—</div>
+        <div class="p-meta" id="p-meta">—</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <!-- أزرار اللغة في الشاشة الرئيسية -->
+        <div class="lang-bar" style="margin-bottom:0;">
+          <button class="client-lang-btn active-lang" data-lang="ar" onclick="ClientI18n.setLang('ar');refreshPortalText()">ع</button>
+          <button class="client-lang-btn" data-lang="en" onclick="ClientI18n.setLang('en');refreshPortalText()">EN</button>
+          <button class="client-lang-btn" data-lang="tr" onclick="ClientI18n.setLang('tr');refreshPortalText()">TR</button>
+        </div>
+        <button class="btn btn-ghost" onclick="window.print()" data-ct="print_btn">🖨️ طباعة</button>
+        <button class="btn btn-ghost" onclick="doLogout()" data-ct="logout_btn">🚪 خروج</button>
+      </div>
+    </div>
+    <!-- أرصدة -->
+    <div class="bal-row" id="p-bals"></div>
+  </div>
+
+  <!-- ملاحظة التحديث -->
+  <div class="pub-note" id="p-pub"></div>
+
+  <!-- فلاتر -->
+  <div class="card" style="padding:14px 16px;">
+    <div class="qf-row">
+      <button class="qf-btn active" onclick="setQuick('month')" data-ct="qf_month">هذا الشهر</button>
+      <button class="qf-btn" onclick="setQuick('prev')" data-ct="qf_prev">الشهر السابق</button>
+      <button class="qf-btn" onclick="setQuick('today')" data-ct="qf_today">اليوم</button>
+      <button class="qf-btn" onclick="setQuick('all')" data-ct="qf_all">الكل</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;">
+      <div style="display:none;">
+        <input type="date" id="p-from">
+        <input type="date" id="p-to">
+      </div>
+      <div style="display:none;">
+        <label style="display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;" data-ct="col_type">النوع</label>
+        <select id="p-type" onchange="filterRows()"
+                style="width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border2);
+                       color:var(--text);border-radius:8px;font-family:inherit;outline:none;">
+          <option value="all" data-ct="qf_all">الكل</option>
+          <option value="dep" data-ct="type_dep">💵 إيداع</option>
+          <option value="wit" data-ct="type_wit">💸 سحب</option>
+          <option value="trf" data-ct="type_trf">🔄 تحويل</option>
+          <option value="fee" data-ct="type_fee">💰 عمولة</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- جدول الحركات -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+      <table id="p-table">
+        <thead>
+          <tr>
+            <th data-ct="col_date">التاريخ</th><th data-ct="col_type">النوع</th><th data-ct="col_currency">العملة</th>
+            <th data-ct="col_debit">دين (خروج)</th><th data-ct="col_credit">دائن (دخول)</th><th data-ct="col_note">ملاحظة</th>
+          </tr>
+        </thead>
+        <tbody id="p-tbody">
+          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);" data-ct="loading">جاري التحميل…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;
+       margin-top:10px;flex-wrap:wrap;gap:8px;">
+    <div id="p-count" style="font-size:0.73rem;color:var(--text3);"></div>
+    <div class="pagination" id="p-pages"></div>
+  </div>
+
+  <!-- تذييل الطباعة -->
+  <div id="print-footer" style="display:none;margin-top:24px;border-top:1px solid #ddd;
+       padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
+    <span id="print-brand-footer">SM-Group</span> — كشف حساب رسمي · طُبع بتاريخ <span id="print-date2"></span>
+    <div style="margin-top:4px;font-size:0.65rem;color:#aaa;" id="print-dawtech-footer"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script>
+<script src="js/config.js"></script>
+<script>
+// ══ نظام ترجمة مستقل لبوابة الزبون ══════════════════
+const ClientI18n = (() => {
+  const KEY = 'client_lang';
+  let _lang = localStorage.getItem(KEY) || 'ar';
+
+  const _dict = {
+    // عام
+    portal_title:    { ar: 'بوابة الزبون', en: 'Client Portal', tr: 'Müşteri Portalı' },
+    acc_number:      { ar: 'رقم الحساب', en: 'Account Number', tr: 'Hesap No' },
+    pin_label:       { ar: 'كلمة المرور (6 أرقام)', en: 'Password (6 digits)', tr: 'Şifre (6 rakam)' },
+    acc_ph:          { ar: '0001', en: '0001', tr: '0001' },
+    pin_ph:          { ar: '••••••', en: '••••••', tr: '••••••' },
+    login_btn:       { ar: 'دخول', en: 'Login', tr: 'Giriş' },
+    login_checking:  { ar: 'جاري التحقق…', en: 'Checking…', tr: 'Kontrol ediliyor…' },
+    login_error:     { ar: 'رقم الحساب أو كلمة المرور غير صحيحة', en: 'Invalid account or password', tr: 'Geçersiz hesap veya şifre' },
+    locked_msg:      { ar: 'تم تعليق الدخول. حاول بعد', en: 'Login suspended. Try after', tr: 'Giriş askıya alındı.' },
+    locked_sec:      { ar: 'ثانية', en: 'seconds', tr: 'saniye' },
+    too_many:        { ar: 'محاولات كثيرة. تم تعليق الدخول لمدة دقيقتين.', en: 'Too many attempts. Suspended for 2 minutes.', tr: 'Çok fazla deneme. 2 dakika askıya alındı.' },
+    contact_admin:   { ar: 'للحصول على كلمة المرور تواصل مع الإدارة', en: 'Contact management for your password', tr: 'Şifre için yönetimle iletişime geçin' },
+    logout_btn:      { ar: '🚪 خروج', en: '🚪 Logout', tr: '🚪 Çıkış' },
+    print_btn:       { ar: '🖨️ طباعة', en: '🖨️ Print', tr: '🖨️ Yazdır' },
+    acc_id_lbl:      { ar: 'رقم الحساب:', en: 'Account No:', tr: 'Hesap No:' },
+    bal_usd:         { ar: '🇺🇸 رصيد الدولار', en: '🇺🇸 USD Balance', tr: '🇺🇸 Dolar Bakiyesi' },
+    bal_eur:         { ar: '🇪🇺 رصيد اليورو', en: '🇪🇺 EUR Balance', tr: '🇪🇺 Euro Bakiyesi' },
+    qf_month:        { ar: 'هذا الشهر', en: 'This Month', tr: 'Bu Ay' },
+    qf_prev:         { ar: 'الشهر السابق', en: 'Last Month', tr: 'Geçen Ay' },
+    qf_today:        { ar: 'اليوم', en: 'Today', tr: 'Bugün' },
+    qf_all:          { ar: 'الكل', en: 'All', tr: 'Tümü' },
+    col_date:        { ar: 'التاريخ', en: 'Date', tr: 'Tarih' },
+    col_type:        { ar: 'النوع', en: 'Type', tr: 'Tür' },
+    col_currency:    { ar: 'العملة', en: 'Currency', tr: 'Para Birimi' },
+    col_debit:       { ar: 'دين (خروج)', en: 'Debit (Out)', tr: 'Borç (Çıkan)' },
+    col_credit:      { ar: 'دائن (دخول)', en: 'Credit (In)', tr: 'Alacak (Giren)' },
+    col_note:        { ar: 'ملاحظة', en: 'Note', tr: 'Not' },
+    type_dep:        { ar: '💵 إيداع', en: '💵 Deposit', tr: '💵 Yatırma' },
+    type_wit:        { ar: '💸 سحب', en: '💸 Withdrawal', tr: '💸 Çekim' },
+    type_trf:        { ar: '🔄 تحويل', en: '🔄 Transfer', tr: '🔄 Transfer' },
+    type_fee:        { ar: '💰 عمولة', en: '💰 Commission', tr: '💰 Komisyon' },
+    no_movements:    { ar: 'لا توجد حركات منشورة في هذه الفترة', en: 'No published movements in this period', tr: 'Bu dönemde yayınlanmış hareket yok' },
+    pub_note:        { ar: '🕐 آخر تحديث للكشف:', en: '🕐 Last statement update:', tr: '🕐 Son özet güncellemesi:' },
+    no_pub:          { ar: '⏳ لم يتم نشر الكشف بعد — تواصل مع الإدارة', en: '⏳ Statement not published yet — contact management', tr: '⏳ Özet henüz yayınlanmadı — yönetimle iletişime geçin' },
+    showing:         { ar: 'عرض', en: 'Showing', tr: 'Gösterilen' },
+    of:              { ar: 'من', en: 'of', tr: '/' },
+    movement:        { ar: 'حركة', en: 'movements', tr: 'hareket' },
+    stmt_title:      { ar: 'كشف حساب الزبون', en: 'Client Account Statement', tr: 'Müşteri Hesap Özeti' },
+    print_date_lbl:  { ar: 'تاريخ الطباعة:', en: 'Print Date:', tr: 'Yazdırma Tarihi:' },
+    official_stmt:   { ar: 'كشف حساب رسمي · طُبع بتاريخ', en: 'Official Statement · Printed on', tr: 'Resmi Özet · Yazdırıldı' },
+  };
+
+  function ct(key) {
+    const e = _dict[key];
+    if (!e) return key;
+    return e[_lang] || e['ar'] || key;
+  }
+
+  function setLang(lang) {
+    _lang = lang;
+    localStorage.setItem(KEY, lang);
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = lang;
+    applyAll();
+  }
+
+  function getLang() { return _lang; }
+
+  function applyAll() {
+    document.querySelectorAll('[data-ct]').forEach(el => {
+      el.textContent = ct(el.getAttribute('data-ct'));
+    });
+    document.querySelectorAll('[data-ct-placeholder]').forEach(el => {
+      el.placeholder = ct(el.getAttribute('data-ct-placeholder'));
+    });
+    // تحديث اتجاه الصفحة
+    const dir = _lang === 'ar' ? 'rtl' : 'ltr';
+    document.body.style.direction = dir;
+    // تحديث أزرار اللغة
+    document.querySelectorAll('.client-lang-btn').forEach(btn => {
+      btn.classList.toggle('active-lang', btn.dataset.lang === _lang);
+    });
+  }
+
+  return { ct, setLang, getLang, applyAll };
+})();
+</script>
+<script>
+const PAGE_SIZE = 20;
+
+// ── تطبيق هوية الشركة ───────────────────────────────────
+(() => {
+  const name = brandName();
+  document.getElementById('client-brand-name').textContent = name;
+  document.getElementById('print-brand-name').textContent = name;
+  document.getElementById('print-brand-footer').textContent = name;
+  document.getElementById('print-dawtech-footer').textContent = brandPrintCopyright();
+  document.title = name + ' — ' + ClientI18n.ct('portal_title');
+  // تطبيق اللغة المحفوظة عند أول تحميل
+  ClientI18n.applyAll();
+})();
+let _acc = null, _allTxns = [], _filtered = [], _page = 1, _printMode = false;
+function typeLabel(type) {
+  const ct = ClientI18n.ct;
+  const map = {dep: ct('type_dep'), wit: ct('type_wit'), trf: ct('type_trf'), fee: ct('type_fee')};
+  return map[type] || type;
+}
+
+// دالة لتحديث النصوص الديناميكية عند تغيير اللغة
+function refreshPortalText() {
+  ClientI18n.applyAll();
+  if (_acc) {
+    // إعادة رسم الجدول بالترجمة الجديدة
+    renderPage();
+    // تحديث ملاحظة النشر
+    const pubEl = document.getElementById('p-pub');
+    if (pubEl && pubEl.dataset.pubAt) {
+      const d = new Date(pubEl.dataset.pubAt).toLocaleString();
+      pubEl.textContent = ClientI18n.ct('pub_note') + ' ' + d;
+    } else if (pubEl) {
+      pubEl.textContent = ClientI18n.ct('no_pub');
+    }
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='', 3000);
+}
+
+// ── Rate Limiting ─────────────────────────────────────
+const _CRL = { attempts: 0, lockedUntil: 0, MAX: 5, LOCKOUT: 120000 };
+
+// ── Login ─────────────────────────────────────────────
+async function doLogin() {
+  const accId = document.getElementById('c-acc').value.trim();
+  const pin   = document.getElementById('c-pin').value.trim();
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+
+  // تحقق من القفل
+  if (Date.now() < _CRL.lockedUntil) {
+    const secs = Math.ceil((_CRL.lockedUntil - Date.now()) / 1000);
+    err.textContent = `${ClientI18n.ct('locked_msg')} ${secs} ${ClientI18n.ct('locked_sec')}`;
+    err.classList.add('show'); return;
+  }
+
+  if (!accId || !pin) { err.textContent = ClientI18n.ct('login_error'); err.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent=ClientI18n.ct('login_checking'); err.classList.remove('show');
+
+  const acc = await Storage.clientLogin(accId, pin);
+  if (!acc) {
+    _CRL.attempts++;
+    if (_CRL.attempts >= _CRL.MAX) {
+      _CRL.lockedUntil = Date.now() + _CRL.LOCKOUT;
+      _CRL.attempts = 0;
+      err.textContent = ClientI18n.ct('too_many');
+    } else {
+      err.textContent = ClientI18n.ct('login_error');
+    }
+    err.classList.add('show');
+    btn.disabled=false; btn.textContent=ClientI18n.ct('login_btn');
+    document.getElementById('c-pin').value='';
+    return;
+  }
+
+  _CRL.attempts = 0;
+  _acc = acc;
+  // نحفظ id فقط — لا نحفظ PIN في sessionStorage أبداً
+  try { sessionStorage.setItem('client_session', JSON.stringify({ id: acc.id })); } catch(e){}
+  await loadPortal();
+}
+
+function doLogout() {
+  try { sessionStorage.removeItem('client_session'); } catch(e){}
+  _acc=null; _allTxns=[];
+  document.getElementById('portal-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('c-pin').value='';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').textContent=ClientI18n.ct('login_btn');
+}
+
+// ── Load Portal ───────────────────────────────────────
+async function loadPortal() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('portal-screen').style.display='block';
+
+  // ترويسة الطباعة
+  const now = new Date().toLocaleDateString('ar-SA');
+  ['print-date','print-date2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=now;
+  });
+
+  const usd = parseFloat(_acc.bal_usd||0);
+  const eur = parseFloat(_acc.bal_eur||0);
+  const pubAt = _acc.client_published_at;
+
+  // اسم ومعلومات
+  document.getElementById('p-name').textContent = _acc.name;
+  document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
+  document.title = brandName() + ' — ' + _acc.name;
+
+  // أرصدة
+  document.getElementById('p-bals').innerHTML = `
+    <div class="bal-box" style="border-color:${usd<0?'var(--red)':'var(--gold)'};
+         background:${usd<0?'var(--red-dim)':'var(--gold-dim2)'};">
+      <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
+      <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--gold)'};">
+        ${usd<0?'-':''}$${Math.abs(usd).toFixed(2)}
+      </div>
+    </div>
+    <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--euro)'};
+         background:${eur<0?'var(--red-dim)':'var(--euro-dim)'};">
+      <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
+      <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--euro)'};">
+        ${eur<0?'-':''}€${Math.abs(eur).toFixed(2)}
+      </div>
+    </div>`;
+
+  // ملاحظة التحديث
+  const pubEl = document.getElementById('p-pub');
+  if (pubAt) {
+    const d = new Date(pubAt).toLocaleString();
+    pubEl.textContent = ClientI18n.ct('pub_note') + ' ' + d;
+    pubEl.dataset.pubAt = pubAt;
+    pubEl.style.borderLeft = '3px solid var(--gold)';
+  } else {
+    pubEl.textContent = ClientI18n.ct('no_pub');
+    pubEl.dataset.pubAt = '';
+  }
+
+  // جلب الحركات المنشورة
+  _allTxns = await Storage.getClientTxns(_acc.id, pubAt);
+  setQuick('month', false);
+  filterRows();
+}
+
+// ── Filters ───────────────────────────────────────────
+function setQuick(key, apply=true) {
+  document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
+  const today = new Date().toISOString().slice(0,10);
+  const map = {
+    today:{ from:today, to:today },
+    month:{ from:firstOfMonth(0), to:lastOfMonth(0) },
+    prev: { from:firstOfMonth(-1), to:lastOfMonth(-1) },
+    all:  { from:'', to:'' }
+  };
+  const r = map[key]||map.month;
+  document.getElementById('p-from').value = r.from;
+  document.getElementById('p-to').value   = r.to;
+  const idx={month:0,prev:1,today:2,all:3}[key];
+  const btns=document.querySelectorAll('.qf-btn');
+  if(btns[idx]) btns[idx].classList.add('active');
+  if(apply) filterRows();
+}
+function clearQ(){ document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
+
+function firstOfMonth(off=0){const d=new Date();d.setMonth(d.getMonth()+off);d.setDate(1);return d.toISOString().slice(0,10);}
+function lastOfMonth(off=0){const d=new Date();d.setMonth(d.getMonth()+off+1);d.setDate(0);return d.toISOString().slice(0,10);}
+
+function filterRows() {
+  const fType = document.getElementById('p-type').value;
+  const fFrom = document.getElementById('p-from').value;
+  const fTo   = document.getElementById('p-to').value;
+  _filtered = _allTxns.filter(t => {
+    if (fType!=='all' && t.type!==fType) return false;
+    if (fFrom && new Date(t.date) < new Date(fFrom)) return false;
+    if (fTo   && new Date(t.date) > new Date(fTo+'T23:59:59')) return false;
+    return true;
+  });
+  _page=1; renderPage();
+}
+
+// ── Render ────────────────────────────────────────────
+function renderPage() {
+  const total      = _filtered.length;
+  const totalPages = Math.ceil(total/PAGE_SIZE)||1;
+  const start      = (_page-1)*PAGE_SIZE;
+  const page       = _printMode ? _filtered : _filtered.slice(start, start+PAGE_SIZE);
+  const accId      = _acc.id;
+
+  document.getElementById('p-tbody').innerHTML = page.length
+    ? page.map(t => {
+        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
+        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
+        const isFee  = t.type==='fee'||t.is_commission_entry;
+        const isFrom = t.type==='trf'&&t.from===accId;
+        const isTo   = t.type==='trf'&&t.to===accId;
+        let debit=0, credit=0;
+        if(t.type==='dep') credit=parseFloat(t.amt);
+        if(t.type==='wit') debit=parseFloat(t.amt);
+        if(isFee)          debit=parseFloat(t.amt);
+        if(isFrom) debit=parseFloat(t.amt);
+        if(isTo)   credit=parseFloat(t.amt)*(parseFloat(t.rate)||1);
+        const dCell=debit>0 ?`<span class="cell-debit">-${sym}${debit.toFixed(2)}</span>`:'—';
+        const cCell=credit>0?`<span class="cell-credit">+${sym}${credit.toFixed(2)}</span>`:'—';
+        const lbl = typeLabel(t.type);
+        const bCls= isFee?'badge-fee':`badge-${t.type}`;
+        const rSty= isFee?'background:rgba(201,168,76,0.04);border-right:2px solid var(--gold);':'';
+        const d = new Date(t.date).toLocaleString('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<tr style="${rSty}">
+          <td data-label="${ClientI18n.ct('col_date')}" style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${d}</td>
+          <td data-label="${ClientI18n.ct('col_type')}"><span class="badge ${bCls}">${lbl}</span></td>
+          <td data-label="${ClientI18n.ct('col_currency')}">${t.cur.toUpperCase()}</td>
+          <td data-label="${ClientI18n.ct('col_debit')}">${dCell}</td>
+          <td data-label="${ClientI18n.ct('col_credit')}">${cCell}</td>
+          <td data-label="${ClientI18n.ct('col_note')}" style="font-size:0.73rem;color:var(--text2);">${t.note||'—'}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
+
+  document.getElementById('p-count').textContent =
+    !total ? '' : _printMode
+      ? `${total} ${ClientI18n.ct('movement')}`
+      : `${ClientI18n.ct('showing')} ${start+1}–${Math.min(start+PAGE_SIZE,total)} ${ClientI18n.ct('of')} ${total} ${ClientI18n.ct('movement')}`;
+
+  const pg=document.getElementById('p-pages');
+  if(totalPages<=1){pg.innerHTML='';return;}
+  let html=`<button class="pg-btn" onclick="go(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp=Math.max(1,_page-2),ep=Math.min(totalPages,_page+2);
+  if(sp>1) html+=`<button class="pg-btn" onclick="go(1)">1</button>`;
+  if(sp>2) html+=`<span style="padding:0 4px;color:var(--text3);">…</span>`;
+  for(let i=sp;i<=ep;i++)
+    html+=`<button class="pg-btn ${i===_page?'active':''}" onclick="go(${i})">${i}</button>`;
+  if(ep<totalPages-1) html+=`<span style="padding:0 4px;color:var(--text3);">…</span>`;
+  if(ep<totalPages)   html+=`<button class="pg-btn" onclick="go(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="pg-btn" onclick="go(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
+}
+function go(p){const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;if(p<1||p>t)return;_page=p;renderPage();}
+
+// ── Print helpers ─────────────────────────────────────
+window.addEventListener('beforeprint', () => {
+  document.getElementById('print-header').style.display='block';
+  document.getElementById('print-footer').style.display='block';
+  _printMode = true; renderPage();
+});
+window.addEventListener('afterprint', () => {
+  document.getElementById('print-header').style.display='none';
+  document.getElementById('print-footer').style.display='none';
+  _printMode = false; renderPage();
+});
+
+// ── Restore session ───────────────────────────────────
+(async () => {
+  try {
+    const s = sessionStorage.getItem('client_session');
+    if (s) {
+      const { id } = JSON.parse(s);
+      // نجلب بيانات الحساب مباشرة بدون PIN
+      const accounts = await Storage.getAccounts();
+      const acc = accounts.find(a => a.id === id && a.type === 'customer');
+      if (acc) { _acc = acc; await loadPortal(); return; }
+    }
+  } catch(e){}
+})();
+</script>
+</body>
+</html>

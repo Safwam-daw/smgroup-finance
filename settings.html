@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="settings_title">SM-Group — الإعدادات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+.settings-section { margin-bottom:16px; }
+.settings-section h3 { margin-bottom:14px; }
+.commission-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--surface2);
+  border:1px solid var(--border2); border-radius:var(--radius-sm);
+  margin-bottom:8px; flex-wrap:wrap;
+}
+.commission-row .acc-name { flex:1; min-width:150px; font-size:0.84rem; font-weight:600; }
+.commission-row .acc-type { font-size:0.72rem; color:var(--text3); }
+.commission-row input[type=number] {
+  width:120px; padding:7px 10px; background:var(--surface);
+  border:1px solid var(--border2); color:var(--text);
+  border-radius:var(--radius-sm); font-family:inherit; font-size:0.84rem;
+  outline:none; text-align:center;
+}
+.commission-row input[type=number]:focus { border-color:var(--gold); }
+.commission-row .btn { flex-shrink:0; }
+.danger-zone {
+  border:1px solid rgba(239,68,68,0.4);
+  border-radius:var(--radius); padding:20px;
+  background:rgba(239,68,68,0.05);
+}
+.danger-zone h3 { color:var(--red); margin-bottom:6px; }
+.danger-zone p { font-size:0.78rem; color:var(--text3); margin-bottom:14px; }
+@media(max-width:640px){
+  .commission-row { flex-direction:column; align-items:flex-start; }
+  .commission-row input[type=number] { width:100%; }
+  .commission-row .btn { width:100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+<main id="main">
+<div id="treasury-placeholder"></div>
+<div class="page-header">
+  <div>
+    <h2 data-i18n="settings_title">⚙️ الإعدادات</h2>
+    <p data-i18n="settings_subtitle">إعدادات الحساب الشخصية والنظام</p>
+  </div>
+</div>
+
+<!-- تغيير الاسم وكلمة المرور -->
+<div class="card settings-section">
+  <h3 data-i18n="personal_acc_settings">👤 إعدادات الحساب الشخصي</h3>
+  <div class="grid-2">
+    <div>
+      <div class="form-group">
+        <label data-i18n="current_username">اسم المستخدم الحالي</label>
+        <input type="text" id="current-user" readonly style="color:var(--text2);">
+      </div>
+      <div class="form-group">
+        <label data-i18n="new_username">اسم المستخدم الجديد</label>
+        <input type="text" id="new-username"
+          data-i18n-placeholder="new_username_ph"
+          placeholder="اتركه فارغاً للإبقاء على الحالي">
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label data-i18n="current_password">كلمة المرور الحالية</label>
+        <input type="password" id="current-pass" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label data-i18n="new_password">كلمة المرور الجديدة</label>
+        <input type="password" id="new-pass"
+          data-i18n-placeholder="new_password_ph"
+          placeholder="اتركها فارغاً للإبقاء على الحالية">
+      </div>
+      <div class="form-group">
+        <label data-i18n="confirm_new_password">تأكيد كلمة المرور الجديدة</label>
+        <input type="password" id="new-pass2"
+          data-i18n-placeholder="confirm_pass_ph"
+          placeholder="أعد كتابة كلمة المرور">
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="savePersonal()" style="min-width:180px;" data-i18n="save_changes">
+    💾 حفظ التغييرات
+  </button>
+</div>
+
+<!-- اختيار اللغة -->
+<div class="card settings-section">
+  <h3>🌐 <span data-i18n="language"></span></h3>
+  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+    <button class="btn" id="lang-btn-ar" onclick="applyLang('ar')" style="min-width:110px;">🇸🇦 العربية</button>
+    <button class="btn" id="lang-btn-en" onclick="applyLang('en')" style="min-width:110px;">🇬🇧 English</button>
+    <button class="btn" id="lang-btn-tr" onclick="applyLang('tr')" style="min-width:110px;">🇹🇷 Türkçe</button>
+  </div>
+</div>
+
+<!-- نمط التنقل -->
+<div class="card settings-section">
+  <h3 data-i18n="nav_style_section">🧭 نمط التنقل</h3>
+  <p style="font-size:0.78rem;color:var(--text3);margin-bottom:12px;" data-i18n="nav_style_hint">
+    اختر كيف تظهر لك قائمة الصفحات
+  </p>
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <button class="btn" id="nav-style-btn-sidebar" onclick="setNavStyleChoice('sidebar')" style="min-width:150px;">
+      <span data-i18n="nav_style_sidebar">☰ قائمة جانبية</span>
+    </button>
+    <button class="btn" id="nav-style-btn-topbar" onclick="setNavStyleChoice('topbar')" style="min-width:150px;">
+      <span data-i18n="nav_style_topbar">▬ شريط علوي ثابت</span>
+    </button>
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text2);cursor:pointer;">
+    <input type="checkbox" id="nav-style-sync">
+    <span data-i18n="nav_style_sync_all">احفظ هذا الاختيار على جميع أجهزتي</span>
+  </label>
+  <p style="font-size:0.72rem;color:var(--text3);margin-top:6px;" data-i18n="nav_style_sync_hint">
+    بدون هذا الخيار، يبقى الاختيار خاصاً بهذا الجهاز فقط — كل جهاز يمكن أن يكون له نمط مختلف
+  </p>
+</div>
+
+<!-- إدارة العملات (أدمن فقط) -->
+<div class="card settings-section" id="currency-section" style="display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <h3 style="margin-bottom:0;" data-i18n="currency_mgmt">💱 إدارة العملات</h3>
+    <span style="font-size:0.73rem;color:var(--text3);" data-i18n="currency_fixed_note">الدولار واليورو ثابتان دائماً</span>
+  </div>
+  <div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;
+    padding:10px 14px;margin-bottom:14px;font-size:0.79rem;color:var(--text2);"
+    data-i18n="currency_info">
+    ℹ️ فعّل العملات التي تحتاجها — ستظهر في حقول الإيداع والسحب والتحويل وشريط الخزينة تلقائياً
+  </div>
+  <div id="currency-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- النسخ الاحتياطي -->
+<div class="card settings-section" id="backup-section" style="display:none;">
+  <h3 data-i18n="backup_section">💾 النسخ الاحتياطي</h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <button class="btn btn-primary" onclick="Storage.exportBackup()" data-i18n="export_backup">
+      📥 تصدير نسخة احتياطية
+    </button>
+    <label class="btn btn-ghost" style="cursor:pointer;">
+      <span data-i18n="restore_data">📤 استعادة بيانات</span>
+      <input type="file" accept=".json" style="display:none;" onchange="handleImport(event)">
+    </label>
+  </div>
+  <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;" data-i18n="backup_tip">
+    يُنصح بتصدير نسخة احتياطية أسبوعياً
+  </p>
+</div>
+
+<!-- حول النظام -->
+<div class="card settings-section">
+  <h3 data-i18n="about_system">ℹ️ حول النظام</h3>
+  <div style="display:flex;flex-direction:column;gap:8px;font-size:0.83rem;color:var(--text2);">
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_sysname">اسم النظام</span>
+      <span style="color:var(--text);font-weight:600;" id="about-brand-name">SM-Group</span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_version_lbl">الإصدار</span>
+      <span style="color:var(--gold);font-weight:600;" id="about-version">v6.2</span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_db">قاعدة البيانات</span>
+      <span>Supabase (PostgreSQL)</span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_host">الاستضافة</span>
+      <span>Netlify</span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_rights">حقوق الملكية</span>
+      <span id="about-copyright"></span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <span style="color:var(--text3);min-width:130px;" data-i18n="about_dev">تطوير</span>
+      <span>Daw Tech</span>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- Modal تأكيد الاستعادة -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);
+  z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin-bottom:0;" data-i18n="restore_modal_title">📤 استعادة النسخة الاحتياطية</h3>
+      <button onclick="closeImport()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="import-preview" style="background:var(--surface2);border:1px solid var(--border2);
+      border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.82rem;line-height:1.8;"></div>
+    <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;
+      padding:10px 14px;margin-bottom:14px;font-size:0.8rem;color:var(--red);"
+      data-i18n="restore_warning">
+      ⚠️ الاستعادة ستمسح البيانات الحالية وتستبدلها بالنسخة الاحتياطية. لا يمكن التراجع.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeImport()" data-i18n="cancel">إلغاء</button>
+      <button class="btn btn-danger" onclick="doImport()" data-i18n="restore_now">📤 استعادة الآن</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/i18n.js"></script>
+<script>
+
+function applyLang(lang) {
+  I18n.setLang(lang);
+  location.reload();
+}
+
+async function setNavStyleChoice(style) {
+  const syncAll = document.getElementById('nav-style-sync').checked;
+  localStorage.setItem('sm_nav_style', style);
+
+  const user = Auth.getUser();
+  if (syncAll) {
+    const ok = await Storage.setNavStyleRemote(user.user, style);
+    if (!ok) { UI.toast(I18n.t('nav_style_sync_error'), 'error'); return; }
+  } else if (user.nav_style) {
+    // كان مُزامناً سابقاً والآن أُلغي — كل جهاز يعتمد إعداده المحلي من الآن
+    await Storage.setNavStyleRemote(user.user, null);
+  }
+
+  UI.toast(I18n.t('nav_style_saved'));
+  setTimeout(() => location.reload(), 700);
+}
+
+function _updateNavStyleBtns() {
+  const style = UI.getEffectiveNavStyle();
+  document.getElementById('nav-style-btn-sidebar')?.classList.toggle('btn-primary', style === 'sidebar');
+  document.getElementById('nav-style-btn-topbar')?.classList.toggle('btn-primary', style === 'topbar');
+  const user = Auth.getUser();
+  document.getElementById('nav-style-sync').checked = !!(user && user.nav_style);
+}
+
+function _applyBrandInfo() {
+  document.getElementById('about-brand-name').textContent =
+    brandName() + ' — ' + brandTagline();
+  document.getElementById('about-version').textContent = BRAND.version;
+  document.getElementById('about-copyright').textContent =
+    `© ${BRAND.copyrightYear} ${BRAND.developedBy} · ${I18n.t('all_rights')}`;
+}
+
+function _updateLangBtns() {
+  const lang = I18n.getLang();
+  ['ar','en','tr'].forEach(l => {
+    const btn = document.getElementById(`lang-btn-${l}`);
+    if (btn) btn.classList.toggle('btn-primary', lang === l);
+  });
+}
+
+(async () => {
+  if (!await initApp('settings')) return;
+  _updateLangBtns();
+  _updateNavStyleBtns();
+  _applyBrandInfo();
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  const user = Auth.getUser();
+  document.getElementById('current-user').value = user.user;
+
+  if (Auth.isAdmin()) {
+    document.getElementById('currency-section').style.display = 'block';
+    await loadCurrencies();
+  }
+  if (Auth.isAdmin() || Auth.can('exportBackup')) {
+    document.getElementById('backup-section').style.display = 'block';
+  }
+  I18n.apply();
+})();
+
+async function loadCurrencies() {
+  const data = await Currency.getAll(); Currency.invalidate();
+  const list = document.getElementById('currency-list');
+  if (!data || !data.length) {
+    list.innerHTML = `<p style="color:var(--text3);font-size:0.8rem;">${I18n.t('no_currencies')}</p>`;
+    return;
+  }
+  const fixed    = ['USD','EUR'];
+  const fixedLbl  = I18n.t('cur_fixed');
+  const activeLbl = I18n.t('cur_active');
+  const inactLbl  = I18n.t('cur_inactive');
+
+  list.innerHTML = data.map(c => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+      background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);">
+      <span style="font-size:1.1rem;min-width:28px;">${c.symbol}</span>
+      <span style="flex:1;font-weight:600;font-size:0.85rem;">${c.name} (${c.code})</span>
+      ${fixed.includes(c.code)
+        ? `<span style="font-size:0.72rem;color:var(--text3);">${fixedLbl}</span>`
+        : `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;">
+            <input type="checkbox" ${c.is_active ? 'checked' : ''}
+              onchange="toggleCurrency('${c.code}',this.checked)"
+              style="width:16px;height:16px;cursor:pointer;">
+            ${c.is_active
+              ? `<span style="color:var(--green);">${activeLbl}</span>`
+              : `<span style="color:var(--text3);">${inactLbl}</span>`}
+           </label>`
+      }
+    </div>`).join('');
+}
+
+async function toggleCurrency(code, active) {
+  const ok = await Currency.toggle(code, active);
+  if (!ok) { UI.toast(I18n.t('err_update'), 'error'); return; }
+  await Storage.logAction('toggle_currency',
+    { currency: code },
+    { is_active: !active },
+    { is_active: active }
+  );
+  Currency.invalidate();
+  const msg = active
+    ? `${I18n.t('cur_toggled_on')} ${code} ✅`
+    : `${I18n.t('cur_toggled_off')} ${code}`;
+  UI.toast(msg);
+  await loadCurrencies();
+}
+
+async function savePersonal() {
+  const currentPass = document.getElementById('current-pass').value;
+  const newUser     = document.getElementById('new-username').value.trim();
+  const newPass     = document.getElementById('new-pass').value;
+  const newPass2    = document.getElementById('new-pass2').value;
+
+  if (!currentPass) { UI.toast(I18n.t('err_enter_current_pass'), 'error'); return; }
+  const user = Auth.getUser();
+  if (newPass && newPass !== newPass2) {
+    UI.toast(I18n.t('err_pass_mismatch'), 'error'); return;
+  }
+  UI.showLoading(true);
+  let ok = true;
+  if (newPass) ok = await Storage.updateOwnPass(user.user, currentPass, newPass);
+  UI.showLoading(false);
+  if (ok) {
+    await Storage.logAction('change_own_password', { username: user.user });
+    UI.toast(I18n.t('saved_logout'));
+    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 1500);
+  } else {
+    UI.toast(I18n.t('err_wrong_pass'), 'error');
+  }
+}
+
+let _importData = null;
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.accounts || !data.txns) {
+        UI.toast(I18n.t('err_invalid_backup'), 'error');
+        return;
+      }
+      _importData = data;
+      const unknown = I18n.t('restore_unknown');
+      const old     = I18n.t('restore_old');
+      document.getElementById('import-preview').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div>${I18n.t('restore_date')} <b>${data.exportedAt ? new Date(data.exportedAt).toLocaleString('ar-SA') : unknown}</b></div>
+          <div>${I18n.t('restore_accounts')} ${data.accounts?.length || 0}</div>
+          <div>${I18n.t('restore_txns')} ${data.txns?.length || 0}</div>
+          <div>${I18n.t('restore_users')} ${data.users?.length || 0}</div>
+          <div>${I18n.t('restore_version')} ${data.version || old}</div>
+        </div>`;
+      document.getElementById('import-modal').style.display = 'flex';
+    } catch(err) {
+      UI.toast(I18n.t('err_corrupt_backup'), 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function closeImport() {
+  _importData = null;
+  document.getElementById('import-modal').style.display = 'none';
+}
+
+async function doImport() {
+  if (!_importData) return;
+  closeImport();
+  UI.showLoading(true);
+  try {
+    const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+    await sb.from('transactions').delete().neq('id', 0);
+    await sb.from('accounts').delete().neq('id', CONFIG.PROFIT_ACCOUNT_ID);
+    await sb.from('accounts').delete().eq('id', CONFIG.PROFIT_ACCOUNT_ID);
+    await Storage.ensureProfitAccount();
+    await sb.from('deleted_accounts').delete().neq('id', '');
+    await sb.from('audit_log').delete().neq('id', 0);
+    await Storage.ensureProfitAccount();
+    Storage.invalidate();
+    UI.showLoading(false);
+    UI.toast(I18n.t('done_clear_logout'));
+    setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
+  } catch(e) {
+    UI.showLoading(false);
+    UI.toast(`${I18n.t('err_clear')}: ${e.message}`, 'error');
+  }
+}
+
+</script>
+</body>
+</html>
