@@ -146,8 +146,7 @@ async function doDeposit() {
       ? ` · ${I18n.t('commission')}: ${result.commission.toFixed(4)}`
       : '';
     UI.toast(I18n.t('deposit_success') + commMsg);
-    document.getElementById('dep-search').value = '';
-    document.getElementById('dep-id').value = '';
+    UI.clearSearch('dep');
     document.getElementById('dep-amount').value = '';
     document.getElementById('dep-preview').style.display = 'none';
     await UI.updateTreasury();

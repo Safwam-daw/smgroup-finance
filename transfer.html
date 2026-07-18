@@ -218,8 +218,8 @@ async function doTransfer(force) {
   if (result.ok) {
     UI.toast(I18n.t('transfer_success'));
     closeOverdraft();
-    ['trf-from-search','trf-to-search'].forEach(id => document.getElementById(id).value='');
-    ['trf-from-id','trf-to-id'].forEach(id => document.getElementById(id).value='');
+    UI.clearSearch('trf-from');
+    UI.clearSearch('trf-to');
     document.getElementById('trf-amount').value='';
     document.getElementById('trf-preview').style.display='none';
     ['from-bal-box','to-bal-box'].forEach(id => document.getElementById(id).style.display='none');

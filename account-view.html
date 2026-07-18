@@ -693,15 +693,13 @@ function openOp(type) {
   // تصفير
   document.getElementById('op-amount').value = '';
   document.getElementById('op-preview').style.display = 'none';
-  document.getElementById('op-to-search').value = '';
-  document.getElementById('op-to-id').value = '';
+  UI.clearSearch('op-to');
   document.getElementById('op-to-bal').style.display = 'none';
   document.getElementById('op-trf-amount').value = '';
 
   if (type === 'trf') {
     // تعبئة "من حساب" تلقائياً بالحساب الحالي، مع إمكانية تغييره
-    document.getElementById('op-from-search').value = _accId + ' — ' + _accObj.name;
-    document.getElementById('op-from-id').value = _accId;
+    UI.setSearchValue('op-from', _accId, _accObj.name);
     const box = document.getElementById('op-from-bal');
     box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">$${parseFloat(_accObj.bal_usd||0).toFixed(2)}</b>
                      &nbsp;|&nbsp; <b style="color:var(--euro);">€${parseFloat(_accObj.bal_eur||0).toFixed(2)}</b>`;
@@ -711,7 +709,7 @@ function openOp(type) {
   document.getElementById('op-modal').classList.add('open');
   setTimeout(() => {
     const inp = type==='trf'
-      ? document.getElementById('op-to-search')
+      ? document.getElementById('op-to-search-code')
       : document.getElementById('op-amount');
     inp?.focus();
   }, 150);

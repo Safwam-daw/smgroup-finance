@@ -276,8 +276,7 @@ function typeLabel(type) {
   if (acc) {
     const a = _allAccounts.find(x => x.id === acc);
     if (a) {
-      document.getElementById('stmt-search').value = a.id + ' — ' + a.name;
-      document.getElementById('stmt-acc-id').value = a.id;
+      UI.setSearchValue('stmt', a.id, a.name);
       await loadStatement();
     }
   }

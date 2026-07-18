@@ -136,8 +136,7 @@ UI.showLoading(false);
 if (result.ok) {
   UI.toast(I18n.t('withdraw_success'));
   closeOverdraft();
-  document.getElementById('wit-search').value='';
-  document.getElementById('wit-id').value='';
+  UI.clearSearch('wit');
   document.getElementById('wit-amount').value='';
   document.getElementById('wit-preview').style.display='none';
   await UI.updateTreasury();

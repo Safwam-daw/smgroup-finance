@@ -7,6 +7,15 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:460px;padding:24px;
+  max-height:90vh; overflow-y:auto; }
+.modal-box h3 { margin-bottom:18px; }
+</style>
 </head>
 <body>
 <div id="app">
@@ -17,51 +26,56 @@
         <h2 data-i18n="manage_accounts">إدارة الحسابات</h2>
         <p data-i18n="manage_accounts_sub">إنشاء ومتابعة حسابات الزبائن والشركات</p>
       </div>
+      <button class="btn btn-primary no-print" id="open-create-btn" onclick="openCreateModal()" data-i18n="create_account">➕ فتح حساب جديد</button>
       <button class="btn btn-primary no-print" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 Excel</button>
       <button class="btn btn-ghost no-print" id="client-portal-btn" data-i18n="nav_client_portal"
               onclick="window.open('client.html','_blank')">👤 بوابة الزبون</button>
     </div>
 
     <!-- فتح حساب جديد -->
-    <div class="card" id="create-card" style="margin-bottom:16px;">
-      <h3 data-i18n="create_account">➕ فتح حساب جديد</h3>
-      <div class="grid-2">
-        <div>
-          <div class="form-group">
-            <label data-i18n="account_type">نوع الحساب</label>
-            <select id="acc-type" onchange="refreshCode()">
-              <option value="customer" data-i18n="lbl_customer">زبون</option>
-              <option value="company" data-i18n="lbl_company">شركة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="account_code_auto">كود الحساب (تلقائي — قابل للتعديل)</label>
-            <input type="text" id="acc-code">
-            <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;" data-i18n="account_code_hint">
-              يقترح النظام الكود التالي تلقائياً، ويمكنك تغييره لكود مميز
-            </div>
+    <div id="create-modal" class="modal-back">
+      <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin-bottom:0;" data-i18n="create_account">➕ فتح حساب جديد</h3>
+          <button onclick="closeCreateModal()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+        </div>
+        <div class="form-group">
+          <label data-i18n="account_type">نوع الحساب</label>
+          <select id="acc-type" onchange="refreshCode()">
+            <option value="customer" data-i18n="lbl_customer">زبون</option>
+            <option value="company" data-i18n="lbl_company">شركة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="account_code_auto">كود الحساب (تلقائي — قابل للتعديل)</label>
+          <input type="text" id="acc-code">
+          <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;" data-i18n="account_code_hint">
+            يقترح النظام الكود التالي تلقائياً، ويمكنك تغييره لكود مميز
           </div>
         </div>
-        <div>
-          <div class="form-group">
-            <label data-i18n="account_name">اسم الحساب</label>
-            <input type="text" id="acc-name" data-i18n-placeholder="account_name_ph"
-                   placeholder="اسم الزبون أو الشركة"
-                   onkeydown="if(event.key==='Enter') doCreate()">
-          </div>
-          <button class="btn btn-primary btn-full" style="margin-top:6px;"
-                  onclick="doCreate()" data-i18n="save_account">💾 حفظ الحساب</button>
+        <div class="form-group">
+          <label data-i18n="account_name">اسم الحساب</label>
+          <input type="text" id="acc-name" data-i18n-placeholder="account_name_ph"
+                 placeholder="اسم الزبون أو الشركة"
+                 onkeydown="if(event.key==='Enter') doCreate()">
         </div>
+        <button class="btn btn-primary btn-full" style="margin-top:6px;"
+                onclick="doCreate()" data-i18n="save_account">💾 حفظ الحساب</button>
       </div>
     </div>
 
     <!-- فلاتر -->
     <div class="card" style="margin-bottom:16px;padding:14px 16px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div class="form-group" style="flex:2;min-width:160px;margin-bottom:0;">
-          <label data-i18n="quick_search">بحث سريع</label>
-          <input type="text" id="filter-input" data-i18n-placeholder="search_name_code"
-                 placeholder="اسم أو كود…" oninput="applyFilter()">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="search_by_code">بحث بالكود</label>
+          <input type="text" id="filter-code" data-i18n-placeholder="search_by_code_ph"
+                 placeholder="بحث بالكود…" oninput="applyFilter()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+          <label data-i18n="search_by_name">بحث بالاسم</label>
+          <input type="text" id="filter-name" data-i18n-placeholder="search_by_name_ph"
+                 placeholder="بحث بالاسم…" oninput="applyFilter()">
         </div>
         <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;">
           <label data-i18n="filter_type">النوع</label>
@@ -154,11 +168,19 @@ let _rawAccounts = [];
   if (!Auth.can('clientPortal')) document.getElementById('client-portal-btn')?.remove();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
-  if (!Auth.isAdmin()) document.getElementById('create-card').style.display='none';
+  if (!Auth.isAdmin()) document.getElementById('open-create-btn').style.display='none';
   await refreshCode();
   await loadAccounts();
   I18n.apply();
 })();
+
+function openCreateModal() {
+  document.getElementById('create-modal').classList.add('open');
+  setTimeout(() => document.getElementById('acc-name').focus(), 150);
+}
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.remove('open');
+}
 
 async function loadAccounts() {
   UI.showLoading(true);
@@ -191,16 +213,19 @@ async function doCreate() {
     await refreshCode();
     await loadAccounts();
     await UI.updateTreasury();
+    closeCreateModal();
   } else { UI.toast(result.error,'error'); }
 }
 
 function applyFilter() {
-  const q      = document.getElementById('filter-input').value.toLowerCase().trim();
+  const qCode  = document.getElementById('filter-code').value.toLowerCase().trim();
+  const qName  = document.getElementById('filter-name').value.toLowerCase().trim();
   const type   = document.getElementById('filter-type').value;
   const bal    = document.getElementById('filter-bal').value;
   const sortBy = document.getElementById('sort-by').value;
   _filtered = _allAccounts.filter(a => {
-    if (q && !a.id.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
+    if (qCode && !a.id.toLowerCase().startsWith(qCode)) return false;
+    if (qName && !a.name.toLowerCase().includes(qName)) return false;
     if (type !== 'all' && a.type !== type) return false;
     if (bal === 'debtor' && a.usd >= 0 && a.eur >= 0) return false;
     return true;
@@ -208,10 +233,15 @@ function applyFilter() {
   if (sortBy === 'code') {
     _filtered.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric:true }));
   } else if (sortBy === 'created') {
-    // ملاحظة: يعتمد على عمود created_at في جدول accounts — إن لم يكن موجوداً يبقى الترتيب كما هو
+    // الأحدث أولاً — يعتمد على عمود created_at (يحتاج تشغيل MIGRATION_V18 + V19)
+    _filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  } else {
+    // seq = تسلسل الإنشاء الفعلي (الأقدم أولاً) — نفس عمود created_at لكن بالاتجاه المعاكس
     _filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
   }
-  // 'seq' = الترتيب الطبيعي كما وصل من قاعدة البيانات (بدون فرز إضافي)
+  if ((sortBy === 'created' || sortBy === 'seq') && _allAccounts.length && _allAccounts.every(a => !a.created_at)) {
+    UI.toast(I18n.t('created_at_missing_warning') || '⚠️ لا يوجد تاريخ إنشاء مسجّل لدى أي حساب — تأكد من تشغيل MIGRATION_V18.sql وMIGRATION_V19.sql', 'error');
+  }
   _page = 1;
   renderPage();
 }
