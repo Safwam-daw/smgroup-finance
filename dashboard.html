@@ -18,10 +18,6 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="loadAll()" data-i18n="refresh">🔄 تحديث</button>
-        <button class="btn btn-primary btn-sm" id="publish-all-btn"
-                style="display:none;" onclick="publishAll()" data-i18n="publish_all">
-          📤 نشر كشوف الزبائن
-        </button>
       </div>
     </div>
 
@@ -98,10 +94,6 @@ let _debtorPage = 1;
   const accounts = await loadAll();
   await UI.updateTreasury();
   Storage.saveDailySnapshot().catch(e => console.log('snapshot:', e));
-  if (Auth.isAdmin()) {
-    const pb = document.getElementById('publish-all-btn');
-    if (pb) pb.style.display = 'inline-flex';
-  }
   await checkDebtAlerts(accounts || []);
   Realtime.start(
     async (txn) => {
@@ -217,34 +209,6 @@ function renderDebtorPage() {
     <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage-1})" ${_debtorPage===1?'disabled':''}>‹ ${I18n.t('prev')}</button>
     <span>${_debtorPage} / ${totalPages}</span>
     <button class="btn btn-ghost btn-sm" onclick="goDebtor(${_debtorPage+1})" ${_debtorPage===totalPages?'disabled':''}>${I18n.t('next')} ›</button>`;
-}
-
-async function publishAll() {
-  const btn = document.getElementById('publish-all-btn');
-  if (btn) { btn.disabled=true; btn.textContent=I18n.t('publishing'); }
-  try {
-    const now      = new Date().toISOString();
-    const accounts = await Storage.getAccounts();
-    const customers = accounts.filter(a => a.type === 'customer');
-    if (!customers.length) { UI.toast(I18n.t('publish_no_clients'), 'error'); return; }
-    const needsPublish = customers.filter(a => {
-      if (!a.client_pin) return false;
-      if (!a.client_published_at) return true;
-      return false;
-    });
-    if (!needsPublish.length) { UI.toast(I18n.t('publish_already')); return; }
-    const ok = await Storage.publishAllClients(Auth.getUser().user);
-    if (ok) {
-      Storage.invalidate('accounts');
-      UI.toast(`✅ ${I18n.t('publish_success')} ${needsPublish.length} / ${customers.length}`);
-      await Storage.addNotification('publish', '📤 ' + I18n.t('publish_all'),
-        `${I18n.t('publish_success')} ${needsPublish.length}`, '📤');
-    } else {
-      UI.toast(I18n.t('publish_error'), 'error');
-    }
-  } finally {
-    if (btn) { btn.disabled=false; btn.textContent=I18n.t('publish_all'); }
-  }
 }
 
 async function checkDebtAlerts(accounts) {
