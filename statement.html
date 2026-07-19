@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 .acc-header {
   background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -163,6 +164,7 @@
           <div style="display:flex;gap:8px;align-self:flex-end;flex-wrap:wrap;" class="no-print">
             <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn">🖨️ طباعة</button>
             <button class="btn btn-primary btn-sm" onclick="exportStatement()" data-i18n="excel_btn">📊 Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="openBulkModal()" data-i18n="download_all_stmts_btn">⬇️ تحميل كل الكشوفات</button>
           </div>
         </div>
       </div>
@@ -225,6 +227,24 @@
     <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeDel()" data-i18n="cancel_btn">إلغاء</button>
       <button class="btn btn-danger" onclick="doDelete()" data-i18n="delete_final_btn">🗑️ حذف نهائي</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Download Modal -->
+<div id="bulk-modal" class="modal-back">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size:2rem;margin-bottom:12px;">⬇️</div>
+    <h3 data-i18n="download_all_stmts_title">تحميل كشوفات الزبائن النشطين</h3>
+    <p style="color:var(--text2);margin:14px 0;font-size:0.85rem;line-height:1.6;" data-i18n="download_all_stmts_desc">
+      يُنزَّل ملف واحد مضغوط يحتوي كشف كل زبون اشتغل خلال الفترة المختارة فقط.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px;">
+      <button class="btn btn-primary" onclick="downloadAllStatements('day')" data-i18n="period_day_btn">📅 اليوم</button>
+      <button class="btn btn-primary" onclick="downloadAllStatements('week')" data-i18n="period_week_btn">🗓️ هذا الأسبوع</button>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeBulkModal()" data-i18n="cancel_btn">إلغاء</button>
     </div>
   </div>
 </div>
@@ -451,6 +471,107 @@ function exportStatement() {
   const wb = XLSX.utils.table_to_book(document.getElementById('stmt-table'), { sheet:t('statement_sheet_name') });
   const name = document.getElementById('acc-header-name').textContent;
   XLSX.writeFile(wb, t('statement_file_prefix') + name + '_' + UI.todayStr() + '.xlsx');
+}
+
+// ── تحميل كشوفات كل الزبائن النشطين خلال يوم/أسبوع ────
+function openBulkModal()  { document.getElementById('bulk-modal').classList.add('open'); }
+function closeBulkModal() { document.getElementById('bulk-modal').classList.remove('open'); }
+
+function _bulkRange(period) {
+  const now = new Date();
+  const to  = now.toISOString();
+  const from = new Date(now);
+  if (period === 'day') {
+    from.setHours(0,0,0,0);
+  } else { // week = آخر 7 أيام بما فيها اليوم
+    from.setDate(from.getDate() - 6);
+    from.setHours(0,0,0,0);
+  }
+  return { from: from.toISOString(), to };
+}
+
+async function downloadAllStatements(period) {
+  if (typeof JSZip === 'undefined') { UI.toast(t('zip_not_loaded') || 'مكتبة الضغط غير محمّلة', 'error'); return; }
+  closeBulkModal();
+  UI.showLoading(true);
+  try {
+    const { from, to } = _bulkRange(period);
+    const periodTxns = await Storage.getTxns({ from_date: from, to_date: to });
+    if (!periodTxns.length) {
+      UI.toast(I18n.t('no_activity_period') || 'لا توجد أي حركة في هذه الفترة', 'error');
+      return;
+    }
+    // الحسابات التي اشتغلت فعلياً خلال الفترة
+    const activeIds = [...new Set(
+      periodTxns.flatMap(t => [t.acc, t.from, t.to]).filter(Boolean)
+    )];
+    if (!_allAccounts.length) _allAccounts = await Accounts.getAll();
+
+    const zip = new JSZip();
+    let fileCount = 0;
+    for (const accId of activeIds) {
+      const acc = _allAccounts.find(a => a.id === accId);
+      if (!acc) continue;
+      const accTxns = periodTxns.filter(tx =>
+        tx.acc === accId || tx.from === accId || tx.to === accId
+      );
+      if (!accTxns.length) continue;
+
+      const rows = [[
+        I18n.t('col_date') || 'التاريخ', I18n.t('col_type') || 'النوع',
+        I18n.t('col_counterpart') || 'الطرف الآخر', I18n.t('col_currency') || 'العملة',
+        I18n.t('col_debit') || 'مدين', I18n.t('col_credit') || 'دائن',
+        I18n.t('note_lbl') || 'ملاحظة'
+      ]];
+      accTxns.forEach(t2 => {
+        const isFrom = t2.type==='trf' && t2.from===accId;
+        const isTo   = t2.type==='trf' && t2.to===accId;
+        const isFee  = t2.type==='fee' || t2.is_commission_entry;
+        let debit=0, credit=0;
+        if (t2.type==='dep') credit = parseFloat(t2.amt);
+        if (t2.type==='wit') debit  = parseFloat(t2.amt);
+        if (isFee)           debit  = parseFloat(t2.amt);
+        if (isFrom) debit  = parseFloat(t2.amt);
+        if (isTo)   credit = parseFloat(t2.amt) * (parseFloat(t2.rate)||1);
+        let counterpart = '';
+        if (t2.type==='trf') {
+          const otherId = isFrom ? t2.to : t2.from;
+          const other   = _allAccounts.find(a=>a.id===otherId);
+          counterpart   = (other ? other.name : otherId) || '';
+        }
+        rows.push([
+          UI.formatDate(t2.date), typeLabel(t2.type),
+          counterpart, (t2.cur||'').toUpperCase(),
+          debit>0?debit.toFixed(2):'', credit>0?credit.toFixed(2):'',
+          t2.note || ''
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, (t('statement_sheet_name')||'Statement').slice(0,31));
+      const bin = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const safeName = String(acc.name||accId).replace(/[\\/:*?"<>|]/g,'_');
+      zip.file(`${accId}_${safeName}.xlsx`, bin);
+      fileCount++;
+    }
+
+    if (!fileCount) {
+      UI.toast(I18n.t('no_activity_period') || 'لا توجد أي حركة في هذه الفترة', 'error');
+      return;
+    }
+    const blob = await zip.generateAsync({ type:'blob' });
+    const label = period === 'day' ? (I18n.t('period_day_btn')||'اليوم') : (I18n.t('period_week_btn')||'الأسبوع');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${I18n.t('statement_file_prefix')||'كشف_'}${label}_${UI.todayStr()}.zip`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    UI.toast(`✅ ${fileCount} ` + (I18n.t('statements_downloaded') || 'كشف تم تحميلها'));
+  } finally {
+    UI.showLoading(false);
+  }
 }
 </script>
 </body>
