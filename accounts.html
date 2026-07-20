@@ -194,14 +194,35 @@ async function publishAll() {
     if (!customers.length) { UI.toast(I18n.t('publish_no_clients'), 'error'); return; }
     const withPin = customers.filter(a => a.client_pin);
     if (!withPin.length) { UI.toast(I18n.t('publish_no_pin'), 'error'); return; }
-    // ملاحظة: هذا الزر يُقصد به إعادة النشر في كل مرة (تحديث الكشوف بآخر الحركات)
-    // وليس مرة واحدة فقط — لذلك ننشر دائماً بدون تخطي من سبق نشره
+
+    // نجلب كل الحركات لنعرف آخر نشاط فعلي لكل حساب، ونقارنه بآخر وقت نشر له
+    const allTxns = await Storage.getTxns({});
+    const lastActivity = {}; // accId -> أحدث تاريخ حركة
+    allTxns.forEach(tx => {
+      [tx.acc, tx.from, tx.to].filter(Boolean).forEach(id => {
+        const d = new Date(tx.date).getTime();
+        if (!lastActivity[id] || d > lastActivity[id]) lastActivity[id] = d;
+      });
+    });
+
+    const needsPublish = withPin.filter(a => {
+      if (!a.client_published_at) return true; // لم يُنشَر له أي كشف من قبل
+      const last = lastActivity[a.id];
+      if (!last) return false; // لا حركة إطلاقاً — لا داعي للنشر
+      return last > new Date(a.client_published_at).getTime();
+    });
+
+    if (!needsPublish.length) {
+      UI.toast(I18n.t('publish_already') || '✅ تم نشر جميع الكشوف مسبقاً — لا توجد أي تحديثات جديدة منذ آخر نشر');
+      return;
+    }
+
     const ok = await Storage.publishAllClients(Auth.getUser().user);
     if (ok) {
       Storage.invalidate('accounts');
-      UI.toast(`✅ ${I18n.t('publish_success')} ${withPin.length} / ${customers.length}`);
+      UI.toast(`✅ ${I18n.t('publish_success')} ${needsPublish.length} / ${withPin.length}`);
       await Storage.addNotification('publish', '📤 ' + I18n.t('publish_all'),
-        `${I18n.t('publish_success')} ${withPin.length}`, '📤');
+        `${I18n.t('publish_success')} ${needsPublish.length}`, '📤');
     } else {
       UI.toast(I18n.t('publish_error'), 'error');
     }

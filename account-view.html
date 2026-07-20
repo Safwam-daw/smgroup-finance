@@ -106,7 +106,6 @@
         <div class="btn-group no-print" style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" id="edit-acc-btn" onclick="openEditAcc()" style="display:none;" data-i18n="edit_acc_btn_lbl">✏️ تعديل</button>
           <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)" data-i18n="full_statement">📋 كشف كامل</button>
-          <button class="btn btn-danger btn-sm" id="del-acc-btn" onclick="openDelAcc()" style="display:none;" data-i18n="delete_acc_btn_lbl">🗑️ حذف الحساب</button>
           <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;" data-i18n="publish_stmt_btn">📤 نشر الكشف</button>
           <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;" data-i18n="check_bal_btn_lbl">🔍 فحص الرصيد</button>
           <button class="btn btn-ghost btn-sm" onclick="history.back()" data-i18n="go_back">← رجوع</button>
@@ -298,12 +297,19 @@
 <!-- Modal تعديل ملاحظة -->
 <div id="edit-modal" class="modal-back">
   <div class="modal-box">
-    <h3 data-i18n="edit_note_title">✏️ تعديل الملاحظة</h3>
+    <h3 data-i18n="edit_note_title">✏️ تعديل الحركة</h3>
     <input type="hidden" id="edit-id">
     <div class="form-group">
       <label data-i18n="note_lbl">الملاحظة</label>
       <input type="text" id="edit-note" placeholder="أدخل ملاحظة…" data-i18n-placeholder="note_ph"
              onkeydown="if(event.key==='Enter') saveNote()">
+    </div>
+    <div class="form-group">
+      <label data-i18n="txn_datetime_lbl">تاريخ ووقت العملية</label>
+      <input type="datetime-local" id="edit-datetime">
+      <div style="font-size:0.71rem;color:var(--text3);margin-top:3px;" data-i18n="txn_datetime_hint">
+        يُسجَّل أي تعديل على التاريخ في سجل التدقيق
+      </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeEdit()" data-i18n="cancel_btn">إلغاء</button>
@@ -398,9 +404,12 @@
            background:var(--surface2);border-radius:6px;padding:8px 12px;margin-top:4px;"></div>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
-      <button class="btn btn-ghost" onclick="closeEditAcc()" data-i18n="cancel_btn">إلغاء</button>
-      <button class="btn btn-primary" onclick="saveEditAcc()" data-i18n="save_edits_btn">💾 حفظ التعديلات</button>
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-top:18px;">
+      <button class="btn btn-danger" id="del-acc-btn-in-modal" onclick="openDelAcc()" style="display:none;" data-i18n="delete_acc_btn_lbl">🗑️ حذف الحساب</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" onclick="closeEditAcc()" data-i18n="cancel_btn">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveEditAcc()" data-i18n="save_edits_btn">💾 حفظ التعديلات</button>
+      </div>
     </div>
   </div>
 </div>
@@ -459,7 +468,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   // إظهار أزرار الأدمن
   if (Auth.isAdmin()) {
     const editBtn    = document.getElementById('edit-acc-btn');
-    const delAccBtn  = document.getElementById('del-acc-btn');
+    const delAccBtn  = document.getElementById('del-acc-btn-in-modal');
     const checkBtn   = document.getElementById('check-bal-btn');
     if (editBtn)   editBtn.style.display   = 'inline-flex';
     if (delAccBtn) delAccBtn.style.display = 'inline-flex';
@@ -618,7 +627,7 @@ function renderPage() {
     // إضافة حدود ذهبية للعمولة
     const editBtns = (!forPrint && !isFee)
       ? [
-          canEdit  ? `<button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}')">✏️</button>` : '',
+          canEdit  ? `<button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}','${t.date}')">✏️</button>` : '',
           canDelete ? `<button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>` : ''
         ].join('')
       : '';
@@ -849,18 +858,14 @@ async function publishClient() {
 function copyPin() {
   const pin = document.getElementById('acc-pin-display').textContent.trim();
   if (!pin || pin === '—') { UI.toast(I18n.t('pin_none'), 'error'); return; }
-  const accId = _accId;
-  const text  = `${t('account_id_lbl')}: ${accId}
-${t('pin_password_lbl')}: ${pin}
-${t('portal_link_lbl')}: ${location.origin}/client.html`;
-  navigator.clipboard.writeText(text).then(() => {
+  navigator.clipboard.writeText(pin).then(() => {
     UI.toast(I18n.t('copy_client_ok'));
     const btn = document.getElementById('copy-pin-btn');
     if (btn) { btn.textContent = I18n.t('copy_ok'); setTimeout(()=>btn.textContent=I18n.t('copy_btn'), 2000); }
   }).catch(() => {
     // fallback for older browsers
     const el = document.createElement('textarea');
-    el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+    el.value = pin; el.style.position = 'fixed'; el.style.opacity = '0';
     document.body.appendChild(el); el.select();
     document.execCommand('copy'); document.body.removeChild(el);
     UI.toast(I18n.t('copy_client_ok'));
@@ -873,12 +878,14 @@ async function regenPin() {
   UI.showLoading(false);
   if (newPin) {
     document.getElementById('acc-pin-display').textContent = newPin;
+    _accObj.client_pin_plain = newPin;
     UI.toast(I18n.t('pin_generated') + ': ' + newPin);
   } else { UI.toast(I18n.t('gen_error'),'error'); }
 }
 
 // ── حذف الحساب ───────────────────────────────────────
 function openDelAcc() {
+  closeEditAcc();
   const usd = parseFloat(_accObj.bal_usd || 0);
   const eur = parseFloat(_accObj.bal_eur || 0);
   document.getElementById('del-acc-info').innerHTML = `
@@ -931,7 +938,7 @@ function openEditAcc() {
   if (pinBox) {
     pinBox.style.display = _accObj.type==='customer' ? 'block' : 'none';
     if (_accObj.type==='customer') {
-      document.getElementById('acc-pin-display').textContent = _accObj.client_pin || '—';
+      document.getElementById('acc-pin-display').textContent = _accObj.client_pin_plain || '—';
     }
   }
   const rate = parseFloat(_accObj.commission_rate ?? 0.025);
@@ -995,25 +1002,37 @@ async function saveEditAcc() {
 }
 
 // ── تعديل / حذف ───────────────────────────────────────
-function openEdit(id, note) {
+function openEdit(id, note, date) {
   document.getElementById('edit-id').value   = id;
   document.getElementById('edit-note').value = note;
+  // datetime-local يحتاج صيغة محلية بدون منطقة زمنية: YYYY-MM-DDTHH:mm
+  const d = new Date(date);
+  const pad = n => String(n).padStart(2,'0');
+  const local = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('edit-datetime').value = local;
   document.getElementById('edit-modal').classList.add('open');
 }
 function closeEdit() { document.getElementById('edit-modal').classList.remove('open'); }
 
 async function saveNote() {
-  const id   = document.getElementById('edit-id').value;
-  const note = document.getElementById('edit-note').value;
+  const id       = document.getElementById('edit-id').value;
+  const note     = document.getElementById('edit-note').value;
+  const newLocal = document.getElementById('edit-datetime').value;
+  const newDate  = newLocal ? new Date(newLocal).toISOString() : null;
   UI.showLoading(true);
   const r = await Transactions.updateNote(id, note);
+  let dateResult = { ok: true };
+  const t = _allTxns.find(x=>String(x.id)===String(id));
+  const dateChanged = newDate && t && new Date(t.date).getTime() !== new Date(newDate).getTime();
+  if (dateChanged) {
+    dateResult = await Transactions.updateDate(id, newDate, t.date);
+  }
   UI.showLoading(false);
-  if (r.ok) {
+  if (r.ok && dateResult.ok) {
     closeEdit(); UI.toast(I18n.t('save_ok'));
-    const t = _allTxns.find(x=>String(x.id)===String(id));
-    if (t) t.note = note;
+    if (t) { t.note = note; if (dateChanged) t.date = newDate; }
     renderRows();
-  } else { UI.toast(r.error,'error'); }
+  } else { UI.toast(r.error || dateResult.error,'error'); }
 }
 
 function openDel(id) {
