@@ -57,9 +57,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='ledger'?'active':''}" data-page="ledger" onclick="navTo('ledger.html')">
           <span class="nav-icon">📒</span> ${t('nav_ledger')}
         </button>
-        <button class="nav-btn ${activePage==='statement'?'active':''}" data-page="statement" onclick="navTo('statement.html')">
-          <span class="nav-icon">📋</span> ${t('nav_statement')}
-        </button>
         <div class="nav-section-label" data-admin-only>${t('nav_admin')}</div>
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only data-page="employees" onclick="navTo('employees.html')">
           <span class="nav-icon">🛡️</span> ${t('nav_employees')}

@@ -6,12 +6,14 @@ const UI = (() => {
 
   // ══ نمط التنقل (سايدبار / توب بار) ═══════════════════════
   // الأولوية: تفضيل مُتزامن من القاعدة (users.nav_style) إن وُجد،
-  // وإلا القيمة المحلية لهذا الجهاز (localStorage)، وإلا 'sidebar'.
+  // وإلا القيمة المحلية لهذا الجهاز (localStorage)، وإلا افتراضي
+  // حسب نوع الجهاز: قائمة جانبية على الهاتف، شريط علوي على الكمبيوتر.
   function getEffectiveNavStyle() {
     const remote = Auth.getUser()?.nav_style;
     if (remote === 'sidebar' || remote === 'topbar') return remote;
     const local = localStorage.getItem('sm_nav_style');
-    return (local === 'sidebar' || local === 'topbar') ? local : 'sidebar';
+    if (local === 'sidebar' || local === 'topbar') return local;
+    return window.innerWidth <= 900 ? 'sidebar' : 'topbar';
   }
 
   function applyNavStyle() {
