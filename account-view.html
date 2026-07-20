@@ -880,7 +880,9 @@ async function regenPin() {
     document.getElementById('acc-pin-display').textContent = newPin;
     _accObj.client_pin_plain = newPin;
     UI.toast(I18n.t('pin_generated') + ': ' + newPin);
-  } else { UI.toast(I18n.t('gen_error'),'error'); }
+  } else {
+    UI.toast('⚠️ فشل حفظ PIN في قاعدة البيانات — تأكد من تشغيل MIGRATION_V21.sql، وإن كنت شغّلته بالفعل جرّب من Supabase Dashboard: Settings → API → اضغط "Reload schema" أو أعد تشغيل المشروع', 'error');
+  }
 }
 
 // ── حذف الحساب ───────────────────────────────────────
