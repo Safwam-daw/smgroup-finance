@@ -225,7 +225,16 @@ const Transactions = (() => {
     return ok ? { ok: true } : { ok: false, error: 'خطأ في التعديل' };
   }
 
+  async function updateDate(txnId, newDateIso, oldDateIso) {
+    if (!Auth.can('canEdit')) return { ok: false, error: 'ليس لديك صلاحية التعديل' };
+    const ok = await Storage.updateTxn(txnId, { date: newDateIso });
+    if (ok) {
+      await Storage.logAction('edit_txn_date', { txnId }, oldDateIso, newDateIso);
+    }
+    return ok ? { ok: true } : { ok: false, error: 'خطأ في تعديل التاريخ' };
+  }
+
   async function getAll(filters = {}) { return Storage.getTxns(filters); }
 
-  return { getBalance, getTreasuryTotals, deposit, withdraw, transfer, deleteTxn, updateNote, getAll };
+  return { getBalance, getTreasuryTotals, deposit, withdraw, transfer, deleteTxn, updateNote, updateDate, getAll };
 })();

@@ -467,10 +467,21 @@ const Storage = (() => {
   async function regeneratePin(accountId) {
     const plain = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
     const hashed = await hashPassword(plain);
-    const { error } = await _sb.from('accounts').update({ client_pin: hashed }).eq('id', accountId);
-    if (error) return null;
+    const { error } = await _sb.from('accounts')
+      .update({ client_pin: hashed, client_pin_plain: plain })
+      .eq('id', accountId);
+    if (error) { console.error('regeneratePin update error:', error); return null; }
     invalidate('accounts');
-    // نعيد الـ PIN كـ plain text مرة واحدة فقط لعرضه للموظف
+    // تحقق فعلي بقراءة السطر من جديد — لا نكتفي بعدم وجود خطأ من Supabase،
+    // لأن أعمدة مضافة حديثاً قد تُقبل صورياً دون أن تُخزَّن فعلياً إن لم يُحدَّث
+    // Supabase schema cache بعد تشغيل الـ migration
+    const { data: verify, error: vErr } = await _sb.from('accounts')
+      .select('client_pin_plain').eq('id', accountId).single();
+    if (vErr || !verify || verify.client_pin_plain !== plain) {
+      console.error('regeneratePin: verification failed — القيمة لم تُحفظ فعلياً في قاعدة البيانات', vErr, verify);
+      return null;
+    }
+    // نعيد الـ PIN كـ plain text — كما أنه محفوظ الآن أيضاً في client_pin_plain لعرضه لاحقاً
     return plain;
   }
 
