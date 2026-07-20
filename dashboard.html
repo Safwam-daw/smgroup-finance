@@ -155,7 +155,8 @@ function renderRecent(txns) {
   txns = txns.filter(t =>
     !String(t.acc||'').startsWith('7') &&
     !String(t.from||'').startsWith('7') &&
-    !String(t.to||'').startsWith('7')
+    !String(t.to||'').startsWith('7') &&
+    !t.is_commission_entry
   ).slice(0, 10);
   const todayStr   = new Date().toDateString();
   const todayCount = txns.filter(t=>new Date(t.date).toDateString()===todayStr).length;
