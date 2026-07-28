@@ -557,6 +557,19 @@ const Storage = (() => {
     return data || [];
   }
 
+  // يجلب أقرب سجل رصيد محفوظ بتاريخ = اليوم المطلوب، أو أقرب يوم سابق له إن لم يوجد
+  // (السجل يُحفظ عند أول دخول للوحة التحكم في ذلك اليوم، فهو يمثّل تقريباً
+  // الرصيد الافتتاحي لذلك اليوم قبل بدء العمل)
+  async function getSnapshotOnOrBefore(dateStr) {
+    const { data } = await _sb
+      .from('daily_snapshots')
+      .select('*')
+      .lte('snapshot_date', dateStr)
+      .order('snapshot_date', { ascending: false })
+      .limit(1);
+    return (data && data[0]) || null;
+  }
+
 
   // ══ الإشعارات ══════════════════════════════════════════
   async function addNotification(type, title, body, icon='🔔') {
@@ -663,7 +676,7 @@ const Storage = (() => {
   clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
 
   // daily snapshots
-  saveDailySnapshot, getSnapshots,
+  saveDailySnapshot, getSnapshots, getSnapshotOnOrBefore,
 
   // notifications
   addNotification, getNotifications, markNotifRead, markAllNotifsRead,
