@@ -34,6 +34,15 @@
   padding:2px 7px; border-radius:5px; display:inline-block; }
 .cell-debit  { background:var(--red-dim); color:var(--red); font-weight:700;
   padding:2px 7px; border-radius:5px; display:inline-block; }
+.action-badge {
+  display:inline-block; padding:2px 9px; border-radius:20px;
+  font-size:0.68rem; font-weight:600;
+}
+.act-deposit  { background:var(--green-dim); color:var(--green); }
+.act-withdraw { background:var(--red-dim);   color:var(--red); }
+.act-transfer { background:var(--blue-dim);  color:var(--blue); }
+.act-delete   { background:rgba(239,68,68,0.2); color:var(--red); }
+.act-other    { background:var(--surface3); color:var(--text2); }
 @media(max-width:640px) { .tab-bar { gap:4px; } .tab-btn { padding:7px 11px; font-size:0.73rem; } }
 @media print {
   /* إخفاء كل عناصر التحكم */
@@ -105,6 +114,8 @@
       <button class="tab-btn" onclick="switchTab('activity',this)" data-i18n="tab_activity">🕐 آخر نشاط</button>
       <button class="tab-btn" onclick="switchTab('employees',this)" data-i18n="tab_employees">👤 حركة الموظفين</button>
       <button class="tab-btn" onclick="switchTab('deleted',this)" data-i18n="tab_deleted">🗑️ المحذوفات</button>
+      <button class="tab-btn" id="tab-btn-audit" onclick="switchTab('audit',this)" data-i18n="tab_audit">🔍 سجل التدقيق</button>
+      <button class="tab-btn" id="tab-btn-edits" onclick="switchTab('edits',this)" data-i18n="tab_edits">📝 سجل التعديلات</button>
       <button class="tab-btn" onclick="switchTab('debtLimit',this)" data-i18n="tab_debt_limit">⚙️ إعداد حد الدين</button>
     </div>
 
@@ -240,6 +251,42 @@
       </div>
     </div>
 
+    <!-- سجل التدقيق -->
+    <div class="tab-content" id="tab-audit">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
+        <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
+          <label data-i18n="filter_action_type">نوع الإجراء</label>
+          <select id="audit-action-filter" onchange="renderAudit()">
+            <option value="all" data-i18n="filter_all">الكل</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;">
+          <label data-i18n="col_user">المستخدم</label>
+          <input type="text" id="audit-user-filter" oninput="renderAudit()">
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="audit-table">
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="col_action">الإجراء</th><th data-i18n="col_user">المستخدم</th><th data-i18n="col_page">الصفحة</th><th data-i18n="col_details">التفاصيل</th></tr></thead>
+            <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- سجل التعديلات -->
+    <div class="tab-content" id="tab-edits">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="tbl-wrap" style="border:none;margin:0;">
+          <table id="edits-table">
+            <thead><tr><th data-i18n="col_time_lbl">الوقت</th><th data-i18n="edit_type">نوع التعديل</th><th data-i18n="col_user">المستخدم</th><th data-i18n="col_details">التفاصيل</th></tr></thead>
+            <tbody id="edits-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- إعداد حد الدين -->
     <div class="tab-content" id="tab-debtLimit">
       <div class="card" id="debt-settings-card">
@@ -288,6 +335,8 @@ window.addEventListener('afterprint', exitPrintMode);
 (async () => {
   if (!await initApp('reports')) return;
   if (!Auth.can('reports')) { navTo('accounts.html'); return; }
+  if (!Auth.can('audit')) document.getElementById('tab-btn-audit')?.remove();
+  if (!Auth.can('viewHistory')) document.getElementById('tab-btn-edits')?.remove();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   document.getElementById('print-report-brand').textContent = brandName() + ' — ' + t('financial_report_lbl');
@@ -390,6 +439,8 @@ function renderCurrentTab() {
   else if (tabName==='activity')    loadActivity();
   else if (tabName==='employees')   renderEmpActivity();
   else if (tabName==='deleted')     loadDeleted();
+  else if (tabName==='audit')       loadAudit();
+  else if (tabName==='edits')       loadEdits();
 }
 
 // ── Summary ───────────────────────────────────────────
@@ -679,6 +730,112 @@ UI.showLoading(false);
         </td>
       </tr>`).join('')
     : `<tr><td colspan="8" class="empty-state">${t('no_deleted_accounts')}</td></tr>`;
+}
+
+// ── سجل التدقيق (مدموج من audit.html) ─────────────────
+let _allLogs = [];
+
+function _getActionLabels() {
+  return {
+    deposit: t('action_deposit'), withdraw: t('action_withdraw'), transfer: t('action_transfer'),
+    delete: t('action_delete'), login: t('action_login'), logout: t('action_logout'),
+    create_account: t('action_create_acc'), delete_account: t('action_delete_acc'),
+    add_employee: t('action_add_emp'), delete_employee: t('action_del_emp'),
+    change_permissions: t('action_change_perm'), change_password: t('action_change_pass'),
+    change_own_password: t('action_change_pass'), toggle_currency: t('action_toggle_cur'),
+    publish: t('publish_all'),
+    balance_check_mismatch: t('action_balance_mismatch') || 'Balance Mismatch',
+    edit_txn_date: t('txn_datetime_lbl') || 'تعديل تاريخ عملية'
+  };
+}
+const _actionClass = {
+  deposit:'act-deposit', withdraw:'act-withdraw', transfer:'act-transfer', delete:'act-delete',
+  delete_account:'act-delete', delete_employee:'act-delete',
+  add_employee:'act-deposit', create_account:'act-deposit',
+  change_permissions:'act-other', change_password:'act-other',
+  change_own_password:'act-other', toggle_currency:'act-other', publish:'act-transfer',
+  edit_txn_date:'act-other'
+};
+function _buildLogDetails(l) {
+  const d = l.details || {};
+  let parts = [];
+  if (d.accountId)   parts.push(`${t('account') || 'حساب'}: ${d.accountId}`);
+  if (d.txnId)       parts.push(`#${d.txnId}`);
+  if (d.name)        parts.push(`${t('col_name')}: ${d.name}`);
+  if (d.amount)      parts.push(`${t('amount')||'مبلغ'}: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`);
+  if (d.fromId)      parts.push(`${t('from')||'من'}: ${d.fromId} → ${d.toId}`);
+  if (d.commission && d.commission > 0) parts.push(`${t('commission')||'عمولة'}: ${parseFloat(d.commission).toFixed(2)}`);
+  if (d.username)    parts.push(`${t('col_user')}: ${d.username}`);
+  if (d.target_user) parts.push(`${t('col_target')||'المستهدف'}: ${d.target_user}`);
+  let html = parts.length ? `<div>${UI.escapeHtml(parts.join(' · '))}</div>` : '';
+  if (l.old_value || l.new_value) {
+    if (l.old_value && l.new_value) {
+      const oldStr = typeof l.old_value === 'string' ? l.old_value : JSON.stringify(l.old_value).slice(0,80);
+      const newStr = typeof l.new_value === 'string' ? l.new_value : JSON.stringify(l.new_value).slice(0,80);
+      html += `<div style="font-size:0.68rem;margin-top:3px;"><span style="color:var(--red);">${t('col_old_val')||'قبل'}: ${UI.escapeHtml(oldStr)}</span> ← <span style="color:var(--green);">${t('col_new_val')||'بعد'}: ${UI.escapeHtml(newStr)}</span></div>`;
+    }
+  }
+  return html || '—';
+}
+
+async function loadAudit() {
+  UI.showLoading(true);
+  const { from, to } = getDates();
+  _allLogs = await Storage.getAuditLogs({ from, to });
+  UI.showLoading(false);
+  const sel = document.getElementById('audit-action-filter');
+  if (sel.options.length <= 1) {
+    const labels = _getActionLabels();
+    const seen = new Set();
+    _allLogs.forEach(l => seen.add(l.action));
+    [...seen].sort().forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = labels[a] || a;
+      sel.appendChild(opt);
+    });
+  }
+  renderAudit();
+}
+
+function renderAudit() {
+  const fAction = document.getElementById('audit-action-filter').value;
+  const fUser   = document.getElementById('audit-user-filter').value.toLowerCase().trim();
+  const labels  = _getActionLabels();
+  const rows = _allLogs.filter(l => {
+    if (fAction !== 'all' && l.action !== fAction) return false;
+    if (fUser && !(l.username||'').toLowerCase().includes(fUser)) return false;
+    return true;
+  });
+  document.getElementById('audit-tbody').innerHTML = rows.length
+    ? rows.map(l => {
+        const cls = _actionClass[l.action] || 'act-other';
+        return `<tr>
+          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(l.created_at)}</td>
+          <td><span class="action-badge ${cls}">${labels[l.action] || l.action}</span></td>
+          <td style="font-weight:600;font-size:0.82rem;">${UI.escapeHtml(l.username||'—')}</td>
+          <td style="font-size:0.75rem;color:var(--text3);">${UI.escapeHtml(l.page||'—')}</td>
+          <td style="font-size:0.75rem;color:var(--text2);">${_buildLogDetails(l)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" class="empty-state">${t('no_logs')||'لا توجد سجلات'}</td></tr>`;
+}
+
+// ── سجل التعديلات (مدموج من history.html) ─────────────
+async function loadEdits() {
+  UI.showLoading(true);
+  const { from, to } = getDates();
+  const logs = await Storage.getAuditLogs({ from, to });
+  UI.showLoading(false);
+  const edits = logs.filter(l => l.action && l.action.startsWith('edit_'));
+  const labels = _getActionLabels();
+  document.getElementById('edits-tbody').innerHTML = edits.length
+    ? edits.map(l => `<tr>
+        <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(l.created_at)}</td>
+        <td><span class="action-badge act-other">${labels[l.action] || l.action}</span></td>
+        <td style="font-weight:600;font-size:0.82rem;">${UI.escapeHtml(l.username||'—')}</td>
+        <td style="font-size:0.75rem;color:var(--text2);">${_buildLogDetails(l)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" class="empty-state">${t('no_edits_recorded')||'لا توجد تعديلات مسجّلة في هذه الفترة'}</td></tr>`;
 }
 
 async function showDeletedTxns(originalId, name, archiveId) {
