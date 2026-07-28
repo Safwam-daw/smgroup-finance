@@ -537,7 +537,7 @@ async function loadPortal() {
 // ── Filters ───────────────────────────────────────────
 function setQuick(key, apply=true) {
   document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));
-  const today = new Date().toISOString().slice(0,10);
+  const today = _localDateStr(new Date());
   const map = {
     today:{ from:today, to:today },
     month:{ from:firstOfMonth(0), to:lastOfMonth(0) },
@@ -554,8 +554,9 @@ function setQuick(key, apply=true) {
 }
 function clearQ(){ document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active')); }
 
-function firstOfMonth(off=0){const d=new Date();d.setMonth(d.getMonth()+off);d.setDate(1);return d.toISOString().slice(0,10);}
-function lastOfMonth(off=0){const d=new Date();d.setMonth(d.getMonth()+off+1);d.setDate(0);return d.toISOString().slice(0,10);}
+function _localDateStr(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
+function firstOfMonth(off=0){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+off);return _localDateStr(d);}
+function lastOfMonth(off=0){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+off+1);d.setDate(0);return _localDateStr(d);}
 
 function filterRows() {
   const fType = document.getElementById('p-type').value;

@@ -127,7 +127,8 @@ function shiftDay(delta) {
 const el = document.getElementById('f-date');
 const d = el.value ? new Date(el.value + 'T00:00:00') : new Date();
 d.setDate(d.getDate() + delta);
-el.value = d.toISOString().slice(0,10);
+const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+el.value = `${y}-${m}-${day}`;
 applyFilter();
 }
 function goToday() {
@@ -135,16 +136,27 @@ document.getElementById('f-date').value = UI.todayStr();
 applyFilter();
 }
 
+function _dayBounds(dateStr) {
+if (!dateStr) return null;
+const [y,m,d] = dateStr.split('-').map(Number);
+const from = new Date(y, m-1, d, 0,0,0,0);
+const to   = new Date(y, m-1, d, 23,59,59,999);
+return { from, to };
+}
+
 function applyFilter() {
 const fType = document.getElementById('f-type').value;
 const fCur = document.getElementById('f-cur').value;
 const fAcc = document.getElementById('f-acc').value.toLowerCase().trim();
 const fDate = document.getElementById('f-date').value;
+const bounds = _dayBounds(fDate);
 _filtered = _allTxns.filter(t => {
 if (fType !== 'all' && t.type !== fType) return false;
 if (fCur !== 'all' && t.cur !== fCur) return false;
-if (fDate && new Date(t.date) < new Date(fDate)) return false;
-if (fDate && new Date(t.date) > new Date(fDate + 'T23:59:59')) return false;
+if (bounds) {
+const td = new Date(t.date);
+if (td < bounds.from || td > bounds.to) return false;
+}
 if (fAcc) {
 const ids = [t.acc, t.from, t.to].filter(Boolean);
 const names = ids.map(id => { const a=_allAccounts.find(x=>x.id===id); return a?a.name.toLowerCase():''; });
@@ -160,12 +172,11 @@ renderPage();
 
 // يحسب حركات اليوم المختار بالكامل بغض النظر عن فلاتر النوع/العملة/الحساب
 function _dayTxns(dateStr) {
-if (!dateStr) return [];
-const from = new Date(dateStr); from.setHours(0,0,0,0);
-const to   = new Date(dateStr); to.setHours(23,59,59,999);
+const bounds = _dayBounds(dateStr);
+if (!bounds) return [];
 return _allTxns.filter(tx => {
 const d = new Date(tx.date);
-return d >= from && d <= to;
+return d >= bounds.from && d <= bounds.to;
 });
 }
 
@@ -189,22 +200,25 @@ const closeUsd = openUsd + dep.usd - wit.usd;
 const closeEur = openEur + dep.eur - wit.eur;
 
 const row = (label, usdVal, eurVal, color) => `
-<div style="flex:1;min-width:160px;">
+<div style="text-align:center;padding:8px 0;border-bottom:1px solid var(--border2);">
 <div style="font-size:0.72rem;color:var(--text3);">${label}</div>
-<div style="font-weight:700;color:${color||'var(--text)'};font-size:0.9rem;margin-top:2px;">
-$${usdVal.toFixed(2)} | €${eurVal.toFixed(2)}
+<div style="font-weight:700;color:${color||'var(--text)'};font-size:0.95rem;margin-top:3px;">
+$${usdVal.toFixed(2)} &nbsp;|&nbsp; €${eurVal.toFixed(2)}
 </div>
 </div>`;
 
 box.innerHTML = `
-<div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--gold);">
+<div style="font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--gold);text-align:center;">
 ⚖️ ${t('daily_balance_title')}
 </div>
-<div style="display:flex;gap:16px;flex-wrap:wrap;">
 ${row(t('opening_balance'), openUsd, openEur)}
 ${row(t('stat_deposits'), dep.usd, dep.eur, 'var(--green)')}
 ${row(t('stat_withdrawals'), wit.usd, wit.eur, 'var(--red)')}
-${row(t('closing_balance'), closeUsd, closeEur, 'var(--gold)')}
+<div style="text-align:center;padding:14px 0 4px;">
+<div style="font-size:0.78rem;color:var(--text3);">${t('closing_balance')}</div>
+<div style="font-weight:700;color:var(--gold);font-size:1.25rem;margin-top:4px;">
+$${closeUsd.toFixed(2)} &nbsp;|&nbsp; €${closeEur.toFixed(2)}
+</div>
 </div>
 ${!hasOpen ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:8px;">
 ⚠️ ${t('no_prior_snapshot')}
