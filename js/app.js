@@ -65,12 +65,6 @@ function buildSidebar(activePage) {
         <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" onclick="navTo('reports.html')">
           <span class="nav-icon">📊</span> ${t('nav_reports')}
         </button>
-        <button class="nav-btn ${activePage==='audit'?'active':''}" data-page="audit" onclick="navTo('audit.html')">
-          <span class="nav-icon">🔍</span> ${t('nav_audit')}
-        </button>
-        <button class="nav-btn ${activePage==='history'?'active':''}" data-page="history" onclick="navTo('history.html')">
-          <span class="nav-icon">📝</span> ${t('nav_history')}
-        </button>
         <div class="nav-section-label">${t('nav_tools')}</div>
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
           <span class="nav-icon">⚙️</span> ${t('nav_settings')}
@@ -260,9 +254,7 @@ async function initApp(pageId) {
     'statement':    'statement',
     'employees':    'employees',
     'reports':      'reports',
-    'audit':        'audit',
     'account-view': 'accounts',
-    'history':      'viewHistory',
     'settings':     null
   };
 
@@ -305,8 +297,7 @@ function applyNavPermissions() {
     'ledger':    'ledger',
     'statement': 'statement',
     'employees': 'employees',
-    'reports':   'reports',
-    'audit':        'audit'
+    'reports':   'reports'
   };
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     const page = btn.dataset.page;

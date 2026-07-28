@@ -463,6 +463,10 @@ const I18n = (() => {
     tab_activity:       { ar: '🕐 آخر نشاط', en: '🕐 Last Activity', tr: '🕐 Son Aktivite' },
     tab_employees:      { ar: '👤 حركة الموظفين', en: '👤 Employee Activity', tr: '👤 Personel Hareketleri' },
     tab_deleted:        { ar: '🗑️ المحذوفات', en: '🗑️ Deleted', tr: '🗑️ Silinenler' },
+    tab_audit:          { ar: '🔍 سجل التدقيق', en: '🔍 Audit Log', tr: '🔍 Denetim Günlüğü' },
+    tab_edits:          { ar: '📝 سجل التعديلات', en: '📝 Edit History', tr: '📝 Düzenleme Geçmişi' },
+    filter_action_type: { ar: 'نوع الإجراء', en: 'Action type', tr: 'İşlem türü' },
+    no_edits_recorded:  { ar: 'لا توجد تعديلات مسجّلة في هذه الفترة', en: 'No edits recorded in this period', tr: 'Bu dönemde kayıtlı düzenleme yok' },
     tab_debt_limit:     { ar: '⚙️ إعداد حد الدين', en: '⚙️ Debt Limit', tr: '⚙️ Borç Limiti' },
 
     // ── الإحصائيات ───────────────────────────────────────
