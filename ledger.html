@@ -61,6 +61,8 @@ border-left:0; border-right:0; height:34px;
 <!-- إحصاءات -->
 <div id="ledger-totals" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;
 overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
+<!-- التوازن اليومي -->
+<div id="ledger-balance" class="card" style="margin-bottom:14px;padding:14px 16px;"></div>
 <!-- جدول -->
 <div class="card" style="padding:0;overflow:hidden;">
 <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
@@ -152,7 +154,62 @@ return true;
 });
 _page = 1;
 renderTotals();
+renderBalance();
 renderPage();
+}
+
+// يحسب حركات اليوم المختار بالكامل بغض النظر عن فلاتر النوع/العملة/الحساب
+function _dayTxns(dateStr) {
+if (!dateStr) return [];
+const from = new Date(dateStr); from.setHours(0,0,0,0);
+const to   = new Date(dateStr); to.setHours(23,59,59,999);
+return _allTxns.filter(tx => {
+const d = new Date(tx.date);
+return d >= from && d <= to;
+});
+}
+
+async function renderBalance() {
+const dateStr = document.getElementById('f-date').value;
+const box = document.getElementById('ledger-balance');
+if (!dateStr) { box.innerHTML = ''; return; }
+
+const dayTxns = _dayTxns(dateStr);
+let dep = {usd:0, eur:0}, wit = {usd:0, eur:0};
+dayTxns.forEach(tx => {
+if (tx.type==='dep') dep[tx.cur] += parseFloat(tx.amt);
+if (tx.type==='wit') wit[tx.cur] += parseFloat(tx.amt);
+});
+
+const snap = await Storage.getSnapshotOnOrBefore(dateStr);
+const hasOpen = !!snap;
+const openUsd = hasOpen ? parseFloat(snap.treasury_usd||0) : 0;
+const openEur = hasOpen ? parseFloat(snap.treasury_eur||0) : 0;
+const closeUsd = openUsd + dep.usd - wit.usd;
+const closeEur = openEur + dep.eur - wit.eur;
+
+const row = (label, usdVal, eurVal, color) => `
+<div style="flex:1;min-width:160px;">
+<div style="font-size:0.72rem;color:var(--text3);">${label}</div>
+<div style="font-weight:700;color:${color||'var(--text)'};font-size:0.9rem;margin-top:2px;">
+$${usdVal.toFixed(2)} | €${eurVal.toFixed(2)}
+</div>
+</div>`;
+
+box.innerHTML = `
+<div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--gold);">
+⚖️ ${t('daily_balance_title')}
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;">
+${row(t('opening_balance'), openUsd, openEur)}
+${row(t('stat_deposits'), dep.usd, dep.eur, 'var(--green)')}
+${row(t('stat_withdrawals'), wit.usd, wit.eur, 'var(--red)')}
+${row(t('closing_balance'), closeUsd, closeEur, 'var(--gold)')}
+</div>
+${!hasOpen ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:8px;">
+⚠️ ${t('no_prior_snapshot')}
+</div>` : ''}
+`;
 }
 
 function renderTotals() {
