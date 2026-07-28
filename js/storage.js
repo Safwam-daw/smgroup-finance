@@ -502,7 +502,8 @@ const Storage = (() => {
 
   // ══ السجل الإحصائي اليومي ══════════════════════════════
   async function saveDailySnapshot() {
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
     // تحقق إذا حُفظ اليوم مسبقاً
     const { data: existing } = await _sb
@@ -624,7 +625,9 @@ const Storage = (() => {
     }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'SMGroup_Backup_' + new Date().toISOString().slice(0, 10) + '.json';
+    const _n = new Date();
+    const _localToday = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}-${String(_n.getDate()).padStart(2,'0')}`;
+    a.download = 'SMGroup_Backup_' + _localToday + '.json';
     a.click();
   }
 

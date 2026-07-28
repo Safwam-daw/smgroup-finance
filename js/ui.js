@@ -258,25 +258,34 @@ const UI = (() => {
     } catch(e) { return isoStr; }
   }
 
-  // تاريخ اليوم بصيغة YYYY-MM-DD
+  // يحوّل Date إلى نص YYYY-MM-DD بالتوقيت المحلي (وليس UTC)
+  function _localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // تاريخ اليوم بصيغة YYYY-MM-DD (بالتوقيت المحلي للمتصفح)
   function todayStr() {
-    return new Date().toISOString().slice(0,10);
+    return _localDateStr(new Date());
   }
 
   // أول يوم في الشهر الحالي
   function firstOfMonth(offset=0) {
     const d = new Date();
+    d.setDate(1); // نضبط اليوم أولاً لتفادي مشاكل الأشهر ذات الأيام الأقل عند تغيير الشهر
     d.setMonth(d.getMonth() + offset);
-    d.setDate(1);
-    return d.toISOString().slice(0,10);
+    return _localDateStr(d);
   }
 
   // آخر يوم في الشهر
   function lastOfMonth(offset=0) {
     const d = new Date();
+    d.setDate(1);
     d.setMonth(d.getMonth() + offset + 1);
     d.setDate(0);
-    return d.toISOString().slice(0,10);
+    return _localDateStr(d);
   }
 
   function exportExcel(tableId, filename) {
