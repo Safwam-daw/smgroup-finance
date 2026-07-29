@@ -58,9 +58,6 @@ border-left:0; border-right:0; height:34px;
 </div>
 </div>
 </div>
-<!-- إحصاءات -->
-<div id="ledger-totals" style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;
-overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
 <!-- جدول -->
 <div class="card" style="padding:0;overflow:hidden;">
 <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
@@ -77,8 +74,11 @@ overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
 </table>
 </div>
 </div>
+<!-- إحصاءات -->
+<div id="ledger-totals" style="display:flex;gap:12px;margin:14px 0;flex-wrap:wrap;
+overflow-x:auto;-webkit-overflow-scrolling:touch;"></div>
 <!-- التوازن اليومي -->
-<div id="ledger-balance" class="card" style="margin-top:14px;padding:14px 16px;"></div>
+<div id="ledger-balance" class="card" style="padding:14px 16px;"></div>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;">
 <div id="ledger-count" style="font-size:0.74rem;color:var(--text3);"></div>
 <div class="pagination" id="ledger-pages"></div>
@@ -212,8 +212,6 @@ box.innerHTML = `
 ⚖️ ${t('daily_balance_title')}
 </div>
 ${row(t('opening_balance'), openUsd, openEur)}
-${row(t('stat_deposits'), dep.usd, dep.eur, 'var(--green)')}
-${row(t('stat_withdrawals'), wit.usd, wit.eur, 'var(--red)')}
 <div style="text-align:center;padding:14px 0 4px;">
 <div style="font-size:0.78rem;color:var(--text3);">${t('closing_balance')}</div>
 <div style="font-weight:700;color:var(--gold);font-size:1.25rem;margin-top:4px;">
@@ -233,19 +231,15 @@ if (t.type==='dep') dep[(t.cur||'').toLowerCase()]+=parseFloat(t.amt);
 if (t.type==='wit') wit[(t.cur||'').toLowerCase()]+=parseFloat(t.amt);
 });
 document.getElementById('ledger-totals').innerHTML = `
-<div class="stat-card" style="flex:2;min-width:230px;padding:12px 16px;border-right:3px solid var(--gold);">
-<div style="display:flex;gap:20px;flex-wrap:wrap;">
-<div>
+<div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--green);">
 <div class="stat-label" style="color:var(--green);">${t('stat_deposits')}</div>
 <div style="font-size:0.85rem;font-weight:700;color:var(--green);margin-top:4px;">
 $${dep.usd.toFixed(2)} | €${dep.eur.toFixed(2)}</div>
 </div>
-<div>
+<div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--red);">
 <div class="stat-label" style="color:var(--red);">${t('stat_withdrawals')}</div>
 <div style="font-size:0.85rem;font-weight:700;color:var(--red);margin-top:4px;">
 $${wit.usd.toFixed(2)} | €${wit.eur.toFixed(2)}</div>
-</div>
-</div>
 </div>
 <div class="stat-card" style="flex:1;min-width:100px;padding:12px 16px;border-right:3px solid var(--blue);">
 <div class="stat-label">${t('stat_op_count')}</div>
