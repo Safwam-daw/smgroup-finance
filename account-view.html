@@ -577,7 +577,7 @@ function renderRows() {
 
   _filtered = _allTxns.filter(t => {
     if (fType!=='all' && t.type!==fType) return false;
-    if (fCur !=='all' && t.cur !==fCur)  return false;
+    if (fCur !=='all' && (t.cur||'').toLowerCase() !==fCur)  return false;
     if (fFrom && new Date(t.date) < new Date(fFrom)) return false;
     if (fTo   && new Date(t.date) > new Date(fTo+'T23:59:59')) return false;
     return true;

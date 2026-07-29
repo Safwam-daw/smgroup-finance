@@ -452,8 +452,8 @@ function renderSummary() {
   const comm = deps.reduce((s,t)=>s+parseFloat(t.commission_amt||0),0);
   const profitAcc = _allAccounts.find(a=>a.id===CONFIG.PROFIT_ACCOUNT_ID);
   let depUsd=0,depEur=0,witUsd=0,witEur=0;
-  deps.forEach(t=>{ if(t.cur==='usd')depUsd+=parseFloat(t.amt); else depEur+=parseFloat(t.amt); });
-  wits.forEach(t=>{ if(t.cur==='usd')witUsd+=parseFloat(t.amt); else witEur+=parseFloat(t.amt); });
+  deps.forEach(t=>{ if((t.cur||'').toLowerCase()==='usd')depUsd+=parseFloat(t.amt); else depEur+=parseFloat(t.amt); });
+  wits.forEach(t=>{ if((t.cur||'').toLowerCase()==='usd')witUsd+=parseFloat(t.amt); else witEur+=parseFloat(t.amt); });
   document.getElementById('sum-stats').innerHTML = `
     <div class="stat-mini" style="border-right:3px solid var(--green);">
       <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
@@ -517,7 +517,7 @@ function renderDep(p=null) {
   if(p!==null) _depPage=p;
   const rows = _allTxns.filter(t=>t.type==='dep');
   let tot={usd:0,eur:0},comm={usd:0,eur:0};
-  rows.forEach(t=>{ tot[t.cur]+=parseFloat(t.amt); comm[t.cur]+=parseFloat(t.commission_amt||0); });
+  rows.forEach(t=>{ const c=(t.cur||'').toLowerCase(); tot[c]+=parseFloat(t.amt); comm[c]+=parseFloat(t.commission_amt||0); });
   document.getElementById('dep-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--green);">
       <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
@@ -554,7 +554,7 @@ function renderWit(p=null) {
   if(p!==null) _witPage=p;
   const rows = _allTxns.filter(t=>t.type==='wit');
   let tot={usd:0,eur:0};
-  rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
+  rows.forEach(t=>tot[(t.cur||'').toLowerCase()]+=parseFloat(t.amt));
   document.getElementById('wit-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--red);">
       <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
@@ -583,7 +583,7 @@ function renderTrf(p=null) {
   if(p!==null) _trfPage=p;
   const rows = _allTxns.filter(t=>t.type==='trf');
   let tot={usd:0,eur:0};
-  rows.forEach(t=>tot[t.cur]+=parseFloat(t.amt));
+  rows.forEach(t=>tot[(t.cur||'').toLowerCase()]+=parseFloat(t.amt));
   document.getElementById('trf-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--blue);">
       <div class="stat-mini-label">${t('total_transfers_lbl')}</div>
@@ -862,7 +862,7 @@ async function showDeletedTxns(originalId, name, archiveId) {
   <p style="color:#8a9bb5;font-size:0.8rem;">${t('original_number_lbl')}: ${originalId} · ${txns.length} ${t('movement_unit')}</p>
   <table><thead><tr><th>${t('col_date')}</th><th>${t('col_type_lbl')}</th><th>${t('col_currency')}</th><th>${t('col_amount_lbl')}</th><th>${t('col_by_lbl')}</th></tr></thead>
   <tbody>${txns.map(t=>{
-    const sym=t.cur==='usd'?'$':'€';
+    const sym=(t.cur||'').toLowerCase()==='usd'?'$':'€';
     const cls=t.type;
     return `<tr><td style="font-size:0.75rem;">${new Date(t.date).toLocaleString()}</td>
       <td class="${cls}">${typeLabel[t.type]||t.type}</td>

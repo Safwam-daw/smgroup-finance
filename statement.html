@@ -372,7 +372,7 @@ function renderRows() {
 
   let rows = _allTxns;
   if (fType !== 'all') rows = rows.filter(t => t.type === fType);
-  if (fCur  !== 'all') rows = rows.filter(t => t.cur  === fCur);
+  if (fCur  !== 'all') rows = rows.filter(t => (t.cur||'').toLowerCase() === fCur);
   if (fFrom) rows = rows.filter(t => new Date(t.date) >= new Date(fFrom));
   if (fTo)   rows = rows.filter(t => new Date(t.date) <= new Date(fTo + 'T23:59:59'));
 
@@ -381,7 +381,7 @@ function renderRows() {
 
   tbody.innerHTML = rows.length
     ? rows.map(t => {
-        const sym    = t.cur==='usd'?'$':'€';
+        const sym    = (t.cur||'').toLowerCase()==='usd'?'$':'€';
         const isFrom = t.type==='trf' && t.from===_currentAccId;
         const isTo   = t.type==='trf' && t.to===_currentAccId;
         const isFee = t.type==='fee' || t.is_commission_entry;
