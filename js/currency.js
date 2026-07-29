@@ -43,27 +43,31 @@ const Currency = (() => {
   // رمز العملة
   async function symbol(code) {
     const all = await getAll();
-    return all.find(c => c.code === code)?.symbol || code;
+    return all.find(c => c.code.toLowerCase() === String(code).toLowerCase())?.symbol || code;
   }
 
   // اسم العملة
   async function name(code) {
     const all = await getAll();
-    return all.find(c => c.code === code)?.name || code;
+    return all.find(c => c.code.toLowerCase() === String(code).toLowerCase())?.name || code;
   }
 
   // بناء خيارات select للعملات المفعّلة
-  async function buildSelectOptions(selectedCode = 'USD') {
+  // ملاحظة: نستخدم كود العملة بأحرف صغيرة كقيمة دائماً — لأن باقي النظام
+  // (دفتر اليومية، التقارير، كشف الحساب...) يفترض 'usd'/'eur' بأحرف صغيرة
+  // كمفاتيح كائنات وحقول أعمدة، بينما جدول currencies يخزّن الكود بأحرف كبيرة
+  async function buildSelectOptions(selectedCode = 'usd') {
     const active = await getActive();
+    const selLower = String(selectedCode).toLowerCase();
     return active.map(c =>
-      `<option value="${c.code}" ${c.code === selectedCode ? 'selected' : ''}>
+      `<option value="${c.code.toLowerCase()}" ${c.code.toLowerCase() === selLower ? 'selected' : ''}>
          ${c.symbol} ${c.name} (${c.code})
        </option>`
     ).join('');
   }
 
   // تحديث كل حقول اختيار العملة في الصفحة
-  async function refreshSelects(selectedCode = 'USD') {
+  async function refreshSelects(selectedCode = 'usd') {
     const opts = await buildSelectOptions(selectedCode);
     document.querySelectorAll('.currency-select').forEach(sel => {
       const val = sel.value || selectedCode;
