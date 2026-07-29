@@ -528,6 +528,9 @@ const I18n = (() => {
     export_excel_btn:   { ar: '📊 Excel', en: '📊 Excel', tr: '📊 Excel' },
     col_debit_lbl:      { ar: 'دين', en: 'Debit', tr: 'Borç' },
     col_credit_lbl:     { ar: 'دائن', en: 'Credit', tr: 'Alacak' },
+    col_value_lbl:      { ar: 'القيمة', en: 'Value', tr: 'Değer' },
+    col_commission_lbl: { ar: 'العمولة', en: 'Commission', tr: 'Komisyon' },
+    col_net_lbl:        { ar: 'الصافي', en: 'Net', tr: 'Net' },
     no_movements_acc:   { ar: 'لا توجد حركات', en: 'No movements', tr: 'Hareket yok' },
     profit_account_lbl: { ar: '🏦 حساب الأرباح', en: '🏦 Profit Account', tr: '🏦 Kâr Hesabı' },
 
