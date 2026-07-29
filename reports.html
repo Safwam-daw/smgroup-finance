@@ -414,7 +414,7 @@ async function reload() {
       Storage.getAccounts()
     ]);
 
-    _allTxns     = txns     || [];
+    _allTxns     = (txns || []).filter(t => !t.is_commission_entry);
     _allAccounts = accounts || [];
 
     // debug
