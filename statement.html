@@ -176,7 +176,7 @@
             <thead>
               <tr>
                 <th data-i18n="col_date">التاريخ</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_counterpart">الطرف الآخر</th>
-                <th data-i18n="col_currency">العملة</th><th data-i18n="col_debit">دين (خروج)</th><th data-i18n="col_credit">دائن (دخول)</th>
+                <th data-i18n="col_currency">العملة</th><th id="stmt-th1">القيمة</th><th id="stmt-th2">العمولة</th><th id="stmt-th3">الصافي</th>
                 <th data-i18n="col_note">ملاحظة</th><th class="no-print" data-i18n="col_action">إجراء</th>
               </tr>
             </thead>
@@ -338,8 +338,9 @@ async function loadStatement() {
     Storage.getBalance(id,'eur'),
     Storage.getTxns({ acc: id })
   ]);
-  _allTxns = txns;
+  _allTxns = (id === CONFIG.PROFIT_ACCOUNT_ID) ? txns : txns.filter(x => !x.is_commission_entry);
   UI.showLoading(false);
+  _setupStmtColumns(id === CONFIG.PROFIT_ACCOUNT_ID);
 
   // header
   document.getElementById('acc-header-name').textContent = acc.name + ' (' + acc.id + ')';
@@ -363,6 +364,22 @@ async function loadStatement() {
   renderRows();
 }
 
+function _setupStmtColumns(isProfitAcc) {
+  const th1 = document.getElementById('stmt-th1');
+  const th2 = document.getElementById('stmt-th2');
+  const th3 = document.getElementById('stmt-th3');
+  if (isProfitAcc) {
+    th1.textContent = t('col_debit_lbl') || 'مدين';
+    th2.textContent = t('col_credit_lbl') || 'دائن';
+    th3.style.display = 'none';
+  } else {
+    th1.textContent = t('col_value_lbl') || 'القيمة';
+    th2.textContent = t('col_commission_lbl') || 'العمولة';
+    th3.textContent = t('col_net_lbl') || 'الصافي';
+    th3.style.display = '';
+  }
+}
+
 // ── Render Rows ───────────────────────────────────────
 function renderRows() {
   const fType = document.getElementById('f-type').value;
@@ -373,24 +390,19 @@ function renderRows() {
   let rows = _allTxns;
   if (fType !== 'all') rows = rows.filter(t => t.type === fType);
   if (fCur  !== 'all') rows = rows.filter(t => (t.cur||'').toLowerCase() === fCur);
-  if (fFrom) rows = rows.filter(t => new Date(t.date) >= new Date(fFrom));
-  if (fTo)   rows = rows.filter(t => new Date(t.date) <= new Date(fTo + 'T23:59:59'));
+  if (fFrom) { const [y,m,d]=fFrom.split('-').map(Number); rows = rows.filter(t => new Date(t.date) >= new Date(y,m-1,d,0,0,0,0)); }
+  if (fTo)   { const [y,m,d]=fTo.split('-').map(Number);   rows = rows.filter(t => new Date(t.date) <= new Date(y,m-1,d,23,59,59,999)); }
 
   const canEdit = Auth.isAdmin();
   const tbody   = document.getElementById('stmt-tbody');
+  const isProfitAcc = _currentAccId === CONFIG.PROFIT_ACCOUNT_ID;
 
   tbody.innerHTML = rows.length
     ? rows.map(t => {
         const sym    = (t.cur||'').toLowerCase()==='usd'?'$':'€';
         const isFrom = t.type==='trf' && t.from===_currentAccId;
         const isTo   = t.type==='trf' && t.to===_currentAccId;
-        const isFee = t.type==='fee' || t.is_commission_entry;
-        let debit=0, credit=0;
-        if (t.type==='dep') credit = parseFloat(t.amt);
-        if (t.type==='wit') debit  = parseFloat(t.amt);
-        if (isFee)          debit  = parseFloat(t.amt);
-        if (isFrom) debit  = parseFloat(t.amt);
-        if (isTo)   credit = parseFloat(t.amt) * (parseFloat(t.rate)||1);
+        const isFeeIn = t.type==='dep' && t.is_commission_entry;
         // الطرف الآخر
         let counterpart = '—';
         if (t.type==='trf') {
@@ -399,20 +411,44 @@ function renderRows() {
           counterpart   = UI.escapeHtml(other ? other.name : otherId);
           counterpart   = isFrom ? ('← ' + counterpart) : ('→ ' + counterpart);
         }
-        const debitCell  = debit>0  ? `<span class="cell-debit">${sym}${debit.toFixed(2)}</span>`   : '—';
-        const creditCell = credit>0 ? `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>` : '—';
-        const editBtns   = canEdit ? `
+        if (isFeeIn) {
+          const m = (t.note||'').match(/من حساب (\S+)/);
+          const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
+          counterpart = srcAcc ? UI.escapeHtml(srcAcc.name) : (m ? UI.escapeHtml(m[1]) : t('profit_account_lbl'));
+        }
+
+        let col1, col2, col3;
+        if (isProfitAcc) {
+          const val = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
+          const isDebit = t.type==='wit' || (t.type==='trf' && isFrom);
+          col1 = isDebit ? `<span class="cell-debit">${sym}${val.toFixed(2)}</span>` : '—';
+          col2 = isDebit ? '—' : `<span class="cell-credit">${sym}${val.toFixed(2)}</span>`;
+          col3 = '';
+        } else {
+          let value=0, commission=0;
+          if (t.type==='dep') { value = parseFloat(t.amt); commission = parseFloat(t.commission_amt||0); }
+          if (t.type==='wit') { value = parseFloat(t.amt); commission = 0; }
+          if (isFrom) { value = parseFloat(t.amt); commission = 0; }
+          if (isTo)   { value = parseFloat(t.amt) * (parseFloat(t.rate)||1); commission = parseFloat(t.commission_amt||0); }
+          const net = value - commission;
+          const isIn = t.type==='dep' || isTo;
+          const cls  = isIn ? 'cell-credit' : 'cell-debit';
+          col1 = `<span class="${cls}">${sym}${value.toFixed(2)}</span>`;
+          col2 = commission>0 ? `<span style="color:var(--gold);">${sym}${commission.toFixed(2)}</span>` : '—';
+          col3 = `<span class="${cls}">${sym}${net.toFixed(2)}</span>`;
+        }
+        const editBtns   = (canEdit && !isFeeIn) ? `
           <button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,''))}')">✏️</button>
           <button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>
         ` : '—';
         return `<tr class="stmt-row">
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
-          <td><span class="badge badge-${t.type||'fee'}">${typeLabel(t.type)}</span></td>
+          <td><span class="badge badge-${isFeeIn?'fee':(t.type||'fee')}">${isFeeIn?t('type_fee'):typeLabel(t.type)}</span></td>
           <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
           <td>${t.cur.toUpperCase()}</td>
-          <td>${debitCell}</td>
-          <td>${creditCell}</td>
-          <td style="font-size:0.74rem;color:var(--text2);max-width:110px;
+          <td>${col1}</td>
+          <td ${isProfitAcc?'style="display:none;"':''}>${col2}</td>
+          <td ${isProfitAcc?'style="display:none;"':''}>${col3}</td>          <td style="font-size:0.74rem;color:var(--text2);max-width:110px;
               overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
               title="${UI.escapeHtml(t.note||'')}">
             ${UI.escapeHtml(t.note||'—')}
@@ -512,39 +548,66 @@ async function downloadAllStatements(period) {
     for (const accId of activeIds) {
       const acc = _allAccounts.find(a => a.id === accId);
       if (!acc) continue;
-      const accTxns = periodTxns.filter(tx =>
-        tx.acc === accId || tx.from === accId || tx.to === accId
-      );
+      const isProfitAcc = accId === CONFIG.PROFIT_ACCOUNT_ID;
+      const accTxns = periodTxns.filter(tx => {
+        const touches = tx.acc === accId || tx.from === accId || tx.to === accId;
+        if (!touches) return false;
+        if (!isProfitAcc && tx.is_commission_entry) return false; // مخفية إلا في حساب الأرباح نفسه
+        return true;
+      });
       if (!accTxns.length) continue;
 
-      const rows = [[
+      const rows = isProfitAcc ? [[
         I18n.t('col_date') || 'التاريخ', I18n.t('col_type') || 'النوع',
         I18n.t('col_counterpart') || 'الطرف الآخر', I18n.t('col_currency') || 'العملة',
-        I18n.t('col_debit') || 'مدين', I18n.t('col_credit') || 'دائن',
+        I18n.t('col_debit_lbl') || 'مدين', I18n.t('col_credit_lbl') || 'دائن',
+        I18n.t('note_lbl') || 'ملاحظة'
+      ]] : [[
+        I18n.t('col_date') || 'التاريخ', I18n.t('col_type') || 'النوع',
+        I18n.t('col_counterpart') || 'الطرف الآخر', I18n.t('col_currency') || 'العملة',
+        I18n.t('col_value_lbl') || 'القيمة', I18n.t('col_commission_lbl') || 'العمولة', I18n.t('col_net_lbl') || 'الصافي',
         I18n.t('note_lbl') || 'ملاحظة'
       ]];
       accTxns.forEach(t2 => {
         const isFrom = t2.type==='trf' && t2.from===accId;
         const isTo   = t2.type==='trf' && t2.to===accId;
-        const isFee  = t2.type==='fee' || t2.is_commission_entry;
-        let debit=0, credit=0;
-        if (t2.type==='dep') credit = parseFloat(t2.amt);
-        if (t2.type==='wit') debit  = parseFloat(t2.amt);
-        if (isFee)           debit  = parseFloat(t2.amt);
-        if (isFrom) debit  = parseFloat(t2.amt);
-        if (isTo)   credit = parseFloat(t2.amt) * (parseFloat(t2.rate)||1);
+        const isFeeIn = t2.type==='dep' && t2.is_commission_entry;
         let counterpart = '';
         if (t2.type==='trf') {
           const otherId = isFrom ? t2.to : t2.from;
           const other   = _allAccounts.find(a=>a.id===otherId);
           counterpart   = (other ? other.name : otherId) || '';
         }
-        rows.push([
-          UI.formatDate(t2.date), typeLabel(t2.type),
+        if (isFeeIn) {
+          const m = (t2.note||'').match(/من حساب (\S+)/);
+          const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
+          counterpart = srcAcc ? srcAcc.name : (m ? m[1] : '');
+        }
+        let col1, col2, col3;
+        if (isProfitAcc) {
+          const val = parseFloat(t2.amt) * (t2.type==='trf' && isTo ? (parseFloat(t2.rate)||1) : 1);
+          const isDebit = t2.type==='wit' || (t2.type==='trf' && isFrom);
+          col1 = isDebit ? val.toFixed(2) : '';
+          col2 = isDebit ? '' : val.toFixed(2);
+          col3 = null; // لا يوجد عمود ثالث لحساب الأرباح
+        } else {
+          let value=0, commission=0;
+          if (t2.type==='dep') { value=parseFloat(t2.amt); commission=parseFloat(t2.commission_amt||0); }
+          if (t2.type==='wit') { value=parseFloat(t2.amt); commission=0; }
+          if (isFrom) { value=parseFloat(t2.amt); commission=0; }
+          if (isTo)   { value=parseFloat(t2.amt)*(parseFloat(t2.rate)||1); commission=parseFloat(t2.commission_amt||0); }
+          col1 = value.toFixed(2);
+          col2 = commission>0 ? commission.toFixed(2) : '';
+          col3 = (value-commission).toFixed(2);
+        }
+        const rowData = [
+          UI.formatDate(t2.date), isFeeIn?(I18n.t('type_fee')||'عمولة'):typeLabel(t2.type),
           counterpart, (t2.cur||'').toUpperCase(),
-          debit>0?debit.toFixed(2):'', credit>0?credit.toFixed(2):'',
-          t2.note || ''
-        ]);
+          col1, col2
+        ];
+        if (col3 !== null) rowData.push(col3);
+        rowData.push(t2.note || '');
+        rows.push(rowData);
       });
 
       const ws = XLSX.utils.aoa_to_sheet(rows);

@@ -598,8 +598,9 @@ function _setupColumns() {
   const th2 = document.getElementById('th-col2');
   const th3 = document.getElementById('th-col3');
   if (_isProfitAcc) {
-    th1.textContent = I18n.t('col_credit_lbl') || 'دائن';
-    th2.style.display = 'none';
+    th1.textContent = I18n.t('col_debit_lbl') || 'مدين';
+    th2.textContent = I18n.t('col_credit_lbl') || 'دائن';
+    th2.style.display = '';
     th3.style.display = 'none';
   } else {
     th1.textContent = I18n.t('col_value_lbl') || 'القيمة';
@@ -652,10 +653,12 @@ function renderPage() {
     let col1cell, col2cell, col3cell, badgeClass, badgeLabel, rowStyle='';
 
     if (_isProfitAcc) {
-      // حساب الأرباح: يعرض فقط حركات الإيداع (دائن) — لا يوجد سحب عمولة منه إطلاقاً
-      const credit = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
-      col1cell = `<span class="cell-credit">${sym}${credit.toFixed(2)}</span>`;
-      col2cell = ''; col3cell = '';
+      // حساب الأرباح: مدين (سحب فعلي منه) | دائن (عمولة داخلة أو إيداع فعلي)
+      const val = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
+      const isDebit = t.type==='wit' || (t.type==='trf' && isFrom);
+      col1cell = isDebit ? `<span class="cell-debit">${sym}${val.toFixed(2)}</span>` : '—';
+      col2cell = isDebit ? '—' : `<span class="cell-credit">${sym}${val.toFixed(2)}</span>`;
+      col3cell = '';
       badgeClass = isFeeIn ? 'badge-fee' : `badge-${t.type}`;
       badgeLabel = isFeeIn ? I18n.t('type_fee') : (typeLabel()[t.type]||t.type);
       rowStyle = isFeeIn ? 'background:rgba(201,168,76,0.05);border-right:2px solid var(--gold);' : '';
@@ -688,7 +691,7 @@ function renderPage() {
       <td style="font-size:0.77rem;color:var(--text2);">${other}</td>
       <td>${t.cur.toUpperCase()}</td>
       <td>${col1cell}</td>
-      <td ${_isProfitAcc?'style="display:none;"':''}>${col2cell}</td>
+      <td>${col2cell}</td>
       <td ${_isProfitAcc?'style="display:none;"':''}>${col3cell}</td>
       <td ${forPrint?'':'class="no-print"'} style="font-size:0.73rem;color:var(--text2);max-width:100px;
           overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
@@ -866,7 +869,7 @@ async function confirmOp(forceOverdraft=false) {
       Storage.getBalance(_accId,'usd'),
       Storage.getBalance(_accId,'eur')
     ]);
-    _allTxns = txns;
+    _allTxns = _isProfitAcc ? txns : txns.filter(x => !x.is_commission_entry);
     document.getElementById('hero-meta').textContent =
       (_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')) + ' · ' + txns.length + ' ' + I18n.t('movement_total');
     updateBalBoxes(usd, eur);
