@@ -377,7 +377,6 @@ function handleImport(e) {
           <div>${I18n.t('restore_date')} <b>${data.exportedAt ? new Date(data.exportedAt).toLocaleString('ar-SA') : unknown}</b></div>
           <div>${I18n.t('restore_accounts')} ${data.accounts?.length || 0}</div>
           <div>${I18n.t('restore_txns')} ${data.txns?.length || 0}</div>
-          <div>${I18n.t('restore_users')} ${data.users?.length || 0}</div>
           <div>${I18n.t('restore_version')} ${data.version || old}</div>
         </div>`;
       document.getElementById('import-modal').style.display = 'flex';
@@ -396,24 +395,21 @@ function closeImport() {
 
 async function doImport() {
   if (!_importData) return;
+  const payload = _importData;
   closeImport();
   UI.showLoading(true);
   try {
-    const sb = supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
-    await sb.from('transactions').delete().neq('id', 0);
-    await sb.from('accounts').delete().neq('id', CONFIG.PROFIT_ACCOUNT_ID);
-    await sb.from('accounts').delete().eq('id', CONFIG.PROFIT_ACCOUNT_ID);
-    await Storage.ensureProfitAccount();
-    await sb.from('deleted_accounts').delete().neq('id', '');
-    await sb.from('audit_log').delete().neq('id', 0);
-    await Storage.ensureProfitAccount();
-    Storage.invalidate();
+    const result = await Storage.restoreBackup(payload);
     UI.showLoading(false);
-    UI.toast(I18n.t('done_clear_logout'));
+    if (!result || !result.ok) {
+      UI.toast(`${I18n.t('err_restore')}: ${result?.error || ''}`, 'error');
+      return;
+    }
+    UI.toast(I18n.t('restore_success'));
     setTimeout(() => { Auth.logout(); navTo('login.html'); }, 2000);
   } catch(e) {
     UI.showLoading(false);
-    UI.toast(`${I18n.t('err_clear')}: ${e.message}`, 'error');
+    UI.toast(`${I18n.t('err_restore')}: ${e.message}`, 'error');
   }
 }
 
