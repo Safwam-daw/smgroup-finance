@@ -52,6 +52,21 @@ const Currency = (() => {
     return all.find(c => c.code.toLowerCase() === String(code).toLowerCase())?.name || code;
   }
 
+  // ── تنسيق موحّد للأرقام والعملات (المرجع الوحيد في كل النظام) ──
+  // formatNumber(1000.5)      -> "1,000.50"
+  // formatMoney(1000.5, '$')  -> "$1,000.50"      (نفس ترتيب الرمز الحالي في كل الصفحات)
+  // formatMoney(-1000.5, '$') -> "-$1,000.50"
+  function formatNumber(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatMoney(n, symbol = '') {
+    const v = Number(n) || 0;
+    const sign = v < 0 ? '-' : '';
+    return `${sign}${symbol}${formatNumber(Math.abs(v))}`;
+  }
+
   // بناء خيارات select للعملات المفعّلة
   // ملاحظة: نستخدم كود العملة بأحرف صغيرة كقيمة دائماً — لأن باقي النظام
   // (دفتر اليومية، التقارير، كشف الحساب...) يفترض 'usd'/'eur' بأحرف صغيرة
@@ -79,5 +94,5 @@ const Currency = (() => {
   // إعادة تعيين الـ Cache
   function invalidate() { _currencies = null; }
 
-  return { getAll, getActive, toggle, symbol, name, buildSelectOptions, refreshSelects, invalidate };
+  return { getAll, getActive, toggle, symbol, name, buildSelectOptions, refreshSelects, invalidate, formatNumber, formatMoney };
 })();
