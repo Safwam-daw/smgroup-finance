@@ -280,7 +280,9 @@ async function initApp(pageId) {
   applyNavPermissions();
 
   // تأكد من وجود حساب الأرباح (يُعيد إنشاءه إذا حُذف)
-  Storage.ensureProfitAccount().catch(()=>{});
+  await Storage.ensureProfitAccount().catch(()=>{});
+  // تحديث المرجع الديناميكي لكود حساب الأرباح الفعلي (MIGRATION_V22)
+  CONFIG.PROFIT_ACCOUNT_ID = await Storage.getProfitAccountId().catch(()=>CONFIG.PROFIT_ACCOUNT_ID);
 
   await UI.updateTreasury();
   return true;

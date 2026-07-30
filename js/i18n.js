@@ -168,6 +168,7 @@ const I18n = (() => {
     col_actions:        { ar: 'إجراءات', en: 'Actions', tr: 'İşlemler' },
     lbl_customer:       { ar: 'زبون', en: 'Customer', tr: 'Müşteri' },
     lbl_company:        { ar: 'شركة', en: 'Company', tr: 'Şirket' },
+    lbl_profit_account: { ar: 'حساب أرباح', en: 'Profit Account', tr: 'Kâr Hesabı' },
     lbl_profit:         { ar: '🏦 أرباح', en: '🏦 Profit', tr: '🏦 Kâr' },
     account_created:    { ar: 'تم إنشاء الحساب', en: 'Account created', tr: 'Hesap oluşturuldu' },
     delete_account:     { ar: 'حذف الحساب', en: 'Delete Account', tr: 'Hesabı Sil' },

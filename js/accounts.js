@@ -22,6 +22,16 @@ const Accounts = (() => {
         if (!existing.has(i)) return String(i).padStart(4, '0');
       }
       return '0999';
+    } else if (type === 'profit') {
+      const existing = new Set(
+        accounts.filter(a => a.id.startsWith('9'))
+          .map(a => parseInt(a.id))
+          .filter(n => !isNaN(n))
+      );
+      for (let i = 9999; i >= 9000; i--) {
+        if (!existing.has(i)) return String(i);
+      }
+      return '9000';
     } else {
       const existing = new Set(
         accounts.filter(a => a.id.startsWith('4'))
@@ -45,8 +55,12 @@ const Accounts = (() => {
       if (code.startsWith('4') || code.startsWith('9') || code.startsWith('7')) {
         return { ok:false, error:'هذا النطاق محجوز لنوع حساب آخر' };
       }
-    } else {
+    } else if (type === 'company') {
       if (!code.startsWith('4')) return { ok:false, error:'كود حساب الشركات يجب أن يبدأ بـ 4' };
+    } else if (type === 'profit') {
+      if (!code.startsWith('9')) return { ok:false, error:'كود حساب الأرباح يجب أن يبدأ بـ 9' };
+    } else {
+      return { ok:false, error:'نوع حساب غير معروف' };
     }
     return { ok:true, code };
   }
@@ -63,12 +77,11 @@ const Accounts = (() => {
 
     const result = await Storage.saveAccount({ id, name, type });
     if (!result.ok) {
-      return {
-        ok:false,
-        error: result.error === 'duplicate'
-          ? 'هذا الكود مستخدم بالفعل من قبل حساب آخر'
-          : 'خطأ في الحفظ'
+      const errors = {
+        duplicate: 'هذا الكود مستخدم بالفعل من قبل حساب آخر',
+        duplicate_profit: 'يوجد حساب أرباح بالفعل — لا يمكن إنشاء أكثر من حساب أرباح واحد'
       };
+      return { ok:false, error: errors[result.error] || 'خطأ في الحفظ' };
     }
 
     await Storage.logAction('create_account', { accountId:id, name, type });

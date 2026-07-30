@@ -56,8 +56,12 @@ const Storage = (() => {
       bal_usd: 0, bal_eur: 0, commission_rate: account.type === 'customer' ? 0.025 : 0
     });
     if (!error) { invalidate('accounts'); return { ok:true }; }
-    // 23505 = unique_violation (Postgres) — الكود مستخدم مسبقاً من قبل حساب موجود
-    if (error.code === '23505') return { ok:false, error:'duplicate' };
+    // 23505 = unique_violation (Postgres)
+    if (error.code === '23505') {
+      const isProfitDupe = /one_profit_account_only/i.test(error.message || '') ||
+                            /one_profit_account_only/i.test(error.details || '');
+      return { ok:false, error: isProfitDupe ? 'duplicate_profit' : 'duplicate' };
+    }
     console.error('saveAccount:', error);
     return { ok:false, error:'generic' };
   }
@@ -402,13 +406,24 @@ const Storage = (() => {
   // ══ إعادة إنشاء حساب الأرباح إذا حُذف ══════════════
   async function ensureProfitAccount() {
     const accounts = await getAccounts();
-    if (accounts.find(a => a.id === CONFIG.PROFIT_ACCOUNT_ID)) return; // موجود
+    if (accounts.find(a => a.type === 'profit')) return; // موجود بالفعل (بأي كود)
     await _sb.from('accounts').insert({
       id: CONFIG.PROFIT_ACCOUNT_ID, name: 'حساب الأرباح', type: 'profit',
       bal_usd: 0, bal_eur: 0, commission_rate: 0
     });
     invalidate('accounts');
     console.log('✅ تم إعادة إنشاء حساب الأرباح');
+  }
+
+  // يجلب كود حساب الأرباح الفعلي من قاعدة البيانات (ديناميكي — MIGRATION_V22)
+  // يُستخدم لتحديث CONFIG.PROFIT_ACCOUNT_ID في كل صفحة عند initApp
+  let _profitIdCache = null;
+  async function getProfitAccountId() {
+    if (_profitIdCache) return _profitIdCache;
+    const { data, error } = await _sb.rpc('get_profit_account_id');
+    if (error || !data) return CONFIG.PROFIT_ACCOUNT_ID; // احتياط: القيمة الثابتة القديمة
+    _profitIdCache = data;
+    return data;
   }
 
   // ══ إعدادات التنبيهات ════════════════════════════════
@@ -663,7 +678,7 @@ const Storage = (() => {
   // accounts
   getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
   getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, invalidate,
-  deleteAccount, getRecyclableId, ensureProfitAccount,
+  deleteAccount, getRecyclableId, ensureProfitAccount, getProfitAccountId,
 
   // transactions
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
