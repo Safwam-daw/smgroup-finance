@@ -47,6 +47,7 @@
           <select id="acc-type" onchange="refreshCode()">
             <option value="customer" data-i18n="lbl_customer">زبون</option>
             <option value="company" data-i18n="lbl_company">شركة</option>
+            <option value="profit" id="opt-profit-type" style="display:none;" data-i18n="lbl_profit_account">حساب أرباح</option>
           </select>
         </div>
         <div class="form-group">
@@ -242,6 +243,9 @@ async function loadAccounts() {
     eur: parseFloat(a.bal_eur || 0)
   }));
   UI.showLoading(false);
+  const hasProfitAcc = _allAccounts.some(a => a.type === 'profit');
+  const optProfit = document.getElementById('opt-profit-type');
+  if (optProfit) optProfit.style.display = hasProfitAcc ? 'none' : '';
   applyFilter();
 }
 
