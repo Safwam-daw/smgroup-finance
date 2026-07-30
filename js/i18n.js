@@ -714,6 +714,8 @@ const I18n = (() => {
     restore_version:    { ar: '🔖 إصدار النسخة:', en: '🔖 Backup Version:', tr: '🔖 Yedek Sürümü:' },
     restore_unknown:    { ar: 'غير محدد', en: 'Unknown', tr: 'Bilinmiyor' },
     restore_old:        { ar: 'قديم', en: 'Legacy', tr: 'Eski' },
+    restore_success:    { ar: '✅ تمت الاستعادة بنجاح — سيتم تسجيل الخروج', en: '✅ Restore successful — Logging out', tr: '✅ Geri yükleme başarılı — Çıkış yapılıyor' },
+    err_restore:        { ar: 'خطأ أثناء الاستعادة', en: 'Error during restore', tr: 'Geri yükleme sırasında hata' },
     cur_fixed:          { ar: 'ثابت', en: 'Fixed', tr: 'Sabit' },
     cur_active:         { ar: 'مفعّل', en: 'Active', tr: 'Aktif' },
     cur_inactive:       { ar: 'معطّل', en: 'Inactive', tr: 'Devre Dışı' },

@@ -633,10 +633,18 @@ const Storage = (() => {
 
   // ══ النسخ الاحتياطي ════════════════════════════════════
   async function exportBackup() {
-    const [accounts, txns, users] = await Promise.all([getAccounts(), getTxns(), getUsers()]);
+    const [accounts, txns, deletedAccounts, notifications, alertSettings, currencies] = await Promise.all([
+      getAccounts(), getTxns(),
+      _sb.from('deleted_accounts').select('*').then(r => r.data || []),
+      _sb.from('notifications').select('*').then(r => r.data || []),
+      _sb.from('alert_settings').select('*').then(r => r.data || []),
+      _sb.from('currencies').select('*').then(r => r.data || [])
+    ]);
     const blob = new Blob([JSON.stringify({
-      accounts, txns, users,
-      exportedAt: new Date().toISOString(), version: '6.0'
+      accounts, txns,
+      deleted_accounts: deletedAccounts, notifications,
+      alert_settings: alertSettings, currencies,
+      exportedAt: new Date().toISOString(), version: '7.0'
     }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -644,6 +652,18 @@ const Storage = (() => {
     const _localToday = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}-${String(_n.getDate()).padStart(2,'0')}`;
     a.download = 'SMGroup_Backup_' + _localToday + '.json';
     a.click();
+  }
+
+  // استعادة نسخة احتياطية عبر RPC آمنة (MIGRATION_V23) — ذرية،
+  // تتحقق من admin فعلياً، وتحفظ لقطة أمان قبل أي حذف.
+  async function restoreBackup(payload) {
+    const { data, error } = await _sb.rpc('admin_restore_backup', {
+      ..._callerCreds(),
+      p_payload: payload
+    });
+    if (error) return { ok: false, error: error.message };
+    invalidate();
+    return data;
   }
 
   async function getAuditLogs(filters = {}) {
@@ -701,7 +721,7 @@ const Storage = (() => {
 
   // misc
   logAction,
-  exportBackup,
+  exportBackup, restoreBackup,
   getAuditLogs,
   getDeletedAccounts
 };
