@@ -350,12 +350,11 @@ async function loadStatement() {
   // رصيد chips
   const setChip = (chipId, valId, val, sym, posColor) => {
     const chip = document.getElementById(chipId);
-    document.getElementById(valId).textContent = sym + Math.abs(val).toFixed(2);
+    document.getElementById(valId).textContent = Currency.formatMoney(val, sym);
     const neg = val < 0;
     chip.style.color       = neg ? 'var(--red)' : posColor;
     chip.style.borderColor = neg ? 'var(--red)' : posColor;
     chip.style.background  = neg ? 'var(--red-dim)' : 'transparent';
-    if (neg) document.getElementById(valId).textContent = '-' + sym + Math.abs(val).toFixed(2);
   };
   setChip('chip-usd','bal-usd', usd, '$', 'var(--gold)');
   setChip('chip-eur','bal-eur', eur, '€', 'var(--euro)');
@@ -421,8 +420,8 @@ function renderRows() {
         if (isProfitAcc) {
           const val = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
           const isDebit = t.type==='wit' || (t.type==='trf' && isFrom);
-          col1 = isDebit ? `<span class="cell-debit">${sym}${val.toFixed(2)}</span>` : '—';
-          col2 = isDebit ? '—' : `<span class="cell-credit">${sym}${val.toFixed(2)}</span>`;
+          col1 = isDebit ? `<span class="cell-debit">${Currency.formatMoney(val, sym)}</span>` : '—';
+          col2 = isDebit ? '—' : `<span class="cell-credit">${Currency.formatMoney(val, sym)}</span>`;
           col3 = '';
         } else {
           let value=0, commission=0;
@@ -433,9 +432,9 @@ function renderRows() {
           const net = value - commission;
           const isIn = t.type==='dep' || isTo;
           const cls  = isIn ? 'cell-credit' : 'cell-debit';
-          col1 = `<span class="${cls}">${sym}${value.toFixed(2)}</span>`;
-          col2 = commission>0 ? `<span style="color:var(--gold);">${sym}${commission.toFixed(2)}</span>` : '—';
-          col3 = `<span class="${cls}">${sym}${net.toFixed(2)}</span>`;
+          col1 = `<span class="${cls}">${Currency.formatMoney(value, sym)}</span>`;
+          col2 = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission, sym)}</span>` : '—';
+          col3 = `<span class="${cls}">${Currency.formatMoney(net, sym)}</span>`;
         }
         const editBtns   = (canEdit && !isFeeIn) ? `
           <button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,''))}')">✏️</button>
@@ -587,8 +586,8 @@ async function downloadAllStatements(period) {
         if (isProfitAcc) {
           const val = parseFloat(t2.amt) * (t2.type==='trf' && isTo ? (parseFloat(t2.rate)||1) : 1);
           const isDebit = t2.type==='wit' || (t2.type==='trf' && isFrom);
-          col1 = isDebit ? val.toFixed(2) : '';
-          col2 = isDebit ? '' : val.toFixed(2);
+          col1 = isDebit ? Currency.formatNumber(val) : '';
+          col2 = isDebit ? '' : Currency.formatNumber(val);
           col3 = null; // لا يوجد عمود ثالث لحساب الأرباح
         } else {
           let value=0, commission=0;
@@ -596,9 +595,9 @@ async function downloadAllStatements(period) {
           if (t2.type==='wit') { value=parseFloat(t2.amt); commission=0; }
           if (isFrom) { value=parseFloat(t2.amt); commission=0; }
           if (isTo)   { value=parseFloat(t2.amt)*(parseFloat(t2.rate)||1); commission=parseFloat(t2.commission_amt||0); }
-          col1 = value.toFixed(2);
-          col2 = commission>0 ? commission.toFixed(2) : '';
-          col3 = (value-commission).toFixed(2);
+          col1 = Currency.formatNumber(value);
+          col2 = commission>0 ? Currency.formatNumber(commission) : '';
+          col3 = Currency.formatNumber(value-commission);
         }
         const rowData = [
           UI.formatDate(t2.date), isFeeIn?(I18n.t('type_fee')||'عمولة'):typeLabel(t2.type),
