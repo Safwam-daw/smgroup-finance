@@ -155,8 +155,8 @@ async function showBalBox(side, id) {
     Storage.getBalance(id,'usd'),
     Storage.getBalance(id,'eur')
   ]);
-  usdEl.textContent = '$' + usd.toFixed(2);
-  eurEl.textContent = '€' + eur.toFixed(2);
+  usdEl.textContent = Currency.formatMoney(usd, '$');
+  eurEl.textContent = Currency.formatMoney(eur, '€');
   usdEl.style.color = usd < 0 ? 'var(--red)' : 'var(--gold)';
   eurEl.style.color = eur < 0 ? 'var(--red)' : 'var(--euro)';
   box.style.display = 'block';
@@ -186,22 +186,22 @@ async function updatePreview() {
   document.getElementById('trf-prev-from').innerHTML =
     `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('outgoing')}</div>
-           <b style="color:var(--red);">-${sym}${amt.toFixed(2)}</b></div>
+           <b style="color:var(--red);">-${Currency.formatMoney(amt,sym)}</b></div>
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('sender_after')}</div>
-           <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${sym}${newFrom.toFixed(2)}</b>
+           <b style="color:${newFrom<0?'var(--red)':'var(--text)'};">${Currency.formatMoney(newFrom,sym)}</b>
            ${newFrom<0?'<span style="color:var(--red);font-size:0.72rem;"> ⚠️</span>':''}</div>
     </div>`;
   document.getElementById('trf-prev-to').innerHTML =
     `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;
           padding-top:10px;border-top:1px solid var(--border);">
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('gross_to_receiver')}</div>
-           <b>${sym}${gross.toFixed(2)}</b>
+           <b>${Currency.formatMoney(gross,sym)}</b>
            ${rate!==1?`<span style="font-size:0.72rem;color:var(--text3);"> (×${rate})</span>`:''}
       </div>
       ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('commission_pct')} (${ratePct}%)</div>
-           <b style="color:var(--red);">-${sym}${commission.toFixed(2)}</b></div>`:''}
+           <b style="color:var(--red);">-${Currency.formatMoney(commission,sym)}</b></div>`:''}
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('net_to_receiver')}</div>
-           <b style="color:var(--green);">+${sym}${net.toFixed(2)}</b></div>
+           <b style="color:var(--green);">+${Currency.formatMoney(net,sym)}</b></div>
     </div>`;
   box.style.display = 'block';
 }
@@ -228,9 +228,9 @@ async function doTransfer(force) {
   } else if (result.needsConfirm) {
     const sym = await Currency.symbol(cur.toUpperCase());
     document.getElementById('overdraft-msg').innerHTML =
-      `${I18n.t('sender_balance_lbl')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
-       ${I18n.t('required_amount')}: <b>${sym}${amt.toFixed(2)}</b><br>
-       ${I18n.t('will_become')}: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+      `${I18n.t('sender_balance_lbl')}: <b>${Currency.formatMoney(result.currentBal,sym)}</b><br>
+       ${I18n.t('required_amount')}: <b>${Currency.formatMoney(amt,sym)}</b><br>
+       ${I18n.t('will_become')}: <b style="color:var(--red);">${Currency.formatMoney((result.currentBal-amt),sym)}</b>`;
     document.getElementById('overdraft-modal').style.display='flex';
   } else { UI.toast(result.error,'error'); }
 }
@@ -256,7 +256,7 @@ async function renderRecent() {
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(fromAcc?fromAcc.name:t.from)}</td>
           <td>${UI.escapeHtml(toAcc?toAcc.name:t.to)}</td>
-          <td style="color:var(--blue);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="color:var(--blue);font-weight:600;">${Currency.formatMoney(parseFloat(t.amt),sym)}</td>
         </tr>`;
       }))).join('')
     : `<tr><td colspan="4" class="empty-state">${I18n.t('no_transfers')}</td></tr>`;

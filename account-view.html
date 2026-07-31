@@ -492,8 +492,8 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
       Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
     ]);
     const box = document.getElementById('op-from-bal');
-    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
-                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${be.toFixed(2)}</b>`;
+    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">${Currency.formatMoney(bu,'$')}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">${Currency.formatMoney(be,'€')}</b>`;
     box.style.display = 'block';
   });
 
@@ -503,8 +503,8 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
       Storage.getBalance(id,'usd'), Storage.getBalance(id,'eur')
     ]);
     const box = document.getElementById('op-to-bal');
-    box.innerHTML = `${I18n.t('receiver_bal_lbl')}: <b style="color:var(--gold);">$${bu.toFixed(2)}</b>
-                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${be.toFixed(2)}</b>`;
+    box.innerHTML = `${I18n.t('receiver_bal_lbl')}: <b style="color:var(--gold);">${Currency.formatMoney(bu,'$')}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">${Currency.formatMoney(be,'€')}</b>`;
     box.style.display = 'block';
   });
 
@@ -526,7 +526,7 @@ function updateBalBoxes(usd, eur) {
     const box = document.getElementById(boxId);
     const el  = document.getElementById(valId);
     const neg = val < 0;
-    el.textContent = (neg?'-':'') + sym + Math.abs(val).toFixed(2);
+    el.textContent = Currency.formatMoney(val, sym);
     el.style.color = neg ? 'var(--red)' : posColor;
     box.style.borderColor = neg ? 'var(--red)' : (posColor==='var(--gold)'?'var(--gold)':'var(--euro)');
     box.style.background  = neg ? 'var(--red-dim)' : (posColor==='var(--gold)'?'var(--gold-dim2)':'var(--euro-dim)');
@@ -656,8 +656,8 @@ function renderPage() {
       // حساب الأرباح: مدين (سحب فعلي منه) | دائن (عمولة داخلة أو إيداع فعلي)
       const val = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
       const isDebit = t.type==='wit' || (t.type==='trf' && isFrom);
-      col1cell = isDebit ? `<span class="cell-debit">${sym}${val.toFixed(2)}</span>` : '—';
-      col2cell = isDebit ? '—' : `<span class="cell-credit">${sym}${val.toFixed(2)}</span>`;
+      col1cell = isDebit ? `<span class="cell-debit">${Currency.formatMoney(val,sym)}</span>` : '—';
+      col2cell = isDebit ? '—' : `<span class="cell-credit">${Currency.formatMoney(val,sym)}</span>`;
       col3cell = '';
       badgeClass = isFeeIn ? 'badge-fee' : `badge-${t.type}`;
       badgeLabel = isFeeIn ? I18n.t('type_fee') : (typeLabel()[t.type]||t.type);
@@ -672,9 +672,9 @@ function renderPage() {
       const net = value - commission;
       const isIn = t.type==='dep' || isTo;
       const color = isIn ? 'cell-credit' : 'cell-debit';
-      col1cell = `<span class="${color}">${sym}${value.toFixed(2)}</span>`;
-      col2cell = commission>0 ? `<span style="color:var(--gold);">${sym}${commission.toFixed(2)}</span>` : '—';
-      col3cell = `<span class="${color}">${sym}${net.toFixed(2)}</span>`;
+      col1cell = `<span class="${color}">${Currency.formatMoney(value,sym)}</span>`;
+      col2cell = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission,sym)}</span>` : '—';
+      col3cell = `<span class="${color}">${Currency.formatMoney(net,sym)}</span>`;
       badgeClass = `badge-${t.type}`;
       badgeLabel = typeLabel()[t.type]||t.type;
     }
@@ -762,8 +762,8 @@ function openOp(type) {
     // تعبئة "من حساب" تلقائياً بالحساب الحالي، مع إمكانية تغييره
     UI.setSearchValue('op-from', _accId, _accObj.name);
     const box = document.getElementById('op-from-bal');
-    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">$${parseFloat(_accObj.bal_usd||0).toFixed(2)}</b>
-                     &nbsp;|&nbsp; <b style="color:var(--euro);">€${parseFloat(_accObj.bal_eur||0).toFixed(2)}</b>`;
+    box.innerHTML = `${I18n.t('sender_bal_lbl')}: <b style="color:var(--gold);">${Currency.formatMoney(parseFloat(_accObj.bal_usd||0),'$')}</b>
+                     &nbsp;|&nbsp; <b style="color:var(--euro);">${Currency.formatMoney(parseFloat(_accObj.bal_eur||0),'€')}</b>`;
     box.style.display = 'block';
   }
 
@@ -798,14 +798,14 @@ async function updateOpPreview() {
     box.innerHTML = `
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
         <div><div style="font-size:0.67rem;color:var(--text3);">${t('depositor_lbl')}</div>
-             <b style="color:var(--gold);">${sym}${amt.toFixed(2)}</b></div>
+             <b style="color:var(--gold);">${Currency.formatMoney(amt,sym)}</b></div>
         ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">${t('commission_pct_lbl',{pct:ratePct})}</div>
-             <b style="color:var(--red);">-${sym}${commission.toFixed(2)}</b></div>`:''}
+             <b style="color:var(--red);">-${Currency.formatMoney(commission,sym)}</b></div>`:''}
         <div><div style="font-size:0.67rem;color:var(--text3);">${t('enters_account_lbl')}</div>
-             <b style="color:var(--green);">${sym}${net.toFixed(2)}</b></div>
+             <b style="color:var(--green);">${Currency.formatMoney(net,sym)}</b></div>
         <div style="color:var(--text3);align-self:center;">→</div>
         <div><div style="font-size:0.67rem;color:var(--text3);">${t('new_balance_lbl')}</div>
-             <b>${sym}${after.toFixed(2)}</b></div>
+             <b>${Currency.formatMoney(after,sym)}</b></div>
       </div>`;
     box.style.background='var(--surface2)'; box.style.border='1px solid var(--border2)';
   } else {
@@ -814,10 +814,10 @@ async function updateOpPreview() {
     box.innerHTML = `
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
         <div><div style="font-size:0.67rem;color:var(--text3);">${t('current_balance_lbl')}</div>
-             <b>${sym}${before.toFixed(2)}</b></div>
+             <b>${Currency.formatMoney(before,sym)}</b></div>
         <div style="color:var(--text3);align-self:center;">→</div>
         <div><div style="font-size:0.67rem;color:var(--text3);">${t('after_withdrawal_lbl')}</div>
-             <b style="color:${neg?'var(--red)':'var(--text)'};">${sym}${after.toFixed(2)}
+             <b style="color:${neg?'var(--red)':'var(--text)'};">${Currency.formatMoney(after,sym)}
              ${neg?' ⚠️':''}</b></div>
       </div>`;
     box.style.background = neg?'var(--red-dim)':'var(--surface2)';
@@ -860,7 +860,7 @@ async function confirmOp(forceOverdraft=false) {
       const sym = _opType==='trf'
         ? ({'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'}[document.getElementById('op-trf-cur').value]||document.getElementById('op-trf-cur').value)
         : document.getElementById('op-cur').value==='usd'?'$':'€';
-      msg += ` ${I18n.t('commission_detail')}: ${sym}${result.commission.toFixed(2)}`;
+      msg += ` ${I18n.t('commission_detail')}: ${Currency.formatMoney(result.commission,sym)}`;
     }
     UI.toast(msg);
     // أعد تحميل البيانات
@@ -886,9 +886,9 @@ async function confirmOp(forceOverdraft=false) {
       : parseFloat(document.getElementById('op-amount').value);
     const sym = cur==='usd'?'$':'€';
     document.getElementById('overdraft-msg').innerHTML =
-      `${t('current_balance_lbl')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
-       ${t('required_amount_lbl')}: <b>${sym}${amt.toFixed(2)}</b><br>
-       ${t('will_become_lbl')}: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+      `${t('current_balance_lbl')}: <b>${Currency.formatMoney(result.currentBal,sym)}</b><br>
+       ${t('required_amount_lbl')}: <b>${Currency.formatMoney(amt,sym)}</b><br>
+       ${t('will_become_lbl')}: <b style="color:var(--red);">${Currency.formatMoney(result.currentBal-amt,sym)}</b>`;
     document.getElementById('overdraft-modal').classList.add('open');
   } else {
     UI.toast(result.error,'error');
@@ -947,14 +947,14 @@ function openDelAcc() {
     <div><b>${t('col_type_lbl')}:</b> ${_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')}</div>
     <div><b>${t('usd_balance_lbl')}:</b>
       <span style="color:${usd<0?'var(--red)':usd>0?'var(--green)':'var(--text2)'};">
-        $${usd.toFixed(2)}
+        ${Currency.formatMoney(usd,'$')}
       </span>
       ${usd > 0 ? `← <span style="color:var(--gold);">${I18n.t('profit_will_move')}</span>` :
         usd < 0 ? `← <span style="color:var(--red);">${I18n.t('profit_will_deduct')}</span>` : ''}
     </div>
     <div><b>${t('eur_balance_lbl')}:</b>
       <span style="color:${eur<0?'var(--red)':eur>0?'var(--green)':'var(--text2)'};">
-        €${eur.toFixed(2)}
+        ${Currency.formatMoney(eur,'€')}
       </span>
       ${eur > 0 ? `← <span style="color:var(--gold);">${I18n.t('profit_will_move')}</span>` :
         eur < 0 ? `← <span style="color:var(--red);">${I18n.t('profit_will_deduct')}</span>` : ''}
@@ -975,7 +975,7 @@ async function doDelAcc() {
     await UI.updateTreasury();
     let msg = I18n.t('acc_deleted_ok');
     if (result.usd !== 0 || result.eur !== 0) {
-      msg += ` · رصيد $${result.usd.toFixed(2)} / €${result.eur.toFixed(2)} ${I18n.t('profit_moved_msg')}`;
+      msg += ` · رصيد ${Currency.formatMoney(result.usd,'$')} / ${Currency.formatMoney(result.eur,'€')} ${I18n.t('profit_moved_msg')}`;
     }
     UI.toast(msg);
     setTimeout(() => navTo('accounts.html'), 1500);
@@ -1021,10 +1021,10 @@ function updateCommPreview(rate) {
   if (!r) { box.textContent = I18n.t('no_comm_note'); return; }
   const ex1000 = (1000 * r / 100).toFixed(2);
   const ex5000 = (5000 * r / 100).toFixed(2);
-  box.innerHTML = `${t('example_deposit_commission',{amt1:'$1,000',fee1:`<b style="color:var(--gold);">$${ex1000}</b>`})}
-    · ${t('enters_account_lbl')} <b style="color:var(--green);">$${(1000-parseFloat(ex1000)).toFixed(2)}</b>
-    <br>${t('example_deposit_commission',{amt1:'$5,000',fee1:`<b style="color:var(--gold);">$${ex5000}</b>`})}
-    · ${t('enters_account_lbl')} <b style="color:var(--green);">$${(5000-parseFloat(ex5000)).toFixed(2)}</b>`;
+  box.innerHTML = `${t('example_deposit_commission',{amt1:'$1,000',fee1:`<b style="color:var(--gold);">${Currency.formatMoney(parseFloat(ex1000),'$')}</b>`})}
+    · ${t('enters_account_lbl')} <b style="color:var(--green);">${Currency.formatMoney(1000-parseFloat(ex1000),'$')}</b>
+    <br>${t('example_deposit_commission',{amt1:'$5,000',fee1:`<b style="color:var(--gold);">${Currency.formatMoney(parseFloat(ex5000),'$')}</b>`})}
+    · ${t('enters_account_lbl')} <b style="color:var(--green);">${Currency.formatMoney(5000-parseFloat(ex5000),'$')}</b>`;
 }
 
 async function saveEditAcc() {
@@ -1174,10 +1174,10 @@ async function checkBalance() {
       background:${ok?'var(--green-dim)':'var(--red-dim)'};
       border:1px solid ${ok?'var(--green)':'var(--red)'};">
       <span style="font-weight:700;">${sym}</span>
-      <span style="font-size:0.78rem;color:var(--text2);">${t('calculated_lbl')}: <b>${calc.toFixed(2)}</b></span>
-      <span style="font-size:0.78rem;color:var(--text2);">${t('stored_lbl')}: <b>${stored.toFixed(2)}</b></span>
+      <span style="font-size:0.78rem;color:var(--text2);">${t('calculated_lbl')}: <b>${Currency.formatNumber(calc)}</b></span>
+      <span style="font-size:0.78rem;color:var(--text2);">${t('stored_lbl')}: <b>${Currency.formatNumber(stored)}</b></span>
       <span style="font-weight:700;color:${ok?'var(--green)':'var(--red)'};">
-        ${ok ? I18n.t('bal_match_lbl') : I18n.t('bal_diff_lbl') + ': ' + diff.toFixed(2)}
+        ${ok ? I18n.t('bal_match_lbl') : I18n.t('bal_diff_lbl') + ': ' + Currency.formatNumber(diff)}
       </span>
     </div>`;
   });

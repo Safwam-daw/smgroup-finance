@@ -457,13 +457,13 @@ function renderSummary() {
   document.getElementById('sum-stats').innerHTML = `
     <div class="stat-mini" style="border-right:3px solid var(--green);">
       <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--green);">$${depUsd.toFixed(2)}</div>
-      <div style="font-size:0.78rem;color:var(--euro);">€${depEur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--green);">${Currency.formatMoney(depUsd,'$')}</div>
+      <div style="font-size:0.78rem;color:var(--euro);">${Currency.formatMoney(depEur,'€')}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--red);">
       <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--red);">$${witUsd.toFixed(2)}</div>
-      <div style="font-size:0.78rem;color:var(--euro);">€${witEur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--red);">${Currency.formatMoney(witUsd,'$')}</div>
+      <div style="font-size:0.78rem;color:var(--euro);">${Currency.formatMoney(witEur,'€')}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--blue);">
       <div class="stat-mini-label">${t('transfer_count_lbl')}</div>
@@ -471,7 +471,7 @@ function renderSummary() {
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--gold);">
       <div class="stat-mini-label">${t('period_commissions_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--gold);">$${comm.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--gold);">${Currency.formatMoney(comm,'$')}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--text2);">
       <div class="stat-mini-label">${t('total_ops_lbl')}</div>
@@ -481,8 +481,8 @@ function renderSummary() {
     document.getElementById('sum-profit-box').innerHTML = `
       <div style="font-weight:700;margin-bottom:10px;">📈 ${t('total_profit_calc_lbl')}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.9rem;">
-        <div>$ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_usd||0).toFixed(2)}</b></div>
-        <div>€ <b style="color:var(--green);font-size:1.1rem;">${parseFloat(profitAcc.bal_eur||0).toFixed(2)}</b></div>
+        <div>$ <b style="color:var(--green);font-size:1.1rem;">${Currency.formatNumber(parseFloat(profitAcc.bal_usd||0))}</b></div>
+        <div>€ <b style="color:var(--green);font-size:1.1rem;">${Currency.formatNumber(parseFloat(profitAcc.bal_eur||0))}</b></div>
       </div>`;
     document.getElementById('sum-profit-box').style.display='block';
   } else {
@@ -521,11 +521,11 @@ function renderDep(p=null) {
   document.getElementById('dep-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--green);">
       <div class="stat-mini-label">${t('total_deposits_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--green);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--green);">${Currency.formatMoney(tot.usd,'$')} | ${Currency.formatMoney(tot.eur,'€')}</div>
     </div>
     <div class="stat-mini" style="border-right:3px solid var(--gold);">
       <div class="stat-mini-label">${t('total_commissions_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--gold);">$${comm.usd.toFixed(2)} | €${comm.eur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--gold);">${Currency.formatMoney(comm.usd,'$')} | ${Currency.formatMoney(comm.eur,'€')}</div>
     </div>
     <div class="stat-mini"><div class="stat-mini-label">${t('deposit_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_depPage-1)*PAGE_SIZE, _depPage*PAGE_SIZE);
@@ -539,9 +539,9 @@ function renderDep(p=null) {
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${accName(t.acc)}</td>
           <td>${t.cur.toUpperCase()}</td>
-          <td><span class="cell-credit">${sym}${parseFloat(t.amt).toFixed(2)}</span></td>
-          <td style="color:var(--gold);">${comm>0?sym+comm.toFixed(2):'—'}</td>
-          <td style="font-weight:600;">${sym}${net.toFixed(2)}</td>
+          <td><span class="cell-credit">${Currency.formatMoney(parseFloat(t.amt),sym)}</span></td>
+          <td style="color:var(--gold);">${comm>0?Currency.formatMoney(comm,sym):'—'}</td>
+          <td style="font-weight:600;">${Currency.formatMoney(net,sym)}</td>
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
@@ -558,7 +558,7 @@ function renderWit(p=null) {
   document.getElementById('wit-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--red);">
       <div class="stat-mini-label">${t('total_withdrawals_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--red);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--red);">${Currency.formatMoney(tot.usd,'$')} | ${Currency.formatMoney(tot.eur,'€')}</div>
     </div>
     <div class="stat-mini"><div class="stat-mini-label">${t('withdrawal_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_witPage-1)*PAGE_SIZE, _witPage*PAGE_SIZE);
@@ -570,7 +570,7 @@ function renderWit(p=null) {
           <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${accName(t.acc)}</td>
           <td>${t.cur.toUpperCase()}</td>
-          <td><span class="cell-debit">${sym}${parseFloat(t.amt).toFixed(2)}</span></td>
+          <td><span class="cell-debit">${Currency.formatMoney(parseFloat(t.amt),sym)}</span></td>
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
@@ -587,7 +587,7 @@ function renderTrf(p=null) {
   document.getElementById('trf-stats').innerHTML=`
     <div class="stat-mini" style="border-right:3px solid var(--blue);">
       <div class="stat-mini-label">${t('total_transfers_lbl')}</div>
-      <div class="stat-mini-val" style="color:var(--blue);">$${tot.usd.toFixed(2)} | €${tot.eur.toFixed(2)}</div>
+      <div class="stat-mini-val" style="color:var(--blue);">${Currency.formatMoney(tot.usd,'$')} | ${Currency.formatMoney(tot.eur,'€')}</div>
     </div>
     <div class="stat-mini"><div class="stat-mini-label">${t('transfer_count_lbl')}</div><div class="stat-mini-val">${rows.length}</div></div>`;
   const page = _printMode ? rows : rows.slice((_trfPage-1)*PAGE_SIZE, _trfPage*PAGE_SIZE);
@@ -601,8 +601,8 @@ function renderTrf(p=null) {
           <td>${accName(t.from)}</td>
           <td>${accName(t.to)}</td>
           <td>${t.cur.toUpperCase()}</td>
-          <td style="font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
-          <td style="color:var(--gold);">${comm>0?sym+comm.toFixed(2):'—'}</td>
+          <td style="font-weight:600;">${Currency.formatMoney(parseFloat(t.amt),sym)}</td>
+          <td style="color:var(--gold);">${comm>0?Currency.formatMoney(comm,sym):'—'}</td>
           <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }).join('')
@@ -620,8 +620,8 @@ function renderCreditors() {
         <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
         <td>${UI.escapeHtml(a.name)}</td>
         <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
-        <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
-        <td style="color:var(--green);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+        <td style="color:var(--green);font-weight:600;">${Currency.formatNumber(parseFloat(a.bal_usd||0))}</td>
+        <td style="color:var(--green);font-weight:600;">${Currency.formatNumber(parseFloat(a.bal_eur||0))}</td>
         <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
       </tr>`).join('')
     : `<tr><td colspan="6" class="empty-state">${t('no_creditor_accounts')}</td></tr>`;
@@ -636,8 +636,8 @@ function renderDebtors() {
         <td style="font-weight:700;">${UI.escapeHtml(a.id)} ⚠️</td>
         <td>${UI.escapeHtml(a.name)}</td>
         <td>${a.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
-        <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
-        <td style="color:var(--red);font-weight:600;">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+        <td style="color:var(--red);font-weight:600;">${Currency.formatNumber(parseFloat(a.bal_usd||0))}</td>
+        <td style="color:var(--red);font-weight:600;">${Currency.formatNumber(parseFloat(a.bal_eur||0))}</td>
         <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
       </tr>`).join('')
     : `<tr><td colspan="6" class="empty-state">✅ ${t('no_debtor_accounts')}</td></tr>`;
@@ -672,8 +672,8 @@ async function loadActivity() {
         return `<tr>
           <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
           <td>${UI.escapeHtml(a.name)}</td>
-          <td style="color:${parseFloat(a.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_usd||0).toFixed(2)}</td>
-          <td style="color:${parseFloat(a.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(a.bal_eur||0).toFixed(2)}</td>
+          <td style="color:${parseFloat(a.bal_usd||0)<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(parseFloat(a.bal_usd||0))}</td>
+          <td style="color:${parseFloat(a.bal_eur||0)<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(parseFloat(a.bal_eur||0))}</td>
           <td style="font-size:0.73rem;color:var(--text3);">${a.last ? UI.formatDate(a.last.toISOString()) : t('none_lbl')}</td>
           <td style="color:var(--red);font-weight:700;">${daysSince} ${t('day_unit')}</td>
           <td class="no-print"><button class="btn btn-ghost btn-sm" onclick="navTo('account-view.html?acc=${a.id}')">👁️</button></td>
@@ -718,8 +718,8 @@ UI.showLoading(false);
         <td style="font-weight:700;color:var(--text3);">${UI.escapeHtml(r.archive_id||r.id)}</td>
         <td>${UI.escapeHtml(r.name)}</td>
         <td>${r.type==='company'?t('company_type_lbl'):t('customer_type_lbl')}</td>
-        <td style="color:${parseFloat(r.bal_usd||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_usd||0).toFixed(2)}</td>
-        <td style="color:${parseFloat(r.bal_eur||0)<0?'var(--red)':'var(--text)'};">${parseFloat(r.bal_eur||0).toFixed(2)}</td>
+        <td style="color:${parseFloat(r.bal_usd||0)<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(parseFloat(r.bal_usd||0))}</td>
+        <td style="color:${parseFloat(r.bal_eur||0)<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(parseFloat(r.bal_eur||0))}</td>
         <td style="font-size:0.74rem;color:var(--text2);">${UI.escapeHtml(r.deleted_by||'—')}</td>
         <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(r.deleted_at)}</td>
         <td class="no-print">
@@ -762,9 +762,9 @@ function _buildLogDetails(l) {
   if (d.accountId)   parts.push(`${t('account') || 'حساب'}: ${d.accountId}`);
   if (d.txnId)       parts.push(`#${d.txnId}`);
   if (d.name)        parts.push(`${t('col_name')}: ${d.name}`);
-  if (d.amount)      parts.push(`${t('amount')||'مبلغ'}: ${parseFloat(d.amount).toFixed(2)} ${d.currency||''}`);
+  if (d.amount)      parts.push(`${t('amount')||'مبلغ'}: ${Currency.formatNumber(parseFloat(d.amount))} ${d.currency||''}`);
   if (d.fromId)      parts.push(`${t('from')||'من'}: ${d.fromId} → ${d.toId}`);
-  if (d.commission && d.commission > 0) parts.push(`${t('commission')||'عمولة'}: ${parseFloat(d.commission).toFixed(2)}`);
+  if (d.commission && d.commission > 0) parts.push(`${t('commission')||'عمولة'}: ${Currency.formatNumber(parseFloat(d.commission))}`);
   if (d.username)    parts.push(`${t('col_user')}: ${d.username}`);
   if (d.target_user) parts.push(`${t('col_target')||'المستهدف'}: ${d.target_user}`);
   let html = parts.length ? `<div>${UI.escapeHtml(parts.join(' · '))}</div>` : '';
@@ -867,7 +867,7 @@ async function showDeletedTxns(originalId, name, archiveId) {
     return `<tr><td style="font-size:0.75rem;">${new Date(t.date).toLocaleString()}</td>
       <td class="${cls}">${typeLabel[t.type]||t.type}</td>
       <td>${t.cur.toUpperCase()}</td>
-      <td class="${cls}">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+      <td class="${cls}">${Currency.formatMoney(parseFloat(t.amt),sym)}</td>
       <td>${t.by||'—'}</td></tr>`;
   }).join('')}</tbody></table>
   <p style="margin-top:20px;font-size:0.75rem;color:#4a5a72;">${brandName()} — ${t('archive_record_lbl')}</p>

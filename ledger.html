@@ -203,7 +203,7 @@ const row = (label, usdVal, eurVal, color) => `
 <div style="text-align:center;padding:8px 0;border-bottom:1px solid var(--border2);">
 <div style="font-size:0.72rem;color:var(--text3);">${label}</div>
 <div style="font-weight:700;color:${color||'var(--text)'};font-size:0.95rem;margin-top:3px;">
-$${usdVal.toFixed(2)} &nbsp;|&nbsp; €${eurVal.toFixed(2)}
+${Currency.formatMoney(usdVal,'$')} &nbsp;|&nbsp; ${Currency.formatMoney(eurVal,'€')}
 </div>
 </div>`;
 
@@ -215,7 +215,7 @@ ${row(t('opening_balance'), openUsd, openEur)}
 <div style="text-align:center;padding:14px 0 4px;">
 <div style="font-size:0.78rem;color:var(--text3);">${t('closing_balance')}</div>
 <div style="font-weight:700;color:var(--gold);font-size:1.25rem;margin-top:4px;">
-$${closeUsd.toFixed(2)} &nbsp;|&nbsp; €${closeEur.toFixed(2)}
+${Currency.formatMoney(closeUsd,'$')} &nbsp;|&nbsp; ${Currency.formatMoney(closeEur,'€')}
 </div>
 </div>
 ${!hasOpen ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:8px;">
@@ -234,12 +234,12 @@ document.getElementById('ledger-totals').innerHTML = `
 <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--green);">
 <div class="stat-label" style="color:var(--green);">${t('stat_deposits')}</div>
 <div style="font-size:0.85rem;font-weight:700;color:var(--green);margin-top:4px;">
-$${dep.usd.toFixed(2)} | €${dep.eur.toFixed(2)}</div>
+${Currency.formatMoney(dep.usd,'$')} | ${Currency.formatMoney(dep.eur,'€')}</div>
 </div>
 <div class="stat-card" style="flex:1;min-width:130px;padding:12px 16px;border-right:3px solid var(--red);">
 <div class="stat-label" style="color:var(--red);">${t('stat_withdrawals')}</div>
 <div style="font-size:0.85rem;font-weight:700;color:var(--red);margin-top:4px;">
-$${wit.usd.toFixed(2)} | €${wit.eur.toFixed(2)}</div>
+${Currency.formatMoney(wit.usd,'$')} | ${Currency.formatMoney(wit.eur,'€')}</div>
 </div>
 <div class="stat-card" style="flex:1;min-width:100px;padding:12px 16px;border-right:3px solid var(--blue);">
 <div class="stat-label">${t('stat_op_count')}</div>
@@ -275,7 +275,7 @@ return `<tr>
 <td><span class="badge badge-${t.type}">${typeLabel(t.type)}</span></td>
 <td>${accStr}</td>
 <td>${t.cur.toUpperCase()}</td>
-<td style="font-weight:700;color:${color};">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+<td style="font-weight:700;color:${color};">${Currency.formatMoney(parseFloat(t.amt),sym)}</td>
 <td style="color:var(--text3);font-size:0.75rem;">${t.rate&&parseFloat(t.rate)!==1?'×'+t.rate:'—'}</td>
 <td style="font-size:0.73rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
 </tr>`;

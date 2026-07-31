@@ -331,8 +331,8 @@ function renderPage() {
       <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}</td>
       <td>${UI.escapeHtml(a.name)}</td>
       <td><span class="badge-type">${typeLabel}</span></td>
-      <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${a.usd.toFixed(2)}</td>
-      <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${a.eur.toFixed(2)}</td>
+      <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.usd)}</td>
+      <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.eur)}</td>
       <td onclick="event.stopPropagation();" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-ghost btn-sm" title="${I18n.t('movements')}"
           onclick="event.stopPropagation();navTo('account-view.html?acc=${safeId}')">👁️</button>
@@ -370,7 +370,7 @@ function confirmDelAcc(id, name) {
   const usd = _filtered.find(a=>a.id===id)?.usd || 0;
   const eur = _filtered.find(a=>a.id===id)?.eur || 0;
   document.getElementById('del-acc-name').textContent = name + ' (' + id + ')';
-  document.getElementById('del-acc-bal').textContent = `$${usd.toFixed(2)} | €${eur.toFixed(2)}`;
+  document.getElementById('del-acc-bal').textContent = `${Currency.formatMoney(usd,'$')} | ${Currency.formatMoney(eur,'€')}`;
   document.getElementById('del-acc-bal').style.color = (usd < 0 || eur < 0) ? 'var(--red)' : 'var(--text2)';
   document.getElementById('del-acc-modal').style.display = 'flex';
 }
@@ -388,7 +388,7 @@ async function doDelAcc() {
   if (result.ok) {
     let msg = I18n.t('account_deleted');
     if (result.usd !== 0 || result.eur !== 0)
-      msg += ` · ($${result.usd.toFixed(2)} | €${result.eur.toFixed(2)}) ${I18n.t('balance_transferred')}`;
+      msg += ` · (${Currency.formatMoney(result.usd,'$')} | ${Currency.formatMoney(result.eur,'€')}) ${I18n.t('balance_transferred')}`;
     UI.toast(msg);
     await loadAccounts();
     await UI.updateTreasury();

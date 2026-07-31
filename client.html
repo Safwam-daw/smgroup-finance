@@ -294,6 +294,7 @@ tr:last-child td{border-bottom:none;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script>
+<script src="js/currency.js"></script>
 <script src="js/config.js"></script>
 <script>
 // ══ نظام ترجمة مستقل لبوابة الزبون ══════════════════
@@ -505,14 +506,14 @@ async function loadPortal() {
          background:${usd<0?'var(--red-dim)':'var(--gold-dim2)'};">
       <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
       <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--gold)'};">
-        ${usd<0?'-':''}$${Math.abs(usd).toFixed(2)}
+        ${Currency.formatMoney(usd,'$')}
       </div>
     </div>
     <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--euro)'};
          background:${eur<0?'var(--red-dim)':'var(--euro-dim)'};">
       <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
       <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--euro)'};">
-        ${eur<0?'-':''}€${Math.abs(eur).toFixed(2)}
+        ${Currency.formatMoney(eur,'€')}
       </div>
     </div>`;
 
@@ -592,8 +593,8 @@ function renderPage() {
         if(isFee)          debit=parseFloat(t.amt);
         if(isFrom) debit=parseFloat(t.amt);
         if(isTo)   credit=parseFloat(t.amt)*(parseFloat(t.rate)||1);
-        const dCell=debit>0 ?`<span class="cell-debit">-${sym}${debit.toFixed(2)}</span>`:'—';
-        const cCell=credit>0?`<span class="cell-credit">+${sym}${credit.toFixed(2)}</span>`:'—';
+        const dCell=debit>0 ?`<span class="cell-debit">-${Currency.formatMoney(debit,sym)}</span>`:'—';
+        const cCell=credit>0?`<span class="cell-credit">+${Currency.formatMoney(credit,sym)}</span>`:'—';
         const lbl = typeLabel(t.type);
         const bCls= isFee?'badge-fee':`badge-${t.type}`;
         const rSty= isFee?'background:rgba(201,168,76,0.04);border-right:2px solid var(--gold);':'';

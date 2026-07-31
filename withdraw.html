@@ -113,13 +113,13 @@ const over   = after < 0;
 box.innerHTML = `
 <div style="display:flex;gap:24px;flex-wrap:wrap;">
 <div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">${I18n.t('current_balance')}</div>
-<div style="font-weight:700;font-size:1rem;">${sym}${before.toFixed(2)}</div></div>
+<div style="font-weight:700;font-size:1rem;">${Currency.formatMoney(before,sym)}</div></div>
 <div style="color:var(--text3);font-size:1.2rem;align-self:center;">→</div>
 <div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">${I18n.t('balance_after')}</div>
 <div style="font-weight:700;font-size:1rem;color:${over?'var(--red)':'var(--text)'};">
-${sym}${after.toFixed(2)}${over?' ⚠️':''}</div></div>
+${Currency.formatMoney(after,sym)}${over?' ⚠️':''}</div></div>
 ${amt>0?`<div><div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">${I18n.t('amount')}</div>
-<div style="font-weight:700;font-size:1rem;color:var(--red);">-${sym}${amt.toFixed(2)}</div></div>`:''}
+<div style="font-weight:700;font-size:1rem;color:var(--red);">-${Currency.formatMoney(amt,sym)}</div></div>`:''}
 </div>`;
 box.style.background = over ? 'var(--red-dim)' : 'var(--surface2)';
 box.style.border      = over ? '1px solid var(--red)' : '1px solid var(--border2)';
@@ -144,9 +144,9 @@ if (result.ok) {
 } else if (result.needsConfirm) {
   const sym = await Currency.symbol(cur.toUpperCase());
   document.getElementById('overdraft-msg').innerHTML =
-    `${I18n.t('current_balance')}: <b>${sym}${result.currentBal.toFixed(2)}</b><br>
-     ${I18n.t('overdraft_amount')}: <b>${sym}${amt.toFixed(2)}</b><br>
-     ${I18n.t('balance_will_be')}: <b style="color:var(--red);">${sym}${(result.currentBal-amt).toFixed(2)}</b>`;
+    `${I18n.t('current_balance')}: <b>${Currency.formatMoney(result.currentBal,sym)}</b><br>
+     ${I18n.t('overdraft_amount')}: <b>${Currency.formatMoney(amt,sym)}</b><br>
+     ${I18n.t('balance_will_be')}: <b style="color:var(--red);">${Currency.formatMoney((result.currentBal-amt),sym)}</b>`;
   document.getElementById('overdraft-modal').style.display='flex';
 } else { UI.toast(result.error,'error'); }
 }
@@ -164,7 +164,7 @@ async function renderRecent() {
         return `<tr>
           <td style="font-size:0.72rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
           <td>${UI.escapeHtml(acc?acc.name:t.acc)}</td>
-          <td style="color:var(--red);font-weight:600;">${sym}${parseFloat(t.amt).toFixed(2)}</td>
+          <td style="color:var(--red);font-weight:600;">${Currency.formatMoney(parseFloat(t.amt),sym)}</td>
           <td style="font-size:0.75rem;color:var(--text2);">${UI.escapeHtml(t.by)}</td>
         </tr>`;
       }))).join('')

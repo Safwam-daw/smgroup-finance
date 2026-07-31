@@ -175,7 +175,7 @@ function renderRecent(txns) {
         <td><span class="badge badge-${t.type}">${labels[t.type]||t.type}</span></td>
         <td style="font-size:0.78rem;">${UI.escapeHtml(t.acc||t.from||'—')}</td>
         <td style="font-weight:600;color:${colors[t.type]||'var(--text)'};">
-          ${parseFloat(t.amt).toFixed(2)} ${t.cur.toUpperCase()}</td>
+          ${Currency.formatNumber(parseFloat(t.amt))} ${t.cur.toUpperCase()}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty-state">${I18n.t('no_operations')}</td></tr>`;
 }
@@ -197,8 +197,8 @@ function renderDebtorPage() {
               ${UI.escapeHtml(a.name)}
             </button>
           </td>
-          <td style="color:${usd<0?'var(--red)':'var(--text)'};">${usd.toFixed(2)}</td>
-          <td style="color:${eur<0?'var(--red)':'var(--text)'};">${eur.toFixed(2)}</td>
+          <td style="color:${usd<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(usd)}</td>
+          <td style="color:${eur<0?'var(--red)':'var(--text)'};">${Currency.formatNumber(eur)}</td>
           <td><button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc=${a.id}')">📋</button></td>
         </tr>`;
       }).join('')
@@ -237,7 +237,7 @@ async function checkDebtAlerts(accounts) {
                background:rgba(0,0,0,0.2);border-radius:6px;padding:8px 12px;flex-wrap:wrap;gap:8px;">
             <span style="font-size:0.83rem;"><b>${UI.escapeHtml(a.id)}</b> — ${UI.escapeHtml(a.name)}</span>
             <span style="font-size:0.82rem;color:var(--red);">
-              $${parseFloat(a.bal_usd||0).toFixed(2)} | €${parseFloat(a.bal_eur||0).toFixed(2)}
+              ${Currency.formatMoney(parseFloat(a.bal_usd||0),'$')} | ${Currency.formatMoney(parseFloat(a.bal_eur||0),'€')}
             </span>
             <button class="btn btn-ghost btn-sm"
               onclick="navTo('account-view.html?acc=${a.id}')">${I18n.t('view_account')}</button>

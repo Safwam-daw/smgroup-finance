@@ -198,9 +198,9 @@ let _filtered = [];
   const eur = parseFloat(deleted.bal_eur || 0);
   const usdEl = document.getElementById('bal-usd');
   const eurEl = document.getElementById('bal-eur');
-  usdEl.textContent = '$' + usd.toFixed(2);
+  usdEl.textContent = Currency.formatMoney(usd, '$');
   usdEl.style.color = usd < 0 ? 'var(--red)' : 'var(--gold)';
-  eurEl.textContent = '€' + eur.toFixed(2);
+  eurEl.textContent = Currency.formatMoney(eur, '€');
   eurEl.style.color = eur < 0 ? 'var(--red)' : 'var(--euro)';
 
   if (deleted.transfer_note) {
@@ -271,17 +271,17 @@ function renderRows() {
     const cur = (t.cur || 'usd').toUpperCase();
 
     if (t.type === 'dep') {
-      credit = `<span class="cell-credit">+${amt.toFixed(2)} ${cur}</span>`;
+      credit = `<span class="cell-credit">+${Currency.formatNumber(amt)} ${cur}</span>`;
     } else if (t.type === 'wit') {
-      debit = `<span class="cell-debit">−${amt.toFixed(2)} ${cur}</span>`;
+      debit = `<span class="cell-debit">−${Currency.formatNumber(amt)} ${cur}</span>`;
     } else if (t.type === 'trf') {
       if (isFrom) {
-        debit = `<span class="cell-debit">−${amt.toFixed(2)} ${cur}</span>`;
+        debit = `<span class="cell-debit">−${Currency.formatNumber(amt)} ${cur}</span>`;
         other = UI.escapeHtml(t.to || '—');
       } else {
         const received = (t.rate && t.rate !== 1)
-          ? (amt * t.rate).toFixed(2)
-          : amt.toFixed(2);
+          ? Currency.formatNumber(amt * t.rate)
+          : Currency.formatNumber(amt);
         credit = `<span class="cell-credit">+${received} ${cur}</span>`;
         other = UI.escapeHtml(t.from || '—');
       }
