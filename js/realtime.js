@@ -25,7 +25,10 @@ const Realtime = (() => {
           if (t.by === user) return;
           const labels = { dep:'إيداع', wit:'سحب', trf:'تحويل', fee:'عمولة' };
           const sym    = t.cur==='usd'?'$':'€';
-          UI.toast(`🔔 ${labels[t.type]||t.type}: ${sym}${parseFloat(t.amt).toFixed(2)} — بواسطة ${t.by}`, 'success');
+          const fmt = (typeof Currency !== 'undefined')
+            ? Currency.formatMoney(parseFloat(t.amt), sym)
+            : sym + parseFloat(t.amt).toFixed(2);
+          UI.toast(`🔔 ${labels[t.type]||t.type}: ${fmt} — بواسطة ${t.by}`, 'success');
           if (_onTxn) _onTxn(t);
         }
       )

@@ -93,7 +93,7 @@ const Transactions = (() => {
     if (!forceOverdraft && currentBal < amount) {
       return {
         ok: false, needsConfirm: true, currentBal,
-        error: 'رصيد الحساب (' + currentBal.toFixed(2) + ') غير كافٍ'
+        error: 'رصيد الحساب (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(currentBal) : currentBal.toFixed(2)) + ') غير كافٍ'
       };
     }
 
@@ -137,7 +137,7 @@ const Transactions = (() => {
     if (!forceOverdraft && senderBal < amount) {
       return {
         ok: false, needsConfirm: true, currentBal: senderBal,
-        error: 'رصيد المرسل (' + senderBal.toFixed(2) + ') غير كافٍ'
+        error: 'رصيد المرسل (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(senderBal) : senderBal.toFixed(2)) + ') غير كافٍ'
       };
     }
 
