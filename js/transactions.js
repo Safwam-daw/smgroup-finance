@@ -54,6 +54,33 @@ const Transactions = (() => {
     await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, currency, commission);
   }
 
+  // ── تنبيهات استباقية: رصيد سالب + عملية كبيرة (MIGRATION_V24) ──
+  // resultingBal: مرّرها فقط عند عملية قد تُنتج رصيداً سالباً (سحب/تحويل)
+  async function _checkTxnAlerts(kind, accountId, currency, amount, resultingBal) {
+    try {
+      const settings = await Storage.getAlertSettings();
+      const by  = Auth.getUser()?.user || 'system';
+      const sym = await Currency.symbol(currency);
+
+      if (resultingBal !== undefined && resultingBal < 0) {
+        const accounts = await Storage.getAccounts();
+        const acc = accounts.find(a => a.id === accountId);
+        await Storage.addNotification('negative_balance',
+          '⚠️ رصيد سالب',
+          `الحساب "${acc?.name || accountId}" أصبح برصيد ${Currency.formatMoney(resultingBal, sym)} بعد عملية ${kind} بواسطة ${by}`,
+          '⚠️');
+      }
+
+      const threshold = parseFloat(settings.large_txn_threshold || 0);
+      if (threshold > 0 && amount >= threshold) {
+        await Storage.addNotification('large_txn',
+          '💰 عملية مالية كبيرة',
+          `عملية ${kind} بقيمة ${Currency.formatMoney(amount, sym)} بواسطة ${by}`,
+          '💰');
+      }
+    } catch (e) { console.error('checkTxnAlerts:', e); }
+  }
+
   // ══ إيداع ════════════════════════════════════════════
   async function deposit(accountId, currency, amount) {
     if (!accountId)             return { ok: false, error: 'اختر الحساب' };
@@ -81,6 +108,7 @@ const Transactions = (() => {
 
     await Storage.logAction('deposit', { accountId, currency, amount, commission, netAmount });
     Storage.invalidate();
+    _checkTxnAlerts('إيداع', accountId, currency, amount);
     return { ok: true, commission, netAmount };
   }
 
@@ -115,6 +143,7 @@ const Transactions = (() => {
 
     await Storage.logAction('withdraw', { accountId, currency, amount });
     Storage.invalidate();
+    _checkTxnAlerts('سحب', accountId, currency, amount, currentBal - amount);
     return { ok: true };
   }
 
@@ -162,6 +191,7 @@ const Transactions = (() => {
 
     await Storage.logAction('transfer', { fromId, toId, currency, amount, rate: r, commission, netReceived });
     Storage.invalidate();
+    _checkTxnAlerts('تحويل', fromId, currency, amount, senderBal - amount);
     return { ok: true, commission, netReceived };
   }
 

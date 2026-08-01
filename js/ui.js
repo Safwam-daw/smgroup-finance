@@ -68,6 +68,9 @@ const UI = (() => {
     const eurEl = document.getElementById('t-eur');
     if (usdEl) { usdEl.textContent = fmtMoney(usd,'$'); usdEl.style.color = usd<0?'var(--red)':'var(--gold)'; }
     if (eurEl) { eurEl.textContent = fmtMoney(eur,'€'); eurEl.style.color = eur<0?'var(--red)':'var(--euro)'; }
+    if (typeof Storage !== 'undefined' && Storage.checkTreasuryAlerts) {
+      Storage.checkTreasuryAlerts(usd, eur).catch(()=>{});
+    }
 
     // تحديث الأرباح
     const pusd = profit.usd || 0;

@@ -616,6 +616,31 @@ const Storage = (() => {
     await _sb.from('notifications').update({ is_read: true }).eq('is_read', false);
   }
 
+  // تنبيه انخفاض رصيد الخزينة — بفحص "تبريد" 4 ساعات لتفادي التكرار
+  // على كل تحميل صفحة (يُستدعى من UI.updateTreasury في كل صفحة)
+  const _TREASURY_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+  async function checkTreasuryAlerts(usd, eur) {
+    try {
+      const settings = await getAlertSettings();
+      const checks = [
+        { cur: 'usd', sym: '$', val: usd, min: parseFloat(settings.treasury_min_usd || 0) },
+        { cur: 'eur', sym: '€', val: eur, min: parseFloat(settings.treasury_min_eur || 0) }
+      ];
+      for (const c of checks) {
+        if (c.min <= 0 || c.val >= c.min) continue;
+        const type = 'treasury_low_' + c.cur;
+        const { data: last } = await _sb.from('notifications')
+          .select('created_at').eq('type', type)
+          .order('created_at', { ascending: false }).limit(1).single();
+        if (last && (Date.now() - new Date(last.created_at).getTime()) < _TREASURY_COOLDOWN_MS) continue;
+        const shown = (typeof Currency !== 'undefined') ? Currency.formatMoney(c.val, c.sym) : c.sym + c.val.toFixed(2);
+        const minShown = (typeof Currency !== 'undefined') ? Currency.formatMoney(c.min, c.sym) : c.sym + c.min.toFixed(2);
+        await addNotification(type, '📉 انخفاض رصيد الخزينة',
+          `رصيد الخزينة (${c.cur.toUpperCase()}) أصبح ${shown} — أقل من الحد الأدنى المحدد (${minShown})`, '📉');
+      }
+    } catch(e) { console.error('checkTreasuryAlerts:', e); }
+  }
+
   // ══ سجل التدقيق ═══════════════════════════════════════
   async function logAction(action, details, oldValue = null, newValue = null) {
     const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
@@ -717,7 +742,7 @@ const Storage = (() => {
   saveDailySnapshot, getSnapshots, getSnapshotOnOrBefore,
 
   // notifications
-  addNotification, getNotifications, markNotifRead, markAllNotifsRead,
+  addNotification, getNotifications, markNotifRead, markAllNotifsRead, checkTreasuryAlerts,
 
   // misc
   logAction,
