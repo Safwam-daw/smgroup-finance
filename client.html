@@ -136,7 +136,7 @@ tr:last-child td{border-bottom:none;}
   #login-screen,#toast{display:none!important;}
   .btn,.qf-row,.pagination,.pub-note,
   .card:has(#p-from){display:none!important;}
-  #print-header,#print-footer{display:block!important;}
+  #print-header,#print-footer,#print-signature-slot{display:block!important;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:#fff!important;color:#111!important;}
   #portal-screen{padding:16px!important;max-width:none!important;}
@@ -196,6 +196,7 @@ tr:last-child td{border-bottom:none;}
 
   <!-- ترويسة الطباعة -->
   <div id="print-header" style="display:none;margin-bottom:18px;">
+    <div id="print-logo-slot" style="text-align:center;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;
          border-bottom:3px solid #c9a84c;padding-bottom:12px;">
       <div>
@@ -284,6 +285,9 @@ tr:last-child td{border-bottom:none;}
     <div class="pagination" id="p-pages"></div>
   </div>
 
+  <!-- توقيع وختم -->
+  <div id="print-signature-slot" style="display:none;"></div>
+
   <!-- تذييل الطباعة -->
   <div id="print-footer" style="display:none;margin-top:24px;border-top:1px solid #ddd;
        padding-top:10px;font-size:0.7rem;color:#888;text-align:center;">
@@ -295,6 +299,7 @@ tr:last-child td{border-bottom:none;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script>
 <script src="js/currency.js"></script>
+<script src="js/print-brand.js"></script>
 <script src="js/config.js"></script>
 <script>
 // ══ نظام ترجمة مستقل لبوابة الزبون ══════════════════
@@ -634,11 +639,17 @@ function go(p){const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;if(p<1||p>t)retu
 window.addEventListener('beforeprint', () => {
   document.getElementById('print-header').style.display='block';
   document.getElementById('print-footer').style.display='block';
+  document.getElementById('print-signature-slot').style.display='block';
+  if (typeof PrintBrand !== 'undefined') {
+    PrintBrand.injectLogo('print-logo-slot');
+    PrintBrand.injectSignatureBlock('print-signature-slot');
+  }
   _printMode = true; renderPage();
 });
 window.addEventListener('afterprint', () => {
   document.getElementById('print-header').style.display='none';
   document.getElementById('print-footer').style.display='none';
+  document.getElementById('print-signature-slot').style.display='none';
   _printMode = false; renderPage();
 });
 
