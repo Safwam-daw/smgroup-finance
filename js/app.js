@@ -170,9 +170,9 @@ function buildTreasuryBar() {
       ${canProfit ? `
       <div class="stat-card" style="flex:1;min-width:130px;border-right:3px solid var(--green);">
         <div class="stat-label">${t('treasury_profit')}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;">
-          <span class="stat-value" id="t-profit-usd" style="color:var(--green);font-size:var(--fs-lg);">$0.00</span>
-          <span class="stat-value" id="t-profit-eur" style="color:var(--green);font-size:var(--fs-lg);">€0.00</span>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span class="stat-value" id="t-profit-usd" style="color:var(--green);">$0.00</span>
+          <span class="stat-value" id="t-profit-eur" style="color:var(--green);">€0.00</span>
         </div>
       </div>` : ''}
     </div>
