@@ -7,13 +7,13 @@ const Accounts = (() => {
 
   async function generateCode(type) {
     // البحث عن أول فجوة في الأرقام (رقم محذوف)
+    // نعتمد على حقل type المخزَّن فعلياً لكل حساب (وليس تخمين بادئة الكود) —
+    // لأن حسابات قديمة قد يكون كودها بصيغة غير معتادة (مثال: 707 أو 2014)
     const accounts = await Storage.getAccounts();
 
     if (type === 'customer') {
-      // الأرقام الموجودة للزبائن (بدون 4xxx و 9xxx و 7xxx)
       const existing = new Set(
-        accounts
-          .filter(a => !a.id.startsWith('4') && !a.id.startsWith('9') && !a.id.startsWith('7'))
+        accounts.filter(a => a.type === 'customer')
           .map(a => parseInt(a.id))
           .filter(n => !isNaN(n))
       );
@@ -24,7 +24,7 @@ const Accounts = (() => {
       return '0999';
     } else if (type === 'profit') {
       const existing = new Set(
-        accounts.filter(a => a.id.startsWith('9'))
+        accounts.filter(a => a.type === 'profit')
           .map(a => parseInt(a.id))
           .filter(n => !isNaN(n))
       );
@@ -34,7 +34,7 @@ const Accounts = (() => {
       return '9000';
     } else {
       const existing = new Set(
-        accounts.filter(a => a.id.startsWith('4'))
+        accounts.filter(a => a.type === 'company')
           .map(a => parseInt(a.id))
           .filter(n => !isNaN(n))
       );

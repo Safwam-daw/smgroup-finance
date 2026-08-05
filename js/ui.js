@@ -300,11 +300,23 @@ const UI = (() => {
     XLSX.writeFile(wb, filename + '.xlsx');
   }
 
+  // يستبعد حركات الحسابات المؤرشفة (المحذوفة) اعتماداً على وجود الحساب
+  // فعلياً في قائمة الحسابات الحالية — وليس تخمين بادئة الكود (مثل '7')،
+  // لأن حسابات قديمة مستوردة قد يكون كودها 707 أو 2014 دون أن تكون مؤرشفة
+  function filterActiveTxns(txns, accounts) {
+    const ids = new Set((accounts||[]).map(a => a.id));
+    return (txns||[]).filter(t =>
+      (!t.acc  || ids.has(t.acc))  &&
+      (!t.from || ids.has(t.from)) &&
+      (!t.to   || ids.has(t.to))
+    );
+  }
+
   return {
     toast, showLoading, updateTreasury,
     initSidebar, toggleSidebar, closeSidebarOnNav,
     fillUserInfo, applyRoleUI, initSearch, setSearchValue, clearSearch,
-    escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth,
+    escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth, filterActiveTxns,
     exportExcel, getEffectiveNavStyle, applyNavStyle
   };
 })();
