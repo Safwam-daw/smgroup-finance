@@ -111,13 +111,8 @@ await UI.updateTreasury();
 _allAccounts = await Accounts.getAll();
 UI.showLoading(true);
 const allTxns = await Transactions.getAll();
-// فلترة عمليات الأرشيف (7xxx)، وحركات العمولة (إشعارات مستقلة لا تظهر في السجل اليومي)
-_allTxns = allTxns.filter(t =>
-  !String(t.acc||'').startsWith('7') &&
-  !String(t.from||'').startsWith('7') &&
-  !String(t.to||'').startsWith('7') &&
-  !t.is_commission_entry
-);
+// فلترة عمليات الحسابات المؤرشفة (المحذوفة فعلياً)، وحركات العمولة (إشعارات مستقلة لا تظهر في السجل اليومي)
+_allTxns = UI.filterActiveTxns(allTxns, _allAccounts).filter(t => !t.is_commission_entry);
 UI.showLoading(false);
 document.getElementById('f-date').value = UI.todayStr();
 applyFilter();

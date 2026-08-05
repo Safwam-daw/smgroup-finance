@@ -151,13 +151,11 @@ function renderSummaryShell(accounts) {
     </div>`;
 }
 
-function renderRecent(txns) {
-  txns = txns.filter(t =>
-    !String(t.acc||'').startsWith('7') &&
-    !String(t.from||'').startsWith('7') &&
-    !String(t.to||'').startsWith('7') &&
-    !t.is_commission_entry
-  ).slice(0, 10);
+async function renderRecent(txns) {
+  const accounts = await Accounts.getAll();
+  txns = UI.filterActiveTxns(txns, accounts)
+    .filter(t => !t.is_commission_entry)
+    .slice(0, 10);
   const todayStr   = new Date().toDateString();
   const todayCount = txns.filter(t=>new Date(t.date).toDateString()===todayStr).length;
   const el = document.getElementById('today-stat');

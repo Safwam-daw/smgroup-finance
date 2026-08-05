@@ -238,12 +238,11 @@ async function doTransfer(force) {
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
 
 async function renderRecent() {
-  const txns = (await Transactions.getAll({type:'trf'}))
-    .filter(t =>
-      !String(t.from||'').startsWith('7') &&
-      !String(t.to||'').startsWith('7')
-    )
-    .slice(0,10);
+  const [allTxns, accounts] = await Promise.all([
+    Transactions.getAll({type:'trf'}),
+    Accounts.getAll()
+  ]);
+  const txns = UI.filterActiveTxns(allTxns, accounts).slice(0,10);
   document.getElementById('recent-trf-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
         const [fromAcc, toAcc] = await Promise.all([

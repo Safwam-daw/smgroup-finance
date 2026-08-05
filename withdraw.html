@@ -154,9 +154,11 @@ if (result.ok) {
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
 
 async function renderRecent() {
-  const txns = (await Transactions.getAll({type:'wit'}))
-    .filter(t => !String(t.acc||'').startsWith('7'))
-    .slice(0,10);
+  const [allTxns, accounts] = await Promise.all([
+    Transactions.getAll({type:'wit'}),
+    Accounts.getAll()
+  ]);
+  const txns = UI.filterActiveTxns(allTxns, accounts).slice(0,10);
   document.getElementById('recent-wit-tbody').innerHTML = txns.length
     ? (await Promise.all(txns.map(async t => {
         const acc = await Accounts.getById(t.acc);
