@@ -266,12 +266,12 @@ select option { background:var(--surface2); }
 }
 table { width:100%; border-collapse:collapse; font-size:var(--fs-base); min-width:480px; font-variant-numeric:tabular-nums; }
 th {
-  padding:10px 14px; text-align:right;
+  padding:8px 12px; text-align:right;
   background:var(--surface2); color:var(--text2);
   border-bottom:1px solid var(--border); font-weight:600; white-space:nowrap;
   font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:0.04em;
 }
-td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+td { padding:7px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
 tr:last-child td { border-bottom:none; }
 tr:nth-child(even) td { background:rgba(255,255,255,0.012); }
 tr:hover td { background:var(--gold-dim2); }
