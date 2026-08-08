@@ -74,7 +74,8 @@ body {
 }
 .nav-btn:hover  { background:var(--surface2); color:var(--text); }
 .nav-btn.active { background:var(--gold-dim); color:var(--gold); font-weight:600; }
-.nav-btn .nav-icon { font-size:1rem; flex-shrink:0; }
+.nav-btn .nav-icon { font-size:1rem; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+.nav-btn .nav-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
 /* تذييل القائمة الثابت والمطوّر بالأسفل دائماً */
 .sidebar-footer {
@@ -184,6 +185,10 @@ body.nav-topbar #main { margin-top:calc(var(--topbar-h) + 56px); }
   color:var(--text2); font-size:1.5rem; padding:6px 4px;
   display:flex; align-items:center; order:-1;
   min-width:40px; min-height:40px; justify-content:center;
+}
+#menu-toggle svg, #search-btn svg, #notif-btn svg {
+  width:19px; height:19px; stroke:currentColor; fill:none;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
 }
 
 #main {
