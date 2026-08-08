@@ -1,4 +1,21 @@
 // ══ Theme (Dark/Light) ═══════════════════════════════════
+// أيقونات خطية أحادية اللون (بدل الإيموجي) للقائمة الجانبية
+const ICON = {
+  dashboard: '<svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>',
+  accounts:  '<svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3.2"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17.5" cy="8" r="2.4"/><path d="M15 20c0-2.6 1.8-4.6 4-5"/></svg>',
+  deposit:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v7M8.5 11l3.5 3.5L15.5 11"/></svg>',
+  withdraw:  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 17v-7M8.5 13l3.5-3.5L15.5 13"/></svg>',
+  transfer:  '<svg viewBox="0 0 24 24"><path d="M4 8h13M13 4l4 4-4 4"/><path d="M20 16H7M11 12l-4 4 4 4"/></svg>',
+  ledger:    '<svg viewBox="0 0 24 24"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z"/><path d="M8 9h8M8 13h5"/></svg>',
+  employees: '<svg viewBox="0 0 24 24"><path d="M12 3l8 3.5v5c0 5-3.4 8.4-8 9.5-4.6-1.1-8-4.5-8-9.5v-5L12 3z"/><path d="M9 12l2 2 4-4"/></svg>',
+  reports:   '<svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>',
+  settings:  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  logout:    '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>',
+  search:    '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>',
+  bell:      '<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+  menu:      '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'
+};
+
 function initTheme() {
   const saved = localStorage.getItem('smg_theme') || 'dark';
   applyTheme(saved);
@@ -39,35 +56,35 @@ function buildSidebar(activePage) {
 
         <div class="nav-section-label">${t('nav_main')}</div>
         <button class="nav-btn ${activePage==='dashboard'?'active':''}" data-page="dashboard" onclick="navTo('dashboard.html')">
-          <span class="nav-icon">📊</span> ${t('nav_dashboard')}
+          <span class="nav-icon">${ICON.dashboard}</span> ${t('nav_dashboard')}
         </button>
         <div class="nav-section-label">${t('nav_daily')}</div>
         <button class="nav-btn ${activePage==='accounts'?'active':''}" data-page="accounts" onclick="navTo('accounts.html')">
-          <span class="nav-icon">👥</span> ${t('nav_accounts')}
+          <span class="nav-icon">${ICON.accounts}</span> ${t('nav_accounts')}
         </button>
         <button class="nav-btn ${activePage==='deposit'?'active':''}" data-page="deposit" onclick="navTo('deposit.html')">
-          <span class="nav-icon">💵</span> ${t('nav_deposit')}
+          <span class="nav-icon">${ICON.deposit}</span> ${t('nav_deposit')}
         </button>
         <button class="nav-btn ${activePage==='withdraw'?'active':''}" data-page="withdraw" onclick="navTo('withdraw.html')">
-          <span class="nav-icon">💸</span> ${t('nav_withdraw')}
+          <span class="nav-icon">${ICON.withdraw}</span> ${t('nav_withdraw')}
         </button>
         <button class="nav-btn ${activePage==='transfer'?'active':''}" data-page="transfer" onclick="navTo('transfer.html')">
-          <span class="nav-icon">🔄</span> ${t('nav_transfer')}
+          <span class="nav-icon">${ICON.transfer}</span> ${t('nav_transfer')}
         </button>
         <button class="nav-btn ${activePage==='ledger'?'active':''}" data-page="ledger" onclick="navTo('ledger.html')">
-          <span class="nav-icon">📒</span> ${t('nav_ledger')}
+          <span class="nav-icon">${ICON.ledger}</span> ${t('nav_ledger')}
         </button>
         <div class="nav-section-label" data-admin-only>${t('nav_admin')}</div>
         <button class="nav-btn ${activePage==='employees'?'active':''}" data-admin-only data-page="employees" onclick="navTo('employees.html')">
-          <span class="nav-icon">🛡️</span> ${t('nav_employees')}
+          <span class="nav-icon">${ICON.employees}</span> ${t('nav_employees')}
         </button>
         <div class="nav-section-label" data-admin-only>${t('nav_audit_section')}</div>
         <button class="nav-btn ${activePage==='reports'?'active':''}" data-page="reports" onclick="navTo('reports.html')">
-          <span class="nav-icon">📊</span> ${t('nav_reports')}
+          <span class="nav-icon">${ICON.reports}</span> ${t('nav_reports')}
         </button>
         <div class="nav-section-label">${t('nav_tools')}</div>
         <button class="nav-btn ${activePage==='settings'?'active':''}" onclick="navTo('settings.html')">
-          <span class="nav-icon">⚙️</span> ${t('nav_settings')}
+          <span class="nav-icon">${ICON.settings}</span> ${t('nav_settings')}
         </button>
       </div>
 
@@ -80,7 +97,7 @@ function buildSidebar(activePage) {
           </div>
         </div>
         <button class="nav-btn logout-btn" onclick="doLogout()">
-          <span class="nav-icon">🚪</span> ${t('logout')}
+          <span class="nav-icon">${ICON.logout}</span> ${t('logout')}
         </button>
       </div>
     </nav>
@@ -88,7 +105,7 @@ function buildSidebar(activePage) {
     <div id="topbar" style="display:flex; align-items:center; justify-content:space-between; direction:rtl; padding:10px 15px;">
   
   <!-- 1. زر القائمة أصبح في أقصى اليمين -->
-  <button id="menu-toggle" aria-label="القائمة">☰</button>
+  <button id="menu-toggle" aria-label="القائمة">${ICON.menu}</button>
   
   <!-- 2. عنوان المنظومة في المنتصف -->
   <h1 style="margin:0;">${brandName()}</h1>
@@ -96,13 +113,13 @@ function buildSidebar(activePage) {
   <!-- 3. أزرار البحث والإشعارات في أقصى اليسار -->
   <div style="display:flex;align-items:center;gap:4px;">
     <button id="search-btn" onclick="GlobalSearch.open()" title="${t('global_search_title')}"
-      style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:4px 8px; color:var(--text2);">
-      🔍
+      style="background:none; border:none; cursor:pointer; padding:4px 8px; color:var(--text2); display:flex;">
+      ${ICON.search}
     </button>
     <button id="notif-btn" onclick="toggleNotifPanel()"
-      style="background:none; border:none; cursor:pointer; position:relative;
-      font-size:1.2rem; padding:4px 8px; color:var(--text2);">
-      🔔
+      style="background:none; border:none; cursor:pointer; position:relative; display:flex;
+      padding:4px 8px; color:var(--text2);">
+      ${ICON.bell}
       <span id="notif-badge" style="display:none; position:absolute; top:0; right:0;
         background:var(--red); color:#fff; border-radius:50%; width:16px; height:16px;
         font-size:0.6rem; font-weight:700; display:flex; align-items:center;
