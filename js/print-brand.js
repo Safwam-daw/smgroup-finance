@@ -96,9 +96,46 @@ const PrintBrand = (() => {
     if (html) el.innerHTML = html;
   }
 
+  // ── رسالة مطابقة الأرصدة ──────────────────────────────────
+const DEFAULT_RECONCILIATION_MSG =
+`*📊 كشف مطابقة أرصدة*
+*{company_name}*
+
+🏦 الحساب: {account_name}
+🔖 الكود: {account_code}
+🕐 التاريخ: {date}
+
+━━━━━━━━━━━━━━━
+
+💵 دولار (USD): _____________
+
+💶 يورو (EUR): _____________
+
+━━━━━━━━━━━━━━━
+
+يُرجى مراجعة الأرصدة أعلاه والرد بالتأكيد.
+شاكرين لكم حسن تعاونكم 🙏`;
+
+  async function getReconciliationTemplate() {
+    const a = await getAssets();
+    return a.reconciliation_msg || DEFAULT_RECONCILIATION_MSG;
+  }
+
+  async function saveReconciliationTemplate(text) {
+    return saveAssets({ reconciliation_msg: text });
+  }
+
+  // يستبدل العناصر النائبة {name} بالقيم الفعلية في القالب
+  function fillTemplate(template, values) {
+    return template.replace(/\{(\w+)\}/g, (m, key) =>
+      Object.prototype.hasOwnProperty.call(values, key) ? values[key] : m
+    );
+  }
+
   return {
     getAssets, saveAssets, invalidate,
     injectLogo, logoHTML,
-    signatureBlockHTML, injectSignatureBlock
+    signatureBlockHTML, injectSignatureBlock,
+    DEFAULT_RECONCILIATION_MSG, getReconciliationTemplate, saveReconciliationTemplate, fillTemplate
   };
 })();
