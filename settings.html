@@ -9,6 +9,10 @@
 <style>
 .settings-section { margin-bottom:16px; }
 .settings-section h3 { margin-bottom:14px; }
+.tag-chip {
+  display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.72rem;
+  background:var(--gold-dim); color:var(--gold); font-family:monospace; cursor:default;
+}
 .brand-preview { width:100%; height:110px; border:1px dashed var(--border2); border-radius:8px;
   display:flex; align-items:center; justify-content:center; overflow:hidden;
   color:var(--text3); font-size:0.78rem; background:var(--surface2); }
@@ -209,6 +213,27 @@
   </div>
 </div>
 
+<!-- رسالة مطابقة الأرصدة (أدمن فقط) -->
+<div class="card settings-section" id="recon-msg-section" style="display:none;">
+  <h3 data-i18n="recon_msg_section">📋 رسالة مطابقة الأرصدة</h3>
+  <p style="font-size:0.79rem;color:var(--text3);margin-bottom:14px;" data-i18n="recon_msg_note">
+    هذا النص يُنسخ تلقائياً عند الضغط على زر "مطابقة" في حسابات الشركات، مع تعبئة المعلومات الفعلية مكان العناصر بين الأقواس.
+  </p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+    <span class="tag-chip" title="اسم الشركة">{company_name}</span>
+    <span class="tag-chip" title="اسم الحساب">{account_name}</span>
+    <span class="tag-chip" title="كود الحساب">{account_code}</span>
+    <span class="tag-chip" title="تاريخ ووقت المطابقة">{date}</span>
+  </div>
+  <textarea id="recon-msg-input" rows="12" style="width:100%;font-family:inherit;font-size:0.82rem;
+    background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);
+    padding:12px;line-height:1.7;resize:vertical;"></textarea>
+  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+    <button class="btn btn-primary btn-sm" onclick="saveReconMsg()" data-i18n="save_btn2">💾 حفظ</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetReconMsg()" data-i18n="reset_default_btn">↺ استعادة الافتراضي</button>
+  </div>
+</div>
+
 <!-- حول النظام -->
 <div class="card settings-section">
   <h3 data-i18n="about_system">ℹ️ حول النظام</h3>
@@ -340,6 +365,8 @@ function _updateLangBtns() {
   if (Auth.isAdmin()) {
     document.getElementById('print-brand-section').style.display = 'block';
     await loadBrandPreviews();
+    document.getElementById('recon-msg-section').style.display = 'block';
+    await loadReconMsg();
   }
   I18n.apply();
 })();
@@ -480,6 +507,22 @@ async function loadBrandPreviews() {
   _renderBrandPreview('logo', a.logo_data);
   _renderBrandPreview('stamp', a.stamp_data);
   _renderBrandPreview('signature', a.signature_data);
+}
+
+async function loadReconMsg() {
+  document.getElementById('recon-msg-input').value = await PrintBrand.getReconciliationTemplate();
+}
+
+async function saveReconMsg() {
+  const text = document.getElementById('recon-msg-input').value;
+  UI.showLoading(true);
+  const ok = await PrintBrand.saveReconciliationTemplate(text);
+  UI.showLoading(false);
+  UI.toast(ok ? (I18n.t('save_ok')||'تم الحفظ') : (I18n.t('generic_error')||'خطأ في الحفظ'), ok?undefined:'error');
+}
+
+function resetReconMsg() {
+  document.getElementById('recon-msg-input').value = PrintBrand.DEFAULT_RECONCILIATION_MSG;
 }
 
 function _renderBrandPreview(kind, dataUrl) {

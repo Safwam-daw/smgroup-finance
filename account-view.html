@@ -123,6 +123,7 @@
           <button class="btn btn-ghost btn-sm" onclick="navTo('statement.html?acc='+_accId)" data-i18n="full_statement">📋 كشف كامل</button>
           <button class="btn btn-ghost btn-sm" id="publish-btn" onclick="publishClient()" style="display:none;" data-i18n="publish_stmt_btn">📤 نشر الكشف</button>
           <button class="btn btn-ghost btn-sm" id="check-bal-btn" onclick="checkBalance()" style="display:none;" data-i18n="check_bal_btn_lbl">🔍 فحص الرصيد</button>
+          <button class="btn btn-ghost btn-sm" id="recon-btn" onclick="copyReconMsg()" style="display:none;" data-i18n="recon_btn_lbl">🔄 مطابقة</button>
           <button class="btn btn-ghost btn-sm" onclick="history.back()" data-i18n="go_back">← رجوع</button>
         </div>
       </div>
@@ -520,6 +521,10 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
       const pubBtn = document.getElementById('publish-btn');
       if (pubBtn) pubBtn.style.display = 'inline-flex';
     }
+    if (_accObj.type === 'company') {
+      const reconBtn = document.getElementById('recon-btn');
+      if (reconBtn) reconBtn.style.display = 'inline-flex';
+    }
   }
 
   // تهيئة بحث التحويل — من حساب
@@ -627,6 +632,29 @@ function renderRows() {
   });
   _page = 1;
   renderPage();
+}
+
+async function copyReconMsg() {
+  const template = await PrintBrand.getReconciliationTemplate();
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} — ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const msg = PrintBrand.fillTemplate(template, {
+    company_name: brandName(),
+    account_name: _accObj.name,
+    account_code: _accObj.id,
+    date: dateStr
+  });
+  try {
+    await navigator.clipboard.writeText(msg);
+    UI.toast(I18n.t('recon_copied') || '✅ تم نسخ رسالة المطابقة');
+  } catch (e) {
+    const el = document.createElement('textarea');
+    el.value = msg; el.style.position='fixed'; el.style.opacity='0';
+    document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    UI.toast(I18n.t('recon_copied') || '✅ تم نسخ رسالة المطابقة');
+  }
 }
 
 function _setupColumns() {
