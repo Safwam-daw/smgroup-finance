@@ -13,6 +13,12 @@
   display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.72rem;
   background:var(--gold-dim); color:var(--gold); font-family:monospace; cursor:default;
 }
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:460px;padding:24px;
+  max-height:90vh; overflow-y:auto; }
 .brand-preview { width:100%; height:110px; border:1px dashed var(--border2); border-radius:8px;
   display:flex; align-items:center; justify-content:center; overflow:hidden;
   color:var(--text3); font-size:0.78rem; background:var(--surface2); }
@@ -169,68 +175,84 @@
   </p>
 </div>
 
-<!-- الشعار والختم والتوقيع (أدمن فقط) -->
+<!-- إعدادات الكشوفات والمطابقة (أدمن فقط) — زر واحد يفتح نافذة منبثقة -->
 <div class="card settings-section" id="print-brand-section" style="display:none;">
-  <h3 data-i18n="print_brand_section">🖼️ الشعار والختم والتوقيع</h3>
-  <p style="font-size:0.79rem;color:var(--text3);margin-bottom:14px;" data-i18n="print_brand_note">
-    تظهر هذه الصور تلقائياً أعلى وأسفل كل الكشوفات والتقارير المطبوعة. الشعار اختياري (صورة عادية أو شفافة).
-    يُشترط أن يكون الختم والتوقيع بصيغة PNG شفافة الخلفية ليظهرا كأنهما وُقّعا وخُتما مباشرة على الورقة.
+  <h3 data-i18n="doc_settings_section">🖨️ إعدادات الكشوفات والمطابقة</h3>
+  <p style="font-size:0.79rem;color:var(--text3);margin-bottom:14px;" data-i18n="doc_settings_note">
+    الشعار، الختم، التوقيع، ورسالة مطابقة الأرصدة — كلها في مكان واحد.
   </p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;">
-    <div>
-      <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:8px;" data-i18n="logo_lbl">الشعار</label>
-      <div class="brand-preview" id="logo-preview"><span data-i18n="no_image">لا توجد صورة</span></div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;">
-          <span data-i18n="upload_btn">📤 رفع</span>
-          <input type="file" accept="image/*" style="display:none;" onchange="onBrandFileChange(event,'logo')">
-        </label>
-        <button class="btn btn-ghost btn-sm" onclick="removeBrandAsset('logo')" data-i18n="remove_btn">🗑️ حذف</button>
-      </div>
-    </div>
-    <div>
-      <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:8px;" data-i18n="stamp_lbl">الختم (PNG شفاف)</label>
-      <div class="brand-preview checkered" id="stamp-preview"><span data-i18n="no_image">لا توجد صورة</span></div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;">
-          <span data-i18n="upload_btn">📤 رفع</span>
-          <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'stamp')">
-        </label>
-        <button class="btn btn-ghost btn-sm" onclick="removeBrandAsset('stamp')" data-i18n="remove_btn">🗑️ حذف</button>
-      </div>
-    </div>
-    <div>
-      <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:8px;" data-i18n="signature_lbl">التوقيع (PNG شفاف)</label>
-      <div class="brand-preview checkered" id="signature-preview"><span data-i18n="no_image">لا توجد صورة</span></div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;">
-          <span data-i18n="upload_btn">📤 رفع</span>
-          <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'signature')">
-        </label>
-        <button class="btn btn-ghost btn-sm" onclick="removeBrandAsset('signature')" data-i18n="remove_btn">🗑️ حذف</button>
-      </div>
-    </div>
-  </div>
+  <button class="btn btn-primary btn-sm" onclick="openDocSettings()" data-i18n="open_doc_settings_btn">⚙️ فتح الإعدادات</button>
 </div>
 
-<!-- رسالة مطابقة الأرصدة (أدمن فقط) -->
-<div class="card settings-section" id="recon-msg-section" style="display:none;">
-  <h3 data-i18n="recon_msg_section">📋 رسالة مطابقة الأرصدة</h3>
-  <p style="font-size:0.79rem;color:var(--text3);margin-bottom:14px;" data-i18n="recon_msg_note">
-    هذا النص يُنسخ تلقائياً عند الضغط على زر "مطابقة" في حسابات الشركات، مع تعبئة المعلومات الفعلية مكان العناصر بين الأقواس.
-  </p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-    <span class="tag-chip" title="اسم الشركة">{company_name}</span>
-    <span class="tag-chip" title="اسم الحساب">{account_name}</span>
-    <span class="tag-chip" title="كود الحساب">{account_code}</span>
-    <span class="tag-chip" title="تاريخ ووقت المطابقة">{date}</span>
-  </div>
-  <textarea id="recon-msg-input" rows="12" style="width:100%;font-family:inherit;font-size:0.82rem;
-    background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);
-    padding:12px;line-height:1.7;resize:vertical;"></textarea>
-  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-    <button class="btn btn-primary btn-sm" onclick="saveReconMsg()" data-i18n="save_btn2">💾 حفظ</button>
-    <button class="btn btn-ghost btn-sm" onclick="resetReconMsg()" data-i18n="reset_default_btn">↺ استعادة الافتراضي</button>
+<!-- النافذة المنبثقة -->
+<div id="doc-settings-modal" class="modal-back">
+  <div class="modal-box" style="max-width:560px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;" data-i18n="doc_settings_section">🖨️ إعدادات الكشوفات والمطابقة</h3>
+      <button onclick="closeDocSettings()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+
+    <h4 style="font-size:0.85rem;color:var(--gold);margin:0 0 10px;" data-i18n="print_brand_section">🖼️ الشعار والختم والتوقيع</h4>
+    <p style="font-size:0.75rem;color:var(--text3);margin-bottom:14px;" data-i18n="print_brand_note">
+      تظهر هذه الصور تلقائياً أعلى وأسفل كل الكشوفات والتقارير المطبوعة. الشعار اختياري (صورة عادية أو شفافة).
+      يُشترط أن يكون الختم والتوقيع بصيغة PNG شفافة الخلفية ليظهرا كأنهما وُقّعا وخُتما مباشرة على الورقة.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;">
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="logo_lbl">الشعار</label>
+        <div class="brand-preview" id="logo-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
+            <span data-i18n="upload_btn">📤 رفع</span>
+            <input type="file" accept="image/*" style="display:none;" onchange="onBrandFileChange(event,'logo')">
+          </label>
+          <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('logo')" data-i18n="remove_btn">🗑️</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="stamp_lbl">الختم (PNG شفاف)</label>
+        <div class="brand-preview checkered" id="stamp-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
+            <span data-i18n="upload_btn">📤 رفع</span>
+            <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'stamp')">
+          </label>
+          <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('stamp')" data-i18n="remove_btn">🗑️</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="signature_lbl">التوقيع (PNG شفاف)</label>
+        <div class="brand-preview checkered" id="signature-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
+            <span data-i18n="upload_btn">📤 رفع</span>
+            <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'signature')">
+          </label>
+          <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('signature')" data-i18n="remove_btn">🗑️</button>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-size:0.85rem;color:var(--gold);margin:0 0 10px;border-top:1px solid var(--border2);padding-top:18px;" data-i18n="recon_msg_section">📋 رسالة مطابقة الأرصدة</h4>
+    <p style="font-size:0.75rem;color:var(--text3);margin-bottom:12px;" data-i18n="recon_msg_note">
+      هذا النص يُنسخ تلقائياً عند الضغط على زر "مطابقة" في حسابات الشركات، مع تعبئة المعلومات الفعلية مكان العناصر بين الأقواس.
+    </p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <span class="tag-chip" title="اسم الشركة">{company_name}</span>
+      <span class="tag-chip" title="اسم الحساب">{account_name}</span>
+      <span class="tag-chip" title="كود الحساب">{account_code}</span>
+      <span class="tag-chip" title="تاريخ ووقت المطابقة">{date}</span>
+      <span class="tag-chip" title="رصيد الدولار الحالي">{balance_usd}</span>
+      <span class="tag-chip" title="رصيد اليورو الحالي">{balance_eur}</span>
+    </div>
+    <textarea id="recon-msg-input" rows="10" style="width:100%;font-family:inherit;font-size:0.8rem;
+      background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);
+      padding:10px;line-height:1.7;resize:vertical;"></textarea>
+
+    <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:flex-end;">
+      <button class="btn btn-ghost btn-sm" onclick="resetReconMsg()" data-i18n="reset_default_btn">↺ استعادة الافتراضي</button>
+      <button class="btn btn-primary btn-sm" onclick="saveDocSettings()" data-i18n="save_btn2">💾 حفظ الكل</button>
+    </div>
   </div>
 </div>
 
@@ -365,7 +387,6 @@ function _updateLangBtns() {
   if (Auth.isAdmin()) {
     document.getElementById('print-brand-section').style.display = 'block';
     await loadBrandPreviews();
-    document.getElementById('recon-msg-section').style.display = 'block';
     await loadReconMsg();
   }
   I18n.apply();
@@ -501,6 +522,16 @@ async function doImport() {
 
 // ── الشعار / الختم / التوقيع ─────────────────────────────
 const _BRAND_MAX_BYTES = 500 * 1024; // 500KB لكل صورة
+
+function openDocSettings() {
+  document.getElementById('doc-settings-modal').classList.add('open');
+}
+function closeDocSettings() {
+  document.getElementById('doc-settings-modal').classList.remove('open');
+}
+async function saveDocSettings() {
+  await saveReconMsg();
+}
 
 async function loadBrandPreviews() {
   const a = await PrintBrand.getAssets();

@@ -639,11 +639,17 @@ async function copyReconMsg() {
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
   const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} — ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const [balUsd, balEur] = await Promise.all([
+    Storage.getBalance(_accId, 'usd'),
+    Storage.getBalance(_accId, 'eur')
+  ]);
   const msg = PrintBrand.fillTemplate(template, {
     company_name: brandName(),
     account_name: _accObj.name,
     account_code: _accObj.id,
-    date: dateStr
+    date: dateStr,
+    balance_usd: parseFloat(balUsd||0).toFixed(2),
+    balance_eur: parseFloat(balEur||0).toFixed(2)
   });
   try {
     await navigator.clipboard.writeText(msg);
