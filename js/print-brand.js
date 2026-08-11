@@ -107,9 +107,9 @@ const DEFAULT_RECONCILIATION_MSG =
 
 ━━━━━━━━━━━━━━━
 
-💵 دولار (USD): _____________
+💵 دولار (USD): {balance_usd}$
 
-💶 يورو (EUR): _____________
+💶 يورو (EUR): {balance_eur}€
 
 ━━━━━━━━━━━━━━━
 
