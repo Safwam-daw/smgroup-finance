@@ -643,13 +643,18 @@ async function copyReconMsg() {
     Storage.getBalance(_accId, 'usd'),
     Storage.getBalance(_accId, 'eur')
   ]);
+  const fmtBal = v => {
+    const n = parseFloat(v||0);
+    if (n === 0) return '0.00';
+    return n < 0 ? `لنا ${Math.abs(n).toFixed(2)}` : `لكم ${n.toFixed(2)}`;
+  };
   const msg = PrintBrand.fillTemplate(template, {
     company_name: brandName(),
     account_name: _accObj.name,
     account_code: _accObj.id,
     date: dateStr,
-    balance_usd: parseFloat(balUsd||0).toFixed(2),
-    balance_eur: parseFloat(balEur||0).toFixed(2)
+    balance_usd: fmtBal(balUsd),
+    balance_eur: fmtBal(balEur)
   });
   try {
     await navigator.clipboard.writeText(msg);
