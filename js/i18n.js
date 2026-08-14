@@ -212,6 +212,7 @@ const I18n = (() => {
     sender:             { ar: 'المرسل', en: 'Sender', tr: 'Gönderen' },
     receiver:           { ar: 'المستقبل', en: 'Receiver', tr: 'Alıcı' },
     confirm_deposit:    { ar: 'تأكيد الإيداع', en: 'Confirm Deposit', tr: 'Para Yatırmayı Onayla' },
+    print_receipt_btn:  { ar: '🖨️ طباعة إيصال العملية', en: '🖨️ Print receipt', tr: '🖨️ Makbuz yazdır' },
     confirm_withdraw:   { ar: 'تأكيد السحب', en: 'Confirm Withdrawal', tr: 'Para Çekmeyi Onayla' },
     confirm_transfer:   { ar: 'تأكيد التحويل', en: 'Confirm Transfer', tr: 'Transferi Onayla' },
     txn_done:           { ar: 'تمت العملية ✅', en: 'Transaction done ✅', tr: 'İşlem tamamlandı ✅' },

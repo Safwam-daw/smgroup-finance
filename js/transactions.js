@@ -109,7 +109,7 @@ const Transactions = (() => {
     await Storage.logAction('deposit', { accountId, currency, amount, commission, netAmount });
     Storage.invalidate();
     _checkTxnAlerts('إيداع', accountId, currency, amount);
-    return { ok: true, commission, netAmount };
+    return { ok: true, id: txnId, commission, netAmount };
   }
 
   // ══ سحب ══════════════════════════════════════════════
@@ -144,7 +144,7 @@ const Transactions = (() => {
     await Storage.logAction('withdraw', { accountId, currency, amount });
     Storage.invalidate();
     _checkTxnAlerts('سحب', accountId, currency, amount, currentBal - amount);
-    return { ok: true };
+    return { ok: true, id: txnId };
   }
 
   // ══ تحويل ════════════════════════════════════════════
@@ -192,7 +192,7 @@ const Transactions = (() => {
     await Storage.logAction('transfer', { fromId, toId, currency, amount, rate: r, commission, netReceived });
     Storage.invalidate();
     _checkTxnAlerts('تحويل', fromId, currency, amount, senderBal - amount);
-    return { ok: true, commission, netReceived };
+    return { ok: true, id: txnId, commission, netReceived };
   }
 
   // ══ حذف عملية — soft delete + عكس الرصيد + حذف العمولة المرتبطة ══
