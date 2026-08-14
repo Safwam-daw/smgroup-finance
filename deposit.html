@@ -51,6 +51,8 @@
            background:var(--surface2); border:1px solid var(--border2);"></div>
 
       <button class="btn btn-primary btn-full" onclick="doDeposit()" data-i18n="confirm_deposit">✅ تأكيد الإيداع</button>
+      <button class="btn btn-ghost btn-full" id="dep-receipt-btn" onclick="printLastReceipt()"
+              style="display:none;margin-top:8px;" data-i18n="print_receipt_btn">🖨️ طباعة إيصال العملية</button>
     </div>
 
     <!-- آخر الإيداعات -->
@@ -79,6 +81,7 @@
 <script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/print-brand.js"></script><script src="js/receipt.js"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/i18n.js"></script>
@@ -134,6 +137,8 @@ async function updatePreview() {
   box.style.display = 'block';
 }
 
+let _lastTxn = null;
+
 async function doDeposit() {
   const id  = document.getElementById('dep-id').value;
   const cur = document.getElementById('dep-cur').value;
@@ -146,12 +151,24 @@ async function doDeposit() {
       ? ` · ${I18n.t('commission')}: ${result.commission.toFixed(4)}`
       : '';
     UI.toast(I18n.t('deposit_success') + commMsg);
+    _lastTxn = {
+      id: result.id, type: 'dep', acc: id, cur, amt,
+      commission_amt: result.commission || 0,
+      by: Auth.getUser()?.user || '', date: new Date().toISOString(), note: ''
+    };
+    document.getElementById('dep-receipt-btn').style.display = 'block';
     UI.clearSearch('dep');
     document.getElementById('dep-amount').value = '';
     document.getElementById('dep-preview').style.display = 'none';
     await UI.updateTreasury();
     await renderRecent();
   } else { UI.toast(result.error, 'error'); }
+}
+
+async function printLastReceipt() {
+  if (!_lastTxn) return;
+  const accounts = await Accounts.getAll();
+  Receipt.print(_lastTxn, accounts);
 }
 
 async function renderRecent() {

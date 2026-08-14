@@ -46,6 +46,8 @@ onkeydown="if(event.key==='Enter') doWithdraw(false)">
 <div id="wit-preview" style="display:none; border-radius:8px; padding:14px;
 margin-bottom:16px; font-size:0.84rem; line-height:1.8;"></div>
 <button class="btn btn-danger btn-full" onclick="doWithdraw(false)" data-i18n="confirm_withdraw">⚠️ تأكيد السحب</button>
+<button class="btn btn-ghost btn-full" id="wit-receipt-btn" onclick="printLastReceipt()"
+        style="display:none;margin-top:8px;" data-i18n="print_receipt_btn">🖨️ طباعة إيصال العملية</button>
 </div>
 
 <div class="card">
@@ -85,6 +87,7 @@ z-index:1000;align-items:center;justify-content:center;padding:16px;">
 <script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/print-brand.js"></script><script src="js/receipt.js"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/i18n.js"></script>
@@ -126,6 +129,8 @@ box.style.border      = over ? '1px solid var(--red)' : '1px solid var(--border2
 box.style.display     = 'block';
 }
 
+let _lastTxn = null;
+
 async function doWithdraw(force) {
 const id  = document.getElementById('wit-id').value;
 const cur = document.getElementById('wit-cur').value;
@@ -136,6 +141,11 @@ UI.showLoading(false);
 if (result.ok) {
   UI.toast(I18n.t('withdraw_success'));
   closeOverdraft();
+  _lastTxn = {
+    id: result.id, type: 'wit', acc: id, cur, amt,
+    commission_amt: 0, by: Auth.getUser()?.user || '', date: new Date().toISOString(), note: ''
+  };
+  document.getElementById('wit-receipt-btn').style.display = 'block';
   UI.clearSearch('wit');
   document.getElementById('wit-amount').value='';
   document.getElementById('wit-preview').style.display='none';
@@ -149,6 +159,12 @@ if (result.ok) {
      ${I18n.t('balance_will_be')}: <b style="color:var(--red);">${Currency.formatMoney((result.currentBal-amt),sym)}</b>`;
   document.getElementById('overdraft-modal').style.display='flex';
 } else { UI.toast(result.error,'error'); }
+}
+
+async function printLastReceipt() {
+  if (!_lastTxn) return;
+  const accounts = await Accounts.getAll();
+  Receipt.print(_lastTxn, accounts);
 }
 
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }

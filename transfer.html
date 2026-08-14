@@ -85,6 +85,8 @@
       </div>
 
       <button class="btn btn-primary btn-full" onclick="doTransfer(false)" data-i18n="execute_transfer">🔄 تنفيذ التحويل</button>
+      <button class="btn btn-ghost btn-full" id="trf-receipt-btn" onclick="printLastReceipt()"
+              style="display:none;margin-top:8px;" data-i18n="print_receipt_btn">🖨️ طباعة إيصال العملية</button>
     </div>
 
     <!-- آخر التحويلات -->
@@ -125,6 +127,7 @@
 <script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
 <script src="js/accounts.js"></script><script src="js/transactions.js"></script>
 <script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/print-brand.js"></script><script src="js/receipt.js"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/i18n.js"></script>
@@ -206,6 +209,8 @@ async function updatePreview() {
   box.style.display = 'block';
 }
 
+let _lastTxn = null;
+
 async function doTransfer(force) {
   const from = document.getElementById('trf-from-id').value;
   const to   = document.getElementById('trf-to-id').value;
@@ -218,6 +223,12 @@ async function doTransfer(force) {
   if (result.ok) {
     UI.toast(I18n.t('transfer_success'));
     closeOverdraft();
+    _lastTxn = {
+      id: result.id, type: 'trf', acc: from, from, to, cur, amt, rate,
+      commission_amt: result.commission || 0,
+      by: Auth.getUser()?.user || '', date: new Date().toISOString(), note: ''
+    };
+    document.getElementById('trf-receipt-btn').style.display = 'block';
     UI.clearSearch('trf-from');
     UI.clearSearch('trf-to');
     document.getElementById('trf-amount').value='';
@@ -233,6 +244,12 @@ async function doTransfer(force) {
        ${I18n.t('will_become')}: <b style="color:var(--red);">${Currency.formatMoney((result.currentBal-amt),sym)}</b>`;
     document.getElementById('overdraft-modal').style.display='flex';
   } else { UI.toast(result.error,'error'); }
+}
+
+async function printLastReceipt() {
+  if (!_lastTxn) return;
+  const accounts = await Accounts.getAll();
+  Receipt.print(_lastTxn, accounts);
 }
 
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
