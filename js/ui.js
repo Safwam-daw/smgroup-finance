@@ -161,7 +161,7 @@ const UI = (() => {
     const codePh = (window.I18n && I18n.t('search_by_code_ph')) || 'بحث بالكود…';
     const namePh = (window.I18n && I18n.t('search_by_name_ph')) || 'بحث بالاسم…';
     row.innerHTML = `
-      <input type="text" id="${prefix}-search-code" placeholder="${codePh}" autocomplete="off">
+      <input type="text" id="${prefix}-search-code" inputmode="numeric" pattern="[0-9]*" placeholder="${codePh}" autocomplete="off">
       <input type="text" id="${prefix}-search-name" placeholder="${namePh}" autocomplete="off">
     `;
     oldInput.replaceWith(row);
