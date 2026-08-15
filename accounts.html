@@ -52,7 +52,7 @@
         </div>
         <div class="form-group">
           <label data-i18n="account_code_auto">كود الحساب (تلقائي — قابل للتعديل)</label>
-          <input type="text" id="acc-code">
+          <input type="text" id="acc-code" inputmode="numeric" pattern="[0-9]*">
           <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;" data-i18n="account_code_hint">
             يقترح النظام الكود التالي تلقائياً، ويمكنك تغييره لكود مميز
           </div>
@@ -73,7 +73,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
           <label data-i18n="search_by_code">بحث بالكود</label>
-          <input type="text" id="filter-code" data-i18n-placeholder="search_by_code_ph"
+          <input type="text" id="filter-code" inputmode="numeric" pattern="[0-9]*" data-i18n-placeholder="search_by_code_ph"
                  placeholder="بحث بالكود…" oninput="applyFilter()">
         </div>
         <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
