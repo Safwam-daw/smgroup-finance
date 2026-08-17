@@ -635,7 +635,18 @@ function renderPage() {
 }
 function go(p){const t=Math.ceil(_filtered.length/PAGE_SIZE)||1;if(p<1||p>t)return;_page=p;renderPage();}
 
+// اسم ملف موحّد (نفس تسمية js/ui.js: UI.docFileName) — منسوخة محلياً
+// لأن بوابة العميل خفيفة الوزن ولا تحمّل js/ui.js كاملاً
+function _clientDocFileName(prefix, name, code) {
+  const safeName = String(name || '').replace(/[\\/:*?"<>|]/g, '_').trim() || '—';
+  const safeCode = String(code ?? '').replace(/[\\/:*?"<>|]/g, '_').trim();
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  return `${prefix}_${safeName}_كود_(${safeCode})_${dateStr}`;
+}
+
 // ── Print helpers ─────────────────────────────────────
+let _titleBeforePrint = null;
 window.addEventListener('beforeprint', () => {
   document.getElementById('print-header').style.display='block';
   document.getElementById('print-footer').style.display='block';
@@ -644,12 +655,17 @@ window.addEventListener('beforeprint', () => {
     PrintBrand.injectLogo('print-logo-slot');
     PrintBrand.injectSignatureBlock('print-signature-slot');
   }
+  if (_acc) {
+    _titleBeforePrint = document.title;
+    document.title = _clientDocFileName('دفتر_الاستاذ', _acc.name, _acc.id);
+  }
   _printMode = true; renderPage();
 });
 window.addEventListener('afterprint', () => {
   document.getElementById('print-header').style.display='none';
   document.getElementById('print-footer').style.display='none';
   document.getElementById('print-signature-slot').style.display='none';
+  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
   _printMode = false; renderPage();
 });
 

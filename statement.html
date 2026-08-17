@@ -620,8 +620,7 @@ async function downloadAllStatements(period) {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, (t('statement_sheet_name')||'Statement').slice(0,31));
       const bin = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-      const safeName = String(acc.name||accId).replace(/[\\/:*?"<>|]/g,'_');
-      zip.file(`${accId}_${safeName}.xlsx`, bin);
+      zip.file(`${UI.docFileName('دفتر_الاستاذ', acc.name, accId)}.xlsx`, bin);
       fileCount++;
     }
 
@@ -642,6 +641,18 @@ async function downloadAllStatements(period) {
     UI.showLoading(false);
   }
 }
+
+// اسم ملف PDF المقترح عند الطباعة/الحفظ = نفس تسمية الكشف الموحّدة
+let _titleBeforePrint = null;
+window.addEventListener('beforeprint', () => {
+  if (!_currentAccId) return;
+  const acc = _allAccounts.find(a => a.id === _currentAccId);
+  _titleBeforePrint = document.title;
+  document.title = UI.docFileName('دفتر_الاستاذ', acc ? acc.name : _currentAccId, _currentAccId);
+});
+window.addEventListener('afterprint', () => {
+  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+});
 </script>
 </body>
 </html>

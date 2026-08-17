@@ -342,8 +342,19 @@ function exportMovements() {
   if (typeof XLSX === 'undefined') { UI.toast('مكتبة Excel غير محملة', 'error'); return; }
   const wb = XLSX.utils.table_to_book(document.getElementById('mov-table'), { sheet:'الحركات' });
   const name = _archiveAcc ? _archiveAcc.name : _archiveId;
-  XLSX.writeFile(wb, 'أرشيف_' + name + '_' + UI.todayStr() + '.xlsx');
+  XLSX.writeFile(wb, UI.docFileName('دفتر_الاستاذ', name, _archiveId) + '.xlsx');
 }
+
+// اسم ملف PDF المقترح عند الطباعة/الحفظ = نفس تسمية الكشف الموحّدة
+let _titleBeforePrint = null;
+window.addEventListener('beforeprint', () => {
+  if (!_archiveId) return;
+  _titleBeforePrint = document.title;
+  document.title = UI.docFileName('دفتر_الاستاذ', _archiveAcc ? _archiveAcc.name : _archiveId, _archiveId);
+});
+window.addEventListener('afterprint', () => {
+  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+});
 </script>
 </body>
 </html>

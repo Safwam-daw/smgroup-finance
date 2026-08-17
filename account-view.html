@@ -1285,6 +1285,17 @@ async function checkBalance() {
     });
   }
 }
+
+// اسم ملف PDF المقترح عند الطباعة/الحفظ = نفس تسمية الكشف الموحّدة
+let _titleBeforePrint = null;
+window.addEventListener('beforeprint', () => {
+  if (!_accId) return;
+  _titleBeforePrint = document.title;
+  document.title = UI.docFileName('دفتر_الاستاذ', _accObj ? _accObj.name : _accId, _accId);
+});
+window.addEventListener('afterprint', () => {
+  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+});
 </script>
 
 <!-- Modal فحص تطابق الأرصدة -->
