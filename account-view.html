@@ -1294,7 +1294,10 @@ window.addEventListener('beforeprint', () => {
   document.title = UI.docFileName('دفتر_الاستاذ', _accObj ? _accObj.name : _accId, _accId);
 });
 window.addEventListener('afterprint', () => {
-  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  // مهلة قبل الاستعادة — انظر التعليق المطابق في statement.html
+  setTimeout(() => {
+    if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  }, 8000);
 });
 </script>
 

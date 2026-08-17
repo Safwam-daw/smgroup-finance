@@ -93,7 +93,7 @@
           <div class="acc-hero-meta" id="hero-meta"></div>
         </div>
         <div class="btn-group no-print" style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
+          <button class="btn btn-ghost btn-sm" onclick="printArchivedView()">🖨️ طباعة</button>
           <button class="btn btn-ghost btn-sm" onclick="exportMovements()">📊 Excel</button>
           <button class="btn btn-ghost btn-sm" onclick="history.back()">← رجوع</button>
         </div>
@@ -347,14 +347,23 @@ function exportMovements() {
 
 // اسم ملف PDF المقترح عند الطباعة/الحفظ = نفس تسمية الكشف الموحّدة
 let _titleBeforePrint = null;
-window.addEventListener('beforeprint', () => {
+function _setPrintTitle() {
   if (!_archiveId) return;
   _titleBeforePrint = document.title;
   document.title = UI.docFileName('دفتر_الاستاذ', _archiveAcc ? _archiveAcc.name : _archiveId, _archiveId);
-});
-window.addEventListener('afterprint', () => {
-  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
-});
+}
+function _restorePrintTitle() {
+  // مهلة قبل الاستعادة — انظر التعليق المطابق في statement.html
+  setTimeout(() => {
+    if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  }, 8000);
+}
+function printArchivedView() {
+  _setPrintTitle();
+  window.print();
+}
+window.addEventListener('beforeprint', _setPrintTitle);
+window.addEventListener('afterprint', _restorePrintTitle);
 </script>
 </body>
 </html>

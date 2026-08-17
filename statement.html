@@ -164,7 +164,7 @@
             <input type="date" id="f-to" onchange="clearQuick();renderRows()">
           </div>
           <div style="display:flex;gap:8px;align-self:flex-end;flex-wrap:wrap;" class="no-print">
-            <button class="btn btn-ghost btn-sm" onclick="window.print()" data-i18n="print_btn">🖨️ طباعة</button>
+            <button class="btn btn-ghost btn-sm" onclick="printStatement()" data-i18n="print_btn">🖨️ طباعة</button>
             <button class="btn btn-primary btn-sm" onclick="exportStatement()" data-i18n="excel_btn">📊 Excel</button>
             <button class="btn btn-ghost btn-sm" onclick="openBulkModal()" data-i18n="download_all_stmts_btn">⬇️ تحميل كل الكشوفات</button>
           </div>
@@ -644,15 +644,29 @@ async function downloadAllStatements(period) {
 
 // اسم ملف PDF المقترح عند الطباعة/الحفظ = نفس تسمية الكشف الموحّدة
 let _titleBeforePrint = null;
-window.addEventListener('beforeprint', () => {
+function _setPrintTitle() {
   if (!_currentAccId) return;
   const acc = _allAccounts.find(a => a.id === _currentAccId);
   _titleBeforePrint = document.title;
   document.title = UI.docFileName('دفتر_الاستاذ', acc ? acc.name : _currentAccId, _currentAccId);
-});
-window.addEventListener('afterprint', () => {
-  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
-});
+}
+function _restorePrintTitle() {
+  // تأخير متعمّد: على أندرويد، نافذة "حفظ كـ PDF" النظامية تظهر بعد أن يكون
+  // حدث afterprint في المتصفح قد أُطلق بالفعل — فلو أعدنا العنوان فوراً هنا
+  // فسيلتقط نظام أندرويد العنوان القديم بدل اسم الملف الصحيح (وهذا بالضبط
+  // ما كان يحدث). لذلك ننتظر مهلة كافية قبل الاستعادة.
+  setTimeout(() => {
+    if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  }, 8000);
+}
+// نضبط العنوان مباشرة قبل window.print() (وليس فقط عبر beforeprint) لأن بعض
+// متصفحات أندرويد تلتقط اسم الملف المقترح قبل تنفيذ حدث beforeprint بشكل مضمون.
+function printStatement() {
+  _setPrintTitle();
+  window.print();
+}
+window.addEventListener('beforeprint', _setPrintTitle);
+window.addEventListener('afterprint', _restorePrintTitle);
 </script>
 </body>
 </html>

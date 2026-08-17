@@ -223,7 +223,7 @@ tr:last-child td{border-bottom:none;}
           <button class="client-lang-btn" data-lang="en" onclick="ClientI18n.setLang('en');refreshPortalText()">EN</button>
           <button class="client-lang-btn" data-lang="tr" onclick="ClientI18n.setLang('tr');refreshPortalText()">TR</button>
         </div>
-        <button class="btn btn-ghost" onclick="window.print()" data-ct="print_btn">🖨️ طباعة</button>
+        <button class="btn btn-ghost" onclick="printClientStatement()" data-ct="print_btn">🖨️ طباعة</button>
         <button class="btn btn-ghost" onclick="doLogout()" data-ct="logout_btn">🚪 خروج</button>
       </div>
     </div>
@@ -647,7 +647,7 @@ function _clientDocFileName(prefix, name, code) {
 
 // ── Print helpers ─────────────────────────────────────
 let _titleBeforePrint = null;
-window.addEventListener('beforeprint', () => {
+function _setClientPrintTitle() {
   document.getElementById('print-header').style.display='block';
   document.getElementById('print-footer').style.display='block';
   document.getElementById('print-signature-slot').style.display='block';
@@ -660,12 +660,23 @@ window.addEventListener('beforeprint', () => {
     document.title = _clientDocFileName('دفتر_الاستاذ', _acc.name, _acc.id);
   }
   _printMode = true; renderPage();
-});
+}
+// نضبط العنوان مباشرة قبل window.print() (وليس فقط عبر beforeprint) لأن بعض
+// متصفحات أندرويد تلتقط اسم الملف المقترح قبل تنفيذ حدث beforeprint بشكل مضمون.
+function printClientStatement() {
+  _setClientPrintTitle();
+  window.print();
+}
+window.addEventListener('beforeprint', _setClientPrintTitle);
 window.addEventListener('afterprint', () => {
   document.getElementById('print-header').style.display='none';
   document.getElementById('print-footer').style.display='none';
   document.getElementById('print-signature-slot').style.display='none';
-  if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  // مهلة قبل استعادة العنوان — نافذة "حفظ كـ PDF" النظامية على أندرويد
+  // تظهر بعد إطلاق afterprint فعلياً، فنؤخر الاستعادة حتى لا نُفسد الاسم.
+  setTimeout(() => {
+    if (_titleBeforePrint !== null) { document.title = _titleBeforePrint; _titleBeforePrint = null; }
+  }, 8000);
   _printMode = false; renderPage();
 });
 
