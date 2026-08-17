@@ -312,11 +312,22 @@ const UI = (() => {
     );
   }
 
+  // اسم ملف موحّد لأي مستند مالي محفوظ (كشف/إيصال):
+  // {البادئة}_{الاسم}_كود_({الكود})_{التاريخ}
+  // مثال: docFileName('دفتر_الاستاذ', 'صفوان', '0001') => "دفتر_الاستاذ_صفوان_كود_(0001)_2026.08.16"
+  function docFileName(prefix, name, code) {
+    const safeName = String(name || '').replace(/[\\/:*?"<>|]/g, '_').trim() || '—';
+    const safeCode = String(code ?? '').replace(/[\\/:*?"<>|]/g, '_').trim();
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    return `${prefix}_${safeName}_كود_(${safeCode})_${dateStr}`;
+  }
+
   return {
     toast, showLoading, updateTreasury,
     initSidebar, toggleSidebar, closeSidebarOnNav,
     fillUserInfo, applyRoleUI, initSearch, setSearchValue, clearSearch,
     escapeHtml, formatDate, todayStr, firstOfMonth, lastOfMonth, filterActiveTxns,
-    exportExcel, getEffectiveNavStyle, applyNavStyle
+    exportExcel, getEffectiveNavStyle, applyNavStyle, docFileName
   };
 })();

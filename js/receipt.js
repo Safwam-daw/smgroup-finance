@@ -59,8 +59,20 @@ const Receipt = (() => {
     const brand   = (typeof brandName === 'function') ? brandName() : 'SM Group Finance';
     const footer  = (typeof brandPrintCopyright === 'function') ? brandPrintCopyright() : '';
 
+    // اسم الملف عند الحفظ/الطباعة كـ PDF: إيصال_{النوع}_{الاسم}_كود_({الكود})_{التاريخ}
+    // نفس تسمية الكشوفات (دفتر_الاستاذ_...) لكن ببادئة "إيصال" ونوع العملية.
+    // الحساب المرجعي: حساب المرسل في التحويل، أو الحساب نفسه في الإيداع/السحب.
+    const primaryId   = txn.type === 'trf' ? txn.from : txn.acc;
+    const primaryAcc  = findAcc(primaryId);
+    const primaryName = primaryAcc ? primaryAcc.name : primaryId;
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    const safeName = String(primaryName || '—').replace(/[\\/:*?"<>|]/g, '_').trim() || '—';
+    const safeCode = String(primaryId ?? '').replace(/[\\/:*?"<>|]/g, '_').trim();
+    const fileTitle = `إيصال_${label}_${safeName}_كود_(${safeCode})_${dateStr}`;
+
     return `<!DOCTYPE html>
-<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>إيصال #${txn.id}</title>
+<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>${_esc(fileTitle)}</title>
 <style>
   * { box-sizing:border-box; }
   body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; background:#f4f4f4; margin:0; padding:20px; color:#1a1a1a; }
