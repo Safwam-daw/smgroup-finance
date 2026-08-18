@@ -885,6 +885,7 @@ const I18n = (() => {
     commission_pct_lbl: { ar: 'عمولة ({pct}%)', en: 'Commission ({pct}%)', tr: 'Komisyon (%{pct})' },
     enters_account_lbl: { ar: 'يدخل الحساب', en: 'Enters Account', tr: 'Hesaba Girer' },
     new_balance_lbl:    { ar: 'الرصيد الجديد', en: 'New Balance', tr: 'Yeni Bakiye' },
+    balance_lbl:        { ar: 'الرصيد', en: 'Balance', tr: 'Bakiye' },
     current_balance_lbl: { ar: 'الرصيد الحالي', en: 'Current Balance', tr: 'Mevcut Bakiye' },
     after_withdrawal_lbl: { ar: 'بعد السحب', en: 'After Withdrawal', tr: 'Çekimden Sonra' },
     required_amount_lbl: { ar: 'المبلغ المطلوب', en: 'Required Amount', tr: 'Gerekli Tutar' },
