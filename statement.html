@@ -171,23 +171,8 @@
         </div>
       </div>
 
-      <!-- الجدول -->
-      <div class="card" style="padding:0;overflow:hidden;">
-        <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
-          <table id="stmt-table">
-            <thead>
-              <tr>
-                <th data-i18n="col_date">التاريخ</th><th data-i18n="col_type_lbl">النوع</th><th data-i18n="col_counterpart">الطرف الآخر</th>
-                <th data-i18n="col_currency">العملة</th><th id="stmt-th1">القيمة</th><th id="stmt-th2">العمولة</th><th id="stmt-th3">الصافي</th>
-                <th data-i18n="col_note">ملاحظة</th><th class="no-print" data-i18n="col_action">إجراء</th>
-              </tr>
-            </thead>
-            <tbody id="stmt-tbody">
-              <tr><td colspan="8" class="empty-state" data-i18n="choose_account">اختر حساباً أولاً</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <!-- الجدول (جدول مستقل لكل عملة) -->
+      <div id="stmt-tables-container"></div>
       <div id="stmt-count" style="text-align:center;margin-top:10px;font-size:0.74rem;color:var(--text3);"></div>
     </div>
 
@@ -263,6 +248,8 @@
 <script src="js/i18n.js"></script>
 <script>
 let _currentAccId = null;
+let _currentBalUsd = 0;
+let _currentBalEur = 0;
 let _allTxns      = [];
 let _allAccounts  = [];
 function typeLabel(type) {
@@ -346,8 +333,9 @@ async function loadStatement() {
     Storage.getTxns({ acc: id })
   ]);
   _allTxns = (id === CONFIG.PROFIT_ACCOUNT_ID) ? txns : txns.filter(x => !x.is_commission_entry);
+  _currentBalUsd = usd;
+  _currentBalEur = eur;
   UI.showLoading(false);
-  _setupStmtColumns(id === CONFIG.PROFIT_ACCOUNT_ID);
 
   // header
   document.getElementById('acc-header-name').textContent = acc.name + ' (' + acc.id + ')';
@@ -370,23 +358,7 @@ async function loadStatement() {
   renderRows();
 }
 
-function _setupStmtColumns(isProfitAcc) {
-  const th1 = document.getElementById('stmt-th1');
-  const th2 = document.getElementById('stmt-th2');
-  const th3 = document.getElementById('stmt-th3');
-  if (isProfitAcc) {
-    th1.textContent = t('col_debit_lbl') || 'مدين';
-    th2.textContent = t('col_credit_lbl') || 'دائن';
-    th3.style.display = 'none';
-  } else {
-    th1.textContent = t('col_value_lbl') || 'القيمة';
-    th2.textContent = t('col_commission_lbl') || 'العمولة';
-    th3.textContent = t('col_net_lbl') || 'الصافي';
-    th3.style.display = '';
-  }
-}
-
-// ── Render Rows ───────────────────────────────────────
+// ── Render Rows (جدول مستقل لكل عملة) ──────────────────
 function renderRows() {
   const fType = document.getElementById('f-type').value;
   const fCur  = document.getElementById('f-cur').value;
@@ -400,70 +372,117 @@ function renderRows() {
   if (fTo)   { const [y,m,d]=fTo.split('-').map(Number);   rows = rows.filter(t => new Date(t.date) <= new Date(y,m-1,d,23,59,59,999)); }
 
   const canEdit = Auth.isAdmin();
-  const tbody   = document.getElementById('stmt-tbody');
   const isProfitAcc = _currentAccId === CONFIG.PROFIT_ACCOUNT_ID;
+  const container = document.getElementById('stmt-tables-container');
+  const colspan = 8;
 
-  tbody.innerHTML = rows.length
-    ? rows.map(t => {
-        const sym    = (t.cur||'').toLowerCase()==='usd'?'$':'€';
-        const isFrom = t.type==='trf' && t.from===_currentAccId;
-        const isTo   = t.type==='trf' && t.to===_currentAccId;
-        const isFeeIn = t.type==='dep' && t.is_commission_entry;
-        // الطرف الآخر
-        let counterpart = '—';
-        if (t.type==='trf') {
-          const otherId = isFrom ? t.to : t.from;
-          const other   = _allAccounts.find(a=>a.id===otherId);
-          counterpart   = UI.escapeHtml(other ? other.name : otherId);
-          counterpart   = isFrom ? ('← ' + counterpart) : ('→ ' + counterpart);
-        }
-        if (isFeeIn) {
-          const m = (t.note||'').match(/من حساب (\S+)/);
-          const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
-          counterpart = srcAcc ? UI.escapeHtml(srcAcc.name) : (m ? UI.escapeHtml(m[1]) : t('profit_account_lbl'));
-        }
+  const th1Label = isProfitAcc ? (t('col_debit_lbl')  || 'مدين')  : (t('col_value_lbl')      || 'القيمة');
+  const th2Label = isProfitAcc ? (t('col_credit_lbl') || 'دائن')  : (t('col_commission_lbl')  || 'العمولة');
+  const th3Label = t('col_net_lbl') || 'الصافي';
 
-        let col1, col2, col3;
-        if (isProfitAcc) {
-          const val = parseFloat(t.amt) * (t.type==='trf' && isTo ? (parseFloat(t.rate)||1) : 1);
-          const isDebit = t.type==='wit' || (t.type==='trf' && isFrom);
-          col1 = isDebit ? `<span class="cell-debit">${Currency.formatMoney(val, sym)}</span>` : '—';
-          col2 = isDebit ? '—' : `<span class="cell-credit">${Currency.formatMoney(val, sym)}</span>`;
-          col3 = '';
-        } else {
-          let value=0, commission=0;
-          if (t.type==='dep') { value = parseFloat(t.amt); commission = parseFloat(t.commission_amt||0); }
-          if (t.type==='wit') { value = parseFloat(t.amt); commission = 0; }
-          if (isFrom) { value = parseFloat(t.amt); commission = 0; }
-          if (isTo)   { value = parseFloat(t.amt) * (parseFloat(t.rate)||1); commission = parseFloat(t.commission_amt||0); }
-          const net = value - commission;
-          const isIn = t.type==='dep' || isTo;
-          const cls  = isIn ? 'cell-credit' : 'cell-debit';
-          col1 = `<span class="${cls}">${Currency.formatMoney(value, sym)}</span>`;
-          col2 = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission, sym)}</span>` : '—';
-          col3 = `<span class="${cls}">${Currency.formatMoney(net, sym)}</span>`;
-        }
-        const editBtns   = (canEdit && !isFeeIn) ? `
-          <button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,''))}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="openDel('${t.id}')">🗑️</button>
-        ` : '—';
-        return `<tr class="stmt-row">
-          <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(t.date)}</td>
-          <td><span class="badge badge-${isFeeIn?'fee':(t.type||'fee')}">${isFeeIn?t('type_fee'):typeLabel(t.type)}</span></td>
-          <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
-          <td>${t.cur.toUpperCase()}</td>
-          <td>${col1}</td>
-          <td ${isProfitAcc?'style="display:none;"':''}>${col2}</td>
-          <td ${isProfitAcc?'style="display:none;"':''}>${col3}</td>          <td style="font-size:0.74rem;color:var(--text2);max-width:110px;
-              overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-              title="${UI.escapeHtml(t.note||'')}">
-            ${UI.escapeHtml(t.note||'—')}
-          </td>
-          <td class="no-print" style="white-space:nowrap;">${editBtns}</td>
-        </tr>`;
-      }).join('')
-    : `<tr><td colspan="8" class="empty-state"><div class="empty-icon">📋</div>${t('no_movements_match')}</td></tr>`;
+  function buildRow(tx) {
+    const sym    = (tx.cur||'').toLowerCase()==='usd'?'$':'€';
+    const isFrom = tx.type==='trf' && tx.from===_currentAccId;
+    const isTo   = tx.type==='trf' && tx.to===_currentAccId;
+    const isFeeIn = tx.type==='dep' && tx.is_commission_entry;
+    let counterpart = '—';
+    if (tx.type==='trf') {
+      const otherId = isFrom ? tx.to : tx.from;
+      const other   = _allAccounts.find(a=>a.id===otherId);
+      counterpart   = UI.escapeHtml(other ? other.name : otherId);
+      counterpart   = isFrom ? ('← ' + counterpart) : ('→ ' + counterpart);
+    }
+    if (isFeeIn) {
+      const m = (tx.note||'').match(/من حساب (\S+)/);
+      const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
+      counterpart = srcAcc ? UI.escapeHtml(srcAcc.name) : (m ? UI.escapeHtml(m[1]) : t('profit_account_lbl'));
+    }
 
+    let col1, col2, col3;
+    if (isProfitAcc) {
+      const val = parseFloat(tx.amt) * (tx.type==='trf' && isTo ? (parseFloat(tx.rate)||1) : 1);
+      const isDebit = tx.type==='wit' || (tx.type==='trf' && isFrom);
+      col1 = isDebit ? `<span class="cell-debit">${Currency.formatMoney(val, sym)}</span>` : '—';
+      col2 = isDebit ? '—' : `<span class="cell-credit">${Currency.formatMoney(val, sym)}</span>`;
+      col3 = '';
+    } else {
+      let value=0, commission=0;
+      if (tx.type==='dep') { value = parseFloat(tx.amt); commission = parseFloat(tx.commission_amt||0); }
+      if (tx.type==='wit') { value = parseFloat(tx.amt); commission = 0; }
+      if (isFrom) { value = parseFloat(tx.amt); commission = 0; }
+      if (isTo)   { value = parseFloat(tx.amt) * (parseFloat(tx.rate)||1); commission = parseFloat(tx.commission_amt||0); }
+      const net = value - commission;
+      const isIn = tx.type==='dep' || isTo;
+      const cls  = isIn ? 'cell-credit' : 'cell-debit';
+      col1 = `<span class="${cls}">${Currency.formatMoney(value, sym)}</span>`;
+      col2 = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission, sym)}</span>` : '—';
+      col3 = `<span class="${cls}">${Currency.formatMoney(net, sym)}</span>`;
+    }
+    const editBtns = (canEdit && !isFeeIn) ? `
+      <button class="btn btn-ghost btn-sm" onclick="openEdit('${tx.id}','${UI.escapeHtml((tx.note||'').replace(/'/g,''))}')">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="openDel('${tx.id}')">🗑️</button>
+    ` : '—';
+    return `<tr class="stmt-row">
+      <td style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${UI.formatDate(tx.date)}</td>
+      <td><span class="badge badge-${isFeeIn?'fee':(tx.type||'fee')}">${isFeeIn?t('type_fee'):typeLabel(tx.type)}</span></td>
+      <td style="font-size:0.78rem;color:var(--text2);">${counterpart}</td>
+      <td>${col1}</td>
+      <td ${isProfitAcc?'style="display:none;"':''}>${col2}</td>
+      <td ${isProfitAcc?'style="display:none;"':''}>${col3}</td>
+      <td style="font-size:0.74rem;color:var(--text2);max-width:110px;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+          title="${UI.escapeHtml(tx.note||'')}">
+        ${UI.escapeHtml(tx.note||'—')}
+      </td>
+      <td class="no-print" style="white-space:nowrap;">${editBtns}</td>
+    </tr>`;
+  }
+
+  function buildCurrencyTable(cur, sym, bal, currRows, isLast) {
+    const negBal = bal < 0;
+    const rowsHtml = currRows.length ? currRows.map(buildRow).join('')
+      : `<tr><td colspan="${colspan}" class="empty-state">${t('no_movements_match')}</td></tr>`;
+    return `<div class="card" data-currency="${cur}" style="padding:0;overflow:hidden;margin-bottom:14px;${isLast?'':'page-break-after:always;'}">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <b style="font-size:0.9rem;">${sym} ${cur.toUpperCase()}</b>
+        <span style="font-weight:700;padding:4px 14px;border-radius:20px;font-size:0.82rem;
+          ${negBal ? 'background:var(--red-dim);color:var(--red);border:1px solid var(--red);' : 'color:var(--text2);'}">
+          ${t('balance_lbl') || 'الرصيد'}: ${Currency.formatMoney(bal, sym)}
+        </span>
+      </div>
+      <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+        <table>
+          <thead>
+            <tr>
+              <th>${t('col_date')}</th><th>${t('col_type_lbl')}</th><th>${t('col_counterpart')}</th>
+              <th>${th1Label}</th>
+              <th ${isProfitAcc?'style="display:none;"':''}>${th2Label}</th>
+              <th ${isProfitAcc?'style="display:none;"':''}>${th3Label}</th>
+              <th>${t('col_note')}</th><th class="no-print">${t('col_action')}</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  if (!rows.length) {
+    container.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">
+      <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
+        <table><tbody><tr><td class="empty-state"><div class="empty-icon">📋</div>${t('no_movements_match')}</td></tr></tbody></table>
+      </div></div>`;
+    document.getElementById('stmt-count').textContent = '0 ' + t('movement_unit');
+    return;
+  }
+
+  const currencies = ['usd','eur'].filter(c => fCur === 'all' || fCur === c);
+  const groups = currencies
+    .map(cur => ({ cur, sym: cur==='usd'?'$':'€', bal: cur==='usd'?_currentBalUsd:_currentBalEur,
+                    rows: rows.filter(tx => (tx.cur||'').toLowerCase() === cur) }))
+    .filter(g => g.rows.length > 0);
+
+  container.innerHTML = groups.map((g,i) => buildCurrencyTable(g.cur, g.sym, g.bal, g.rows, i===groups.length-1)).join('');
   document.getElementById('stmt-count').textContent = rows.length + ' ' + t('movement_unit');
 }
 
@@ -510,7 +529,15 @@ async function doDelete() {
 // ── Export ────────────────────────────────────────────
 function exportStatement() {
   if (typeof XLSX === 'undefined') { UI.toast(t('excel_not_loaded'),'error'); return; }
-  const wb = XLSX.utils.table_to_book(document.getElementById('stmt-table'), { sheet:t('statement_sheet_name') });
+  const cards = document.querySelectorAll('#stmt-tables-container .card[data-currency]');
+  if (!cards.length) { UI.toast(t('no_movements_match'),'error'); return; }
+  const wb = XLSX.utils.book_new();
+  cards.forEach(card => {
+    const cur = card.dataset.currency.toUpperCase();
+    const table = card.querySelector('table');
+    const ws = XLSX.utils.table_to_sheet(table);
+    XLSX.utils.book_append_sheet(wb, ws, cur);
+  });
   const name = document.getElementById('acc-header-name').textContent;
   XLSX.writeFile(wb, t('statement_file_prefix') + name + '_' + UI.todayStr() + '.xlsx');
 }
