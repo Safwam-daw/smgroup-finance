@@ -22,6 +22,8 @@
   padding:8px 18px; border-radius:20px; font-size:0.88rem;
   font-weight:700; border:1px solid; display:flex; align-items:center; gap:6px;
 }
+.bal-chip.chip-neg { color:var(--red);   border-color:var(--red);   background:var(--red-dim); }
+.bal-chip.chip-pos { color:var(--green); border-color:var(--green); background:var(--green-dim); }
 /* صف العملية بلا لون */
 /* مربع دائن أخضر */
 .cell-credit { background:var(--green-dim); color:var(--green); font-weight:700;
@@ -56,7 +58,8 @@
   .acc-header { background:#fff!important; border:2px solid #c9a84c!important; }
   .acc-header-info h3 { color:#111!important; }
   .acc-header-info p  { color:#555!important; }
-  .bal-chip { border:1px solid #c9a84c!important; background:#fffbef!important; color:#111!important; }
+  .bal-chip.chip-neg { border:1px solid #c0392b!important; background:#fdecea!important; color:#c0392b!important; }
+  .bal-chip.chip-pos { border:1px solid #1e8449!important; background:#eafaf1!important; color:#1e8449!important; }
   .tbl-wrap { border:1px solid #ccc!important; overflow:visible!important; }
   table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
   th { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; padding:7px 9px; }
@@ -342,17 +345,15 @@ async function loadStatement() {
   document.getElementById('acc-header-meta').textContent =
     (acc.type==='company'?t('company_type_lbl'):t('customer_type_lbl')) + ' · ' + t('created_at_lbl') + ' ' + (acc.created_at ? UI.formatDate(acc.created_at) : '—');
 
-  // رصيد chips
-  const setChip = (chipId, valId, val, sym, posColor) => {
+  // رصيد chips: أخضر للموجب، أحمر للسالب
+  const setChip = (chipId, valId, val, sym) => {
     const chip = document.getElementById(chipId);
     document.getElementById(valId).textContent = Currency.formatMoney(val, sym);
-    const neg = val < 0;
-    chip.style.color       = neg ? 'var(--red)' : posColor;
-    chip.style.borderColor = neg ? 'var(--red)' : posColor;
-    chip.style.background  = neg ? 'var(--red-dim)' : 'transparent';
+    chip.classList.remove('chip-pos', 'chip-neg');
+    chip.classList.add(val < 0 ? 'chip-neg' : 'chip-pos');
   };
-  setChip('chip-usd','bal-usd', usd, '$', 'var(--gold)');
-  setChip('chip-eur','bal-eur', eur, '€', 'var(--euro)');
+  setChip('chip-usd','bal-usd', usd, '$');
+  setChip('chip-eur','bal-eur', eur, '€');
 
   document.getElementById('acc-header-box').style.display = 'block';
   renderRows();
@@ -439,16 +440,11 @@ function renderRows() {
   }
 
   function buildCurrencyTable(cur, sym, bal, currRows, isLast) {
-    const negBal = bal < 0;
     const rowsHtml = currRows.length ? currRows.map(buildRow).join('')
       : `<tr><td colspan="${colspan}" class="empty-state">${t('no_movements_match')}</td></tr>`;
     return `<div class="card" data-currency="${cur}" style="padding:0;overflow:hidden;margin-bottom:14px;${isLast?'':'page-break-after:always;'}">
-      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);">
         <b style="font-size:0.9rem;">${sym} ${cur.toUpperCase()}</b>
-        <span style="font-weight:700;padding:4px 14px;border-radius:20px;font-size:0.82rem;
-          ${negBal ? 'background:var(--red-dim);color:var(--red);border:1px solid var(--red);' : 'color:var(--text2);'}">
-          ${t('balance_lbl') || 'الرصيد'}: ${Currency.formatMoney(bal, sym)}
-        </span>
       </div>
       <div class="tbl-wrap" style="border:none;border-radius:0;margin:0;">
         <table>
