@@ -6,71 +6,61 @@
 const Accounts = (() => {
 
   async function generateCode(type) {
-    // البحث عن أول فجوة في الأرقام (رقم محذوف)
-    // نعتمد على حقل type المخزَّن فعلياً لكل حساب (وليس تخمين بادئة الكود) —
-    // لأن حسابات قديمة قد يكون كودها بصيغة غير معتادة (مثال: 707 أو 2014)
-    const accounts = await Storage.getAccounts();
+    const prefix = CONFIG.TYPE_PREFIXES[type];
+    if (!prefix) return '';
 
-    if (type === 'customer') {
-      const existing = new Set(
-        accounts.filter(a => a.type === 'customer')
-          .map(a => parseInt(a.id))
-          .filter(n => !isNaN(n))
-      );
-      // ابحث عن أول رقم مفقود من 1
-      for (let i = 1; i <= 999; i++) {
-        if (!existing.has(i)) return String(i).padStart(4, '0');
-      }
-      return '0999';
-    } else if (type === 'profit') {
-      const existing = new Set(
-        accounts.filter(a => a.type === 'profit')
-          .map(a => parseInt(a.id))
-          .filter(n => !isNaN(n))
-      );
-      for (let i = 9999; i >= 9000; i--) {
-        if (!existing.has(i)) return String(i);
-      }
-      return '9000';
-    } else {
-      const existing = new Set(
-        accounts.filter(a => a.type === 'company')
-          .map(a => parseInt(a.id))
-          .filter(n => !isNaN(n))
-      );
-      for (let i = 4000; i <= 4999; i++) {
-        if (!existing.has(i)) return String(i);
-      }
-      return '4999';
+    // حساب واحد ثابت فقط لكل من الأرباح والخزينة — لا تسلسل، معرّف واحد دائماً
+    if (type === 'profit')   return CONFIG.PROFIT_ACCOUNT_ID;
+    if (type === 'treasury') return CONFIG.TREASURY_ACCOUNT_ID;
+
+    // البحث عن أول فجوة في تسلسل هذا النوع تحديداً (رقم مُحرَّر بعد الحذف)
+    const accounts = await Storage.getAccounts();
+    const existing = new Set(
+      accounts.filter(a => a.type === type)
+        .map(a => {
+          const s = String(a.id || '');
+          return s.startsWith(prefix) ? parseInt(s.slice(prefix.length), 10) : NaN;
+        })
+        .filter(n => !isNaN(n))
+    );
+    for (let i = 1; i <= 9999; i++) {
+      if (!existing.has(i)) return prefix + String(i).padStart(4, '0');
     }
+    return prefix + '9999';
   }
 
-  // يتحقق أن الكود اليدوي يطابق نمط الكود المتوقع لهذا النوع.
-  // فقط معرّفَا الأرباح والخزينة محجوزان فعلياً (حساب واحد ثابت لكل منهما) —
-  // بقية الأنواع لا تحجز نطاقات كاملة من الأرقام، حتى لا تمنع الزبون من
-  // كود مميز يريده (مثل 999 أو 707 أو 8000)، طالما لا يصطدم بمعرّف ثابت فعلي.
+  // يُزيل أي بادئة نوع معروفة (CU/CO/PR/TN) من بداية النص إن وُجدت —
+  // يسمح للمستخدم بتعديل الكود المقترح جزئياً أو كتابة رقم مجرّد بلا قلق
+  function _stripKnownPrefix(code) {
+    const upper = code.toUpperCase();
+    for (const p of Object.values(CONFIG.TYPE_PREFIXES)) {
+      if (upper.startsWith(p)) return code.slice(p.length);
+    }
+    return code;
+  }
+
+  // يبني الكود النهائي: بادئة النوع الصحيحة + الجزء الذي أدخله المستخدم.
+  // حسابا الأرباح والخزينة: معرّف ثابت واحد دائماً بغض النظر عمّا كُتب —
+  // هذا يمنع أي خطأ يدوي محتمل عند إنشاء أحدهما (كما طلب المستخدم).
   function _validManualCode(type, code) {
     code = String(code || '').trim();
     if (!code) return { ok:false, error:'أدخل كود الحساب' };
 
-    // معرّفان محجوزان حصراً بغض النظر عن النوع المطلوب — حساب واحد فقط لكل منهما في النظام كله
-    if (type !== 'profit' && code === CONFIG.PROFIT_ACCOUNT_ID) {
-      return { ok:false, error:'هذا الكود مخصص لحساب الأرباح' };
-    }
-    if (type !== 'treasury' && code === CONFIG.TREASURY_ACCOUNT_ID) {
-      return { ok:false, error:'هذا الكود مخصص لحساب الخزينة' };
+    const prefix = CONFIG.TYPE_PREFIXES[type];
+    if (!prefix) return { ok:false, error:'نوع حساب غير معروف' };
+
+    if (type === 'profit')   return { ok:true, code: CONFIG.PROFIT_ACCOUNT_ID };
+    if (type === 'treasury') return { ok:true, code: CONFIG.TREASURY_ACCOUNT_ID };
+
+    const suffix = _stripKnownPrefix(code).trim();
+    if (!suffix) return { ok:false, error:'أدخل رقماً أو رمزاً مميزاً بعد رمز نوع الحساب' };
+
+    if (type === 'company' && !/^\d+$/.test(suffix)) {
+      // نطاق الشركات يبقى رقمياً بحتاً لثبات الفرز والتوليد التلقائي
+      return { ok:false, error:'كود حساب الشركات يجب أن يكون رقماً بعد رمز CO' };
     }
 
-    if (type === 'customer') {
-      // لا قيود إضافية — أي كود متاح (غير مستخدم فعلياً) مقبول
-    } else if (type === 'company') {
-      if (!code.startsWith('4')) return { ok:false, error:'كود حساب الشركات يجب أن يبدأ بـ 4' };
-    } else if (type === 'profit') {
-      if (!code.startsWith('9')) return { ok:false, error:'كود حساب الأرباح يجب أن يبدأ بـ 9' };
-    } else {
-      return { ok:false, error:'نوع حساب غير معروف' };
-    }
-    return { ok:true, code };
+    return { ok:true, code: prefix + suffix };
   }
 
   async function create(type, name, code) {

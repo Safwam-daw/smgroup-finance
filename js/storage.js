@@ -363,14 +363,19 @@ const Storage = (() => {
       }
     }
 
-    // توليد رقم أرشيفي (7000+)
+    // توليد رقم أرشيفي حسب نوع الحساب الأصلي (تسلسل مستقل لكل نوع)
+    // مثال: زبون مؤرشف => ACCU0001 ، شركة مؤرشفة => ACCO0001
+    const typePrefix    = CONFIG.TYPE_PREFIXES[acc.type] || 'XX';
+    const archivePrefix = CONFIG.ARCHIVE_PREFIX + typePrefix;
     const { data: existing } = await _sb.from('deleted_accounts')
-      .select('archive_id').not('archive_id','is',null).order('archive_id', { ascending: false }).limit(1);
-    let nextArchive = '7001';
+      .select('archive_id').like('archive_id', archivePrefix + '%')
+      .order('archive_id', { ascending: false }).limit(1);
+    let nextNum = 1;
     if (existing && existing.length > 0) {
-      const last = parseInt(existing[0].archive_id || '7000');
-      nextArchive = String(last + 1);
+      const lastNum = parseInt(String(existing[0].archive_id || '').slice(archivePrefix.length), 10);
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
+    const nextArchive = archivePrefix + String(nextNum).padStart(4, '0');
 
     // تسجيل في المحذوفات مع الرقم الأرشيفي
     await _sb.from('deleted_accounts').insert({

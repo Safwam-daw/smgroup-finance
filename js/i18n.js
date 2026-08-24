@@ -157,7 +157,7 @@ const I18n = (() => {
     add_account:        { ar: 'إضافة حساب', en: 'Add Account', tr: 'Hesap Ekle' },
     create_account:     { ar: '➕ فتح حساب جديد', en: '➕ Open New Account', tr: '➕ Yeni Hesap Aç' },
     account_code_auto:  { ar: 'كود الحساب (تلقائي — قابل للتعديل)', en: 'Account Code (Auto — Editable)', tr: 'Hesap Kodu (Otomatik — Düzenlenebilir)' },
-    account_code_hint:  { ar: 'يقترح النظام الكود التالي تلقائياً، ويمكنك تغييره لكود مميز', en: 'The system suggests the next code automatically; you may change it to a custom one', tr: 'Sistem otomatik olarak bir sonraki kodu önerir; özel bir kodla değiştirebilirsiniz' },
+    account_code_hint:  { ar: 'يقترح النظام الكود التالي تلقائياً (برمز نوع الحساب: CU للزبون، CO للشركة)، ويمكنك تعديل الرقم لكود مميز', en: 'The system suggests the next code automatically (with a type prefix: CU for customer, CO for company); you may edit the number for a custom code', tr: 'Sistem otomatik olarak bir sonraki kodu önerir (tür ön eki ile: müşteri için CU, şirket için CO); numarayı özel bir koda göre düzenleyebilirsiniz' },
     account_name_ph:    { ar: 'اسم الزبون أو الشركة', en: 'Customer or company name', tr: 'Müşteri veya şirket adı' },
     save_account:       { ar: '💾 حفظ الحساب', en: '💾 Save Account', tr: '💾 Hesabı Kaydet' },
     quick_search:       { ar: 'بحث سريع', en: 'Quick Search', tr: 'Hızlı Ara' },
