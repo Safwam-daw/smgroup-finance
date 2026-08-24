@@ -85,6 +85,8 @@ const Transactions = (() => {
   async function deposit(accountId, currency, amount) {
     if (!accountId)             return { ok: false, error: 'اختر الحساب' };
     if (!amount || amount <= 0) return { ok: false, error: 'أدخل مبلغاً صحيحاً' };
+    if (accountId === CONFIG.TREASURY_ACCOUNT_ID)
+      return { ok: false, error: 'رصيد الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن الإيداع فيه مباشرة' };
 
     const commission = await _calcCommission(accountId, amount);
     const netAmount  = parseFloat((amount - commission).toFixed(2));
@@ -104,6 +106,10 @@ const Transactions = (() => {
     const balOk = await Storage.updateBalance(accountId, currency, netAmount);
     if (!balOk) return { ok: false, error: 'خطأ في تحديث الرصيد' };
 
+    // قيد الخزينة المقابل (double-entry): الخزينة استلمت المبلغ الكامل نقداً
+    // من الزبون — تصبح أكثر سالبية (اصطلاح: سالب = الخزينة لديها نقد)
+    await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, -amount);
+
     if (commission > 0) await _saveCommissionEntry(accountId, currency, commission, txnId);
 
     await Storage.logAction('deposit', { accountId, currency, amount, commission, netAmount });
@@ -116,6 +122,8 @@ const Transactions = (() => {
   async function withdraw(accountId, currency, amount, forceOverdraft = false) {
     if (!accountId)             return { ok: false, error: 'اختر الحساب' };
     if (!amount || amount <= 0) return { ok: false, error: 'أدخل مبلغاً صحيحاً' };
+    if (accountId === CONFIG.TREASURY_ACCOUNT_ID)
+      return { ok: false, error: 'رصيد الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن السحب منه مباشرة' };
 
     const currentBal = await Storage.getBalance(accountId, currency);
     if (!forceOverdraft && currentBal < amount) {
@@ -141,6 +149,10 @@ const Transactions = (() => {
     const balOk = await Storage.updateBalance(accountId, currency, -amount);
     if (!balOk) return { ok: false, error: 'خطأ في تحديث الرصيد' };
 
+    // قيد الخزينة المقابل: الخزينة دفعت المبلغ نقداً للزبون —
+    // تصبح أكثر إيجابية (اصطلاح: موجب = الخزينة تحتاج نقداً)
+    await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, amount);
+
     await Storage.logAction('withdraw', { accountId, currency, amount });
     Storage.invalidate();
     _checkTxnAlerts('سحب', accountId, currency, amount, currentBal - amount);
@@ -153,6 +165,8 @@ const Transactions = (() => {
     if (!toId)                  return { ok: false, error: 'اختر حساب المستقبل' };
     if (fromId === toId)        return { ok: false, error: 'لا يمكن التحويل لنفس الحساب' };
     if (!amount || amount <= 0) return { ok: false, error: 'أدخل مبلغاً صحيحاً' };
+    if (fromId === CONFIG.TREASURY_ACCOUNT_ID || toId === CONFIG.TREASURY_ACCOUNT_ID)
+      return { ok: false, error: 'حساب الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن التحويل منه أو إليه مباشرة' };
 
     const r           = parseFloat(rate) || 1;
     const gross       = parseFloat((amount * r).toFixed(2));
@@ -213,9 +227,13 @@ const Transactions = (() => {
     if (t.type === 'dep') {
       const net = parseFloat((amt - parseFloat(t.commission_amt || 0)).toFixed(2));
       await Storage.updateBalance(t.acc, cur, -net);
+      // عكس قيد الخزينة المقابل (كانت قد نقصت بالمبلغ الكامل عند الإيداع)
+      await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, cur, amt);
 
     } else if (t.type === 'wit') {
       await Storage.updateBalance(t.acc, cur, amt);
+      // عكس قيد الخزينة المقابل (كانت قد زادت بالمبلغ عند السحب)
+      await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, cur, -amt);
 
     } else if (t.type === 'trf') {
       const r           = parseFloat(t.rate || 1);

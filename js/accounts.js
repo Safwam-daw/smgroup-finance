@@ -51,8 +51,8 @@ const Accounts = (() => {
     code = String(code || '').trim();
     if (!code) return { ok:false, error:'أدخل كود الحساب' };
     if (type === 'customer') {
-      // لا يُسمح بأكواد تتقاطع مع نطاقات محجوزة لأنواع أخرى (شركات 4xxx، أرباح 9xxx، 7xxx)
-      if (code.startsWith('4') || code.startsWith('9') || code.startsWith('7')) {
+      // لا يُسمح بأكواد تتقاطع مع نطاقات محجوزة لأنواع أخرى (شركات 4xxx، أرباح 9xxx، 7xxx، خزينة 8xxx)
+      if (code.startsWith('4') || code.startsWith('9') || code.startsWith('7') || code.startsWith('8')) {
         return { ok:false, error:'هذا النطاق محجوز لنوع حساب آخر' };
       }
     } else if (type === 'company') {

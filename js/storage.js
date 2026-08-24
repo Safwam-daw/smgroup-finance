@@ -163,6 +163,20 @@ const Storage = (() => {
     return result;
   }
 
+  // رصيد حساب الخزينة الفعلي (القيد المزدوج — MIGRATION_V29)
+  // لا يُخلط مع getTreasuryTotals() التي تجمع أرصدة كل الزبائن/الشركات
+  async function getCashboxBalance() {
+    const accounts = await getAccounts();
+    const cb = accounts.find(a => a.id === CONFIG.TREASURY_ACCOUNT_ID);
+    if (!cb) return { usd:0, eur:0 };
+    const result = {};
+    Object.keys(cb).filter(k => k.startsWith('bal_')).forEach(k => {
+      const cur = k.replace('bal_','').toUpperCase();
+      result[cur.toLowerCase()] = parseFloat(cb[k] || 0);
+    });
+    return result;
+  }
+
   // ══ Transactions ══════════════════════════════════════
   async function getTxns(filters = {}) {
     let q = _sb.from('transactions').select('*').order('date', { ascending: false });
@@ -330,6 +344,7 @@ const Storage = (() => {
   // ══ حذف الحساب مع تسوية الرصيد وأرشفته ═══════════════
   async function deleteAccount(accountId, deletedBy) {
     if (accountId === CONFIG.PROFIT_ACCOUNT_ID) return { ok: false, error: 'لا يمكن حذف حساب الأرباح' };
+    if (accountId === CONFIG.TREASURY_ACCOUNT_ID) return { ok: false, error: 'لا يمكن حذف حساب الخزينة' };
     if (accountId.startsWith('7')) return { ok: false, error: 'هذا حساب أرشيفي محذوف مسبقاً' };
 
     const accounts = await getAccounts();
@@ -413,6 +428,19 @@ const Storage = (() => {
     });
     invalidate('accounts');
     console.log('✅ تم إعادة إنشاء حساب الأرباح');
+  }
+
+  // ══ إعادة إنشاء حساب الخزينة إذا حُذف ══════════════
+  // خزينة واحدة فقط في النظام — القيد المزدوج (إيداع/سحب) يفترض وجودها دائماً
+  async function ensureTreasuryAccount() {
+    const accounts = await getAccounts();
+    if (accounts.find(a => a.type === 'treasury')) return; // موجودة بالفعل
+    await _sb.from('accounts').insert({
+      id: CONFIG.TREASURY_ACCOUNT_ID, name: 'الخزينة', type: 'treasury',
+      bal_usd: 0, bal_eur: 0, commission_rate: 0
+    });
+    invalidate('accounts');
+    console.log('✅ تم إعادة إنشاء حساب الخزينة');
   }
 
   // يجلب كود حساب الأرباح الفعلي من قاعدة البيانات (ديناميكي — MIGRATION_V22)
@@ -722,8 +750,8 @@ const Storage = (() => {
   return {
   // accounts
   getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
-  getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, invalidate,
-  deleteAccount, getRecyclableId, ensureProfitAccount, getProfitAccountId,
+  getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, getCashboxBalance, invalidate,
+  deleteAccount, getRecyclableId, ensureProfitAccount, ensureTreasuryAccount, getProfitAccountId,
 
   // transactions
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,

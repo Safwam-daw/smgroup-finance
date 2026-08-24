@@ -16,11 +16,13 @@
 
 const CONFIG = {
   PROFIT_ACCOUNT_ID: '9999',
+  TREASURY_ACCOUNT_ID: '8888', // خزينة واحدة فقط — قيمة ثابتة (لا حاجة لاختيار ديناميكي كالأرباح)
 
   ACCOUNT_TYPES: {
     CUSTOMER: 'customer',
     COMPANY:  'company',
-    PROFIT:   'profit'
+    PROFIT:   'profit',
+    TREASURY: 'treasury'
   },
 
   TRANSACTION_TYPES: {
@@ -30,7 +32,7 @@ const CONFIG = {
   },
 
   // نطاقات أكواد الحسابات المحجوزة (تُستخدم في accounts.js عند التحقق من كود يدوي)
-  RESERVED_ACCOUNT_CODE_PREFIXES: ['4', '7', '9'],
+  RESERVED_ACCOUNT_CODE_PREFIXES: ['4', '7', '8', '9'],
 
   SUPPORTED_CURRENCIES: ['usd', 'eur'],
 

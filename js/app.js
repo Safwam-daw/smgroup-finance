@@ -192,6 +192,14 @@ function buildTreasuryBar() {
           <span class="stat-value" id="t-profit-eur" style="color:var(--green);">€0.00</span>
         </div>
       </div>` : ''}
+      ${canTreasury ? `
+      <div class="stat-card" style="flex:1;min-width:170px;border-right:3px solid var(--blue);">
+        <div class="stat-label">🏦 ${t('cashbox_lbl')}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <span id="t-cashbox-usd" style="font-size:var(--fs-md);font-weight:700;white-space:nowrap;">$0.00</span>
+          <span id="t-cashbox-eur" style="font-size:var(--fs-md);font-weight:700;white-space:nowrap;">€0.00</span>
+        </div>
+      </div>` : ''}
     </div>
     <div id="t-extra-currencies" style="display:none;gap:10px;margin-top:10px;flex-wrap:wrap;overflow-x:auto;"></div>
   `;
@@ -325,6 +333,8 @@ async function initApp(pageId) {
 
   // تأكد من وجود حساب الأرباح (يُعيد إنشاءه إذا حُذف)
   await Storage.ensureProfitAccount().catch(()=>{});
+  // تأكد من وجود حساب الخزينة (يُعيد إنشاءه إذا حُذف)
+  await Storage.ensureTreasuryAccount().catch(()=>{});
   // تحديث المرجع الديناميكي لكود حساب الأرباح الفعلي (MIGRATION_V22)
   CONFIG.PROFIT_ACCOUNT_ID = await Storage.getProfitAccountId().catch(()=>CONFIG.PROFIT_ACCOUNT_ID);
 
