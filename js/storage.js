@@ -345,7 +345,6 @@ const Storage = (() => {
   async function deleteAccount(accountId, deletedBy) {
     if (accountId === CONFIG.PROFIT_ACCOUNT_ID) return { ok: false, error: 'لا يمكن حذف حساب الأرباح' };
     if (accountId === CONFIG.TREASURY_ACCOUNT_ID) return { ok: false, error: 'لا يمكن حذف حساب الخزينة' };
-    if (accountId.startsWith('7')) return { ok: false, error: 'هذا حساب أرشيفي محذوف مسبقاً' };
 
     const accounts = await getAccounts();
     const acc = accounts.find(a => a.id === accountId);

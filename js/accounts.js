@@ -45,16 +45,24 @@ const Accounts = (() => {
     }
   }
 
-  // يتحقق أن الكود اليدوي يطابق نمط الكود المتوقع لهذا النوع
-  // (نفس نطاقات الأرقام المستخدمة في generateCode) قبل محاولة الحفظ
+  // يتحقق أن الكود اليدوي يطابق نمط الكود المتوقع لهذا النوع.
+  // فقط معرّفَا الأرباح والخزينة محجوزان فعلياً (حساب واحد ثابت لكل منهما) —
+  // بقية الأنواع لا تحجز نطاقات كاملة من الأرقام، حتى لا تمنع الزبون من
+  // كود مميز يريده (مثل 999 أو 707 أو 8000)، طالما لا يصطدم بمعرّف ثابت فعلي.
   function _validManualCode(type, code) {
     code = String(code || '').trim();
     if (!code) return { ok:false, error:'أدخل كود الحساب' };
+
+    // معرّفان محجوزان حصراً بغض النظر عن النوع المطلوب — حساب واحد فقط لكل منهما في النظام كله
+    if (type !== 'profit' && code === CONFIG.PROFIT_ACCOUNT_ID) {
+      return { ok:false, error:'هذا الكود مخصص لحساب الأرباح' };
+    }
+    if (type !== 'treasury' && code === CONFIG.TREASURY_ACCOUNT_ID) {
+      return { ok:false, error:'هذا الكود مخصص لحساب الخزينة' };
+    }
+
     if (type === 'customer') {
-      // لا يُسمح بأكواد تتقاطع مع نطاقات محجوزة لأنواع أخرى (شركات 4xxx، أرباح 9xxx، 7xxx، خزينة 8xxx)
-      if (code.startsWith('4') || code.startsWith('9') || code.startsWith('7') || code.startsWith('8')) {
-        return { ok:false, error:'هذا النطاق محجوز لنوع حساب آخر' };
-      }
+      // لا قيود إضافية — أي كود متاح (غير مستخدم فعلياً) مقبول
     } else if (type === 'company') {
       if (!code.startsWith('4')) return { ok:false, error:'كود حساب الشركات يجب أن يبدأ بـ 4' };
     } else if (type === 'profit') {
