@@ -196,7 +196,7 @@ body.nav-topbar #main { margin-top:calc(var(--topbar-h) + 56px); }
   min-height:100vh; padding:24px; overflow-x:hidden;
 }
 
-#treasury-bar { display:flex; gap:14px; margin-bottom:20px; }
+#treasury-bar { display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
 
 /* ══ COMPONENTS ═══════════════════════════════════════════ */
 .page-header {
