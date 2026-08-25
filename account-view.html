@@ -493,7 +493,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   if (!acc) { UI.toast(I18n.t('acc_not_found'),'error'); navTo('accounts.html'); return; }
 
   _accObj      = acc;
-  _isProfitAcc = (_accId === CONFIG.PROFIT_ACCOUNT_ID);
+  _isProfitAcc = (_accId === CONFIG.PROFIT_ACCOUNT_ID || _accId === CONFIG.TREASURY_ACCOUNT_ID);
   // للحسابات العادية: نخفي حركات العمولة المستقلة (تظهر كعمود "عمولة" على
   // الحركة الأصلية نفسها بدل صف منفصل). حساب الأرباح فقط يُستثنى لأنها
   // فعلياً حركاته الحقيقية ويحتاج مراجعتها.

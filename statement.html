@@ -373,7 +373,7 @@ function renderRows() {
   if (fTo)   { const [y,m,d]=fTo.split('-').map(Number);   rows = rows.filter(t => new Date(t.date) <= new Date(y,m-1,d,23,59,59,999)); }
 
   const canEdit = Auth.isAdmin();
-  const isProfitAcc = _currentAccId === CONFIG.PROFIT_ACCOUNT_ID;
+  const isProfitAcc = _currentAccId === CONFIG.PROFIT_ACCOUNT_ID || _currentAccId === CONFIG.TREASURY_ACCOUNT_ID;
   const container = document.getElementById('stmt-tables-container');
   const colspan = 8;
 
@@ -577,7 +577,7 @@ async function downloadAllStatements(period) {
     for (const accId of activeIds) {
       const acc = _allAccounts.find(a => a.id === accId);
       if (!acc) continue;
-      const isProfitAcc = accId === CONFIG.PROFIT_ACCOUNT_ID;
+      const isProfitAcc = accId === CONFIG.PROFIT_ACCOUNT_ID || accId === CONFIG.TREASURY_ACCOUNT_ID;
       const accTxns = periodTxns.filter(tx => {
         const touches = tx.acc === accId || tx.from === accId || tx.to === accId;
         if (!touches) return false;
