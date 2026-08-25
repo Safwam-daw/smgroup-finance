@@ -364,9 +364,9 @@ const Storage = (() => {
     }
 
     // توليد رقم أرشيفي حسب نوع الحساب الأصلي (تسلسل مستقل لكل نوع)
-    // مثال: زبون مؤرشف => ACCU0001 ، شركة مؤرشفة => ACCO0001
+    // مثال: زبون مؤرشف => AC-CU-0001 ، شركة مؤرشفة => AC-CO-0001
     const typePrefix    = CONFIG.TYPE_PREFIXES[acc.type] || 'XX';
-    const archivePrefix = CONFIG.ARCHIVE_PREFIX + typePrefix;
+    const archivePrefix = CONFIG.ARCHIVE_PREFIX + '-' + typePrefix + '-';
     const { data: existing } = await _sb.from('deleted_accounts')
       .select('archive_id').like('archive_id', archivePrefix + '%')
       .order('archive_id', { ascending: false }).limit(1);

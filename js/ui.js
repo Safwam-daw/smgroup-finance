@@ -52,10 +52,9 @@ const UI = (() => {
   }
 
   async function updateTreasury() {
-    const [totals, profit, cashbox, activeCurs] = await Promise.all([
+    const [totals, profit, activeCurs] = await Promise.all([
       Storage.getTreasuryTotals(),
       Storage.getProfitBalance(),
-      (typeof Storage !== 'undefined' && Storage.getCashboxBalance) ? Storage.getCashboxBalance() : Promise.resolve({usd:0,eur:0}),
       (typeof Currency !== 'undefined') ? Currency.getActive() : Promise.resolve([
         { code:'USD', symbol:'$' }, { code:'EUR', symbol:'€' }
       ])
@@ -80,20 +79,6 @@ const UI = (() => {
     const peurEl = document.getElementById('t-profit-eur');
     if (pusdEl) { pusdEl.textContent = fmtMoney(pusd,'$'); pusdEl.style.color = pusd<0?'var(--red)':'var(--green)'; }
     if (peurEl) { peurEl.textContent = fmtMoney(peur,'€'); peurEl.style.color = peur<0?'var(--red)':'var(--green)'; }
-
-    // تحديث صندوق النقد الفعلي (القيد المزدوج — MIGRATION_V29)
-    // اصطلاح: سالب = الخزينة لديها نقد (فائض) — موجب = الخزينة تحتاج نقداً (عجز)
-    const _t = (k) => (typeof I18n !== 'undefined') ? I18n.t(k) : k;
-    const fmtCashbox = (val, sym) => {
-      const amt = fmtMoney(Math.abs(val), sym);
-      if (val < 0) return { text: `🟢 ${_t('cashbox_has')} ${amt}`, color: 'var(--green)' };
-      if (val > 0) return { text: `🔴 ${_t('cashbox_needs')} ${amt}`, color: 'var(--red)' };
-      return { text: amt, color: 'var(--text2)' };
-    };
-    const cbUsdEl = document.getElementById('t-cashbox-usd');
-    const cbEurEl = document.getElementById('t-cashbox-eur');
-    if (cbUsdEl) { const r = fmtCashbox(cashbox.usd||0,'$'); cbUsdEl.textContent = r.text; cbUsdEl.style.color = r.color; }
-    if (cbEurEl) { const r = fmtCashbox(cashbox.eur||0,'€'); cbEurEl.textContent = r.text; cbEurEl.style.color = r.color; }
 
     // تحديث العملات الإضافية
     const extraBar = document.getElementById('t-extra-currencies');

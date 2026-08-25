@@ -54,6 +54,21 @@ const Transactions = (() => {
     await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, currency, commission);
   }
 
+  // ── تسجيل حركة مرئية لحساب الخزينة (نفس فكرة حركة العمولة) ──
+  // بدون هذا، تتحرك أرقام الخزينة لكن لا يظهر أي سجل حركات عند فتح
+  // حسابها — فقط تحديث رصيد صامت.
+  async function _saveTreasuryEntry(txType, currency, amount, parentId, note) {
+    if (!amount || amount <= 0) return;
+    const now = new Date().toISOString();
+    const entryId = Date.now() + 3; // معرّف مختلف عن معرّفَي حركة العمولة (+1/+2) لتفادي التعارض
+    await Storage.saveTxn({
+      id: entryId, type: txType, acc: CONFIG.TREASURY_ACCOUNT_ID,
+      cur: currency, amt: amount, commission_amt: 0,
+      is_commission_entry: true, parent_id: parentId,
+      by: 'system', date: now, note
+    });
+  }
+
   // ── تنبيهات استباقية: رصيد سالب + عملية كبيرة (MIGRATION_V24) ──
   // resultingBal: مرّرها فقط عند عملية قد تُنتج رصيداً سالباً (سحب/تحويل)
   async function _checkTxnAlerts(kind, accountId, currency, amount, resultingBal) {
@@ -109,6 +124,7 @@ const Transactions = (() => {
     // قيد الخزينة المقابل (double-entry): الخزينة استلمت المبلغ الكامل نقداً
     // من الزبون — تصبح أكثر سالبية (اصطلاح: سالب = الخزينة لديها نقد)
     await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, -amount);
+    await _saveTreasuryEntry('dep', currency, amount, txnId, 'إيداع من حساب ' + accountId);
 
     if (commission > 0) await _saveCommissionEntry(accountId, currency, commission, txnId);
 
@@ -152,6 +168,7 @@ const Transactions = (() => {
     // قيد الخزينة المقابل: الخزينة دفعت المبلغ نقداً للزبون —
     // تصبح أكثر إيجابية (اصطلاح: موجب = الخزينة تحتاج نقداً)
     await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, amount);
+    await _saveTreasuryEntry('wit', currency, amount, txnId, 'سحب من حساب ' + accountId);
 
     await Storage.logAction('withdraw', { accountId, currency, amount });
     Storage.invalidate();
@@ -244,18 +261,18 @@ const Transactions = (() => {
       await Storage.updateBalance(t.to,             cur, -netReceived);
     }
 
-    // ── 2. عكس العمولة المرتبطة ──────────────────────
-    const commAmt = parseFloat(t.commission_amt || 0);
-    if (commAmt > 0) {
-      const commEntries = await Storage.getTxnByParent(txnId);
-      for (const ce of commEntries) {
-        if (ce.is_deleted) continue;
-        // إذا كانت الحركة لحساب الأرباح — اعكس رصيده
-        if (ce.acc === CONFIG.PROFIT_ACCOUNT_ID) {
-          await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, cur, -parseFloat(ce.amt || 0));
-        }
-        await Storage.deleteTxn(ce.id, by);
+    // ── 2. عكس أي حركات فرعية مرتبطة (عمولة و/أو حركة خزينة) ──
+    // بلا شرط على وجود عمولة — حركة الخزينة تُنشأ في كل إيداع/سحب بغض
+    // النظر عن العمولة، ويجب تنظيفها دائماً عند حذف العملية الأصلية.
+    const linkedEntries = await Storage.getTxnByParent(txnId);
+    for (const ce of linkedEntries) {
+      if (ce.is_deleted) continue;
+      // إذا كانت الحركة لحساب الأرباح — اعكس رصيده (حركة الخزينة عُكس
+      // رصيدها بالفعل أعلاه ضمن الخطوة 1، فلا تحتاج عكساً إضافياً هنا)
+      if (ce.acc === CONFIG.PROFIT_ACCOUNT_ID) {
+        await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, cur, -parseFloat(ce.amt || 0));
       }
+      await Storage.deleteTxn(ce.id, by);
     }
 
     // ── 3. حذف العملية الأصلية ───────────────────────
