@@ -645,7 +645,7 @@ function renderTrf(p=null) {
 function renderCreditors() {
   const list = _allAccounts.filter(a=>
     parseFloat(a.bal_usd||0)>0 || parseFloat(a.bal_eur||0)>0
-  ).filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID);
+  ).filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID && a.id!==CONFIG.TREASURY_ACCOUNT_ID);
   document.getElementById('crd-tbody').innerHTML = list.length
     ? list.map(a=>`<tr>
         <td style="font-weight:700;">${UI.escapeHtml(a.id)}</td>
@@ -660,8 +660,8 @@ function renderCreditors() {
 
 function renderDebtors() {
   const list = _allAccounts.filter(a=>
-    parseFloat(a.bal_usd||0)<0 || parseFloat(a.bal_eur||0)<0
-  );
+    (parseFloat(a.bal_usd||0)<0 || parseFloat(a.bal_eur||0)<0)
+  ).filter(a=>a.id!==CONFIG.PROFIT_ACCOUNT_ID && a.id!==CONFIG.TREASURY_ACCOUNT_ID);
   document.getElementById('dbt-tbody').innerHTML = list.length
     ? list.map(a=>`<tr class="row-debtor">
         <td style="font-weight:700;">${UI.escapeHtml(a.id)} ⚠️</td>
@@ -691,7 +691,7 @@ async function loadActivity() {
     });
   });
   const inactive = _allAccounts
-    .filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID)
+    .filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID)
     .map(a => ({ ...a, last: lastActivity[a.id] || null }))
     .filter(a => !a.last || a.last < cutoff)
     .sort((a,b) => (a.last||new Date(0)) - (b.last||new Date(0)));

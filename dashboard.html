@@ -117,7 +117,8 @@ async function loadAll() {
   renderSummaryShell(accounts);
   renderRecent(txns);
   _debtors = accounts.filter(a =>
-    parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0
+    a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID &&
+    (parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0)
   );
   const debtorCount = document.getElementById('debtor-count');
   debtorCount.textContent = _debtors.length
@@ -214,8 +215,8 @@ async function checkDebtAlerts(accounts) {
   const settings  = await Storage.getAlertSettings();
   const debtLimit = parseFloat(settings.debt_limit || -500);
   const overLimit = accounts.filter(a =>
-    parseFloat(a.bal_usd||0) < debtLimit ||
-    parseFloat(a.bal_eur||0) < debtLimit
+    a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID &&
+    (parseFloat(a.bal_usd||0) < debtLimit || parseFloat(a.bal_eur||0) < debtLimit)
   );
   const box = document.getElementById('debt-alerts');
   if (!overLimit.length) { box.style.display='none'; return; }
