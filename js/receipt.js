@@ -34,13 +34,16 @@ const Receipt = (() => {
     const findAcc = id => (accounts||[]).find(a => a.id === id);
 
     let partyRows = '';
+    let grossReceived = null;
     if (txn.type === 'trf') {
       const fromAcc = findAcc(txn.from);
       const toAcc   = findAcc(txn.to);
+      const hasRate = txn.rate && parseFloat(txn.rate) !== 1;
+      grossReceived = hasRate ? parseFloat(txn.amt) * parseFloat(txn.rate) : parseFloat(txn.amt);
       partyRows = `
         <tr><td class="lbl">من حساب</td><td class="val">${_esc(fromAcc?fromAcc.name:txn.from)} <span class="code">(${_esc(txn.from)})</span></td></tr>
         <tr><td class="lbl">إلى حساب</td><td class="val">${_esc(toAcc?toAcc.name:txn.to)} <span class="code">(${_esc(txn.to)})</span></td></tr>
-        ${txn.rate && parseFloat(txn.rate) !== 1 ? `<tr><td class="lbl">سعر الصرف</td><td class="val">${parseFloat(txn.rate)}</td></tr>` : ''}`;
+        ${hasRate ? `<tr><td class="lbl">سعر الصرف</td><td class="val">${parseFloat(txn.rate)}</td></tr>` : ''}`;
     } else {
       const acc = findAcc(txn.acc);
       partyRows = `<tr><td class="lbl">الحساب</td><td class="val">${_esc(acc?acc.name:txn.acc)} <span class="code">(${_esc(txn.acc)})</span></td></tr>`;
@@ -48,11 +51,21 @@ const Receipt = (() => {
 
     let commRows = '';
     const comm = parseFloat(txn.commission_amt || 0);
+    const fmt  = (v) => (typeof Currency !== 'undefined') ? Currency.formatMoney(v, sym) : sym + v.toFixed(2);
     if (comm > 0) {
-      const net = parseFloat(txn.amt) - comm;
+      // الصافي = الإجمالي بعد التحويل ناقص العمولة. في التحويل بسعر صرف
+      // (rate) مختلف عن 1، العمولة تُحسب على القيمة المحوَّلة (gross) وليس
+      // على المبلغ المُرسَل مباشرة — يجب مطابقة نفس الصيغة هنا تماماً كما
+      // في Transactions.transfer()، وإلا يظهر "الصافي" خاطئاً في الإيصال.
+      const gross = grossReceived !== null ? grossReceived : parseFloat(txn.amt);
+      const net = gross - comm;
       commRows = `
-        <tr><td class="lbl">العمولة</td><td class="val" style="color:#c9a84c;">${sym}${comm.toFixed(2)}</td></tr>
-        <tr><td class="lbl">الصافي</td><td class="val" style="font-weight:700;">${sym}${net.toFixed(2)}</td></tr>`;
+        <tr><td class="lbl">العمولة</td><td class="val" style="color:#c9a84c;">${fmt(comm)}</td></tr>
+        <tr><td class="lbl">الصافي</td><td class="val" style="font-weight:700;">${fmt(net)}</td></tr>`;
+    } else if (grossReceived !== null && Math.abs(grossReceived - parseFloat(txn.amt)) > 0.0001) {
+      // تحويل بسعر صرف مختلف عن 1 وبلا عمولة — نوضّح المبلغ الفعلي المستلم
+      // بعد التحويل حتى لا يُترك القارئ ليحسبه يدوياً من سعر الصرف وحده
+      commRows = `<tr><td class="lbl">المبلغ المستلم</td><td class="val" style="font-weight:700;">${fmt(grossReceived)}</td></tr>`;
     }
 
     const noteRow = txn.note ? `<tr><td class="lbl">ملاحظة</td><td class="val">${_esc(txn.note)}</td></tr>` : '';
@@ -105,7 +118,7 @@ const Receipt = (() => {
     <div class="sub">إيصال عملية مالية</div>
     <div class="receipt-no">رقم الإيصال: #${txn.id}</div>
     <div class="badge">${label}</div>
-    <div class="amount">${sym}${parseFloat(txn.amt).toFixed(2)}</div>
+    <div class="amount">${fmt(parseFloat(txn.amt))}</div>
     <table>
       <tr><td class="lbl">التاريخ</td><td class="val">${_fmtDate(txn.date)}</td></tr>
       ${partyRows}
