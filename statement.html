@@ -385,7 +385,8 @@ function renderRows() {
     const sym    = (tx.cur||'').toLowerCase()==='usd'?'$':'€';
     const isFrom = tx.type==='trf' && tx.from===_currentAccId;
     const isTo   = tx.type==='trf' && tx.to===_currentAccId;
-    const isFeeIn = tx.type==='dep' && tx.is_commission_entry;
+    const isFeeIn = tx.type==='dep' && tx.is_commission_entry && tx.acc===CONFIG.PROFIT_ACCOUNT_ID;
+    const isDerived = !!tx.is_commission_entry;
     let counterpart = '—';
     if (tx.type==='trf') {
       const otherId = isFrom ? tx.to : tx.from;
@@ -393,7 +394,7 @@ function renderRows() {
       counterpart   = UI.escapeHtml(other ? other.name : otherId);
       counterpart   = isFrom ? ('← ' + counterpart) : ('→ ' + counterpart);
     }
-    if (isFeeIn) {
+    if (isDerived) {
       const m = (tx.note||'').match(/من حساب (\S+)/);
       const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
       counterpart = srcAcc ? UI.escapeHtml(srcAcc.name) : (m ? UI.escapeHtml(m[1]) : t('profit_account_lbl'));
@@ -419,7 +420,7 @@ function renderRows() {
       col2 = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission, sym)}</span>` : '—';
       col3 = `<span class="${cls}">${Currency.formatMoney(net, sym)}</span>`;
     }
-    const editBtns = (canEdit && !isFeeIn) ? `
+    const editBtns = (canEdit && !isDerived) ? `
       <button class="btn btn-ghost btn-sm" onclick="openEdit('${tx.id}','${UI.escapeHtml((tx.note||'').replace(/'/g,''))}')">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="openDel('${tx.id}')">🗑️</button>
     ` : '—';
@@ -600,14 +601,15 @@ async function downloadAllStatements(period) {
       accTxns.forEach(t2 => {
         const isFrom = t2.type==='trf' && t2.from===accId;
         const isTo   = t2.type==='trf' && t2.to===accId;
-        const isFeeIn = t2.type==='dep' && t2.is_commission_entry;
+        const isFeeIn = t2.type==='dep' && t2.is_commission_entry && t2.acc===CONFIG.PROFIT_ACCOUNT_ID;
+        const isDerived = !!t2.is_commission_entry;
         let counterpart = '';
         if (t2.type==='trf') {
           const otherId = isFrom ? t2.to : t2.from;
           const other   = _allAccounts.find(a=>a.id===otherId);
           counterpart   = (other ? other.name : otherId) || '';
         }
-        if (isFeeIn) {
+        if (isDerived) {
           const m = (t2.note||'').match(/من حساب (\S+)/);
           const srcAcc = m ? _allAccounts.find(a=>a.id===m[1]) : null;
           counterpart = srcAcc ? srcAcc.name : (m ? m[1] : '');

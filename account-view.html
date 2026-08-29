@@ -709,7 +709,8 @@ function renderPage() {
   const makeRow = (t, forPrint=false) => {
     const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
     const sym    = _cm[(t.cur||'usd').toLowerCase()] || (t.cur||'').toUpperCase();
-    const isFeeIn  = t.type==='dep' && t.is_commission_entry; // طرف الإيداع في حساب الأرباح فقط
+    const isFeeIn  = t.type==='dep' && t.is_commission_entry && t.acc===CONFIG.PROFIT_ACCOUNT_ID; // طرف الإيداع في حساب الأرباح فقط (تنسيق الشارة الذهبية)
+    const isDerived = !!t.is_commission_entry; // أي حركة مشتقة تلقائياً (عمولة أو مرآة خزينة) — لا تُعدَّل ولا تُطبع ولا تُحذف مباشرة أبداً
     const isFrom = t.type==='trf' && t.from===_accId;
     const isTo   = t.type==='trf' && t.to===_accId;
 
@@ -720,8 +721,8 @@ function renderPage() {
       other = UI.escapeHtml(oa?oa.name:oid);
       other = isFrom?('← '+other):('→ '+other);
     }
-    if (isFeeIn) {
-      // نستخرج الحساب المصدر من نص الملاحظة "عمولة من حساب <id>"
+    if (isDerived) {
+      // نستخرج الحساب المصدر من نص الملاحظة "... من حساب <id>" (عمولة أو مرآة خزينة)
       const m = (t.note||'').match(/من حساب (\S+)/);
       if (m) {
         const srcAcc = _allAccounts.find(a=>a.id===m[1]);
@@ -760,10 +761,10 @@ function renderPage() {
       badgeLabel = typeLabel()[t.type]||t.type;
     }
 
-    const printBtn = (!forPrint && !isFeeIn && (t.type==='dep'||t.type==='wit'||t.type==='trf'))
+    const printBtn = (!forPrint && !isDerived && (t.type==='dep'||t.type==='wit'||t.type==='trf'))
       ? `<button class="btn btn-ghost btn-sm" title="طباعة إيصال" onclick='printTxnReceipt(${JSON.stringify(t.id)})'>🖨️</button>`
       : '';
-    const editBtns = (!forPrint && !isFeeIn)
+    const editBtns = (!forPrint && !isDerived)
       ? [
           printBtn,
           canEdit  ? `<button class="btn btn-ghost btn-sm" onclick="openEdit('${t.id}','${UI.escapeHtml((t.note||'').replace(/'/g,"&#39;"))}','${t.date}')">✏️</button>` : '',
