@@ -126,7 +126,10 @@ const Storage = (() => {
   async function getTreasuryTotals() {
     const accounts = await getAccounts();
     const totals = {};
-    accounts.forEach(a => {
+    // نستبعد حساب الخزينة الفعلي (القيد المزدوج — MIGRATION_V29) من هذا
+    // المجموع: هو رصيد نقد فعلي (مركز نقدية)، وليس التزاماً تجاه زبون
+    // كبقية الحسابات — خلطه هنا كان سيُفسد معنى هذه البطاقة تماماً.
+    accounts.filter(a => a.id !== CONFIG.TREASURY_ACCOUNT_ID).forEach(a => {
       Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
         const cur = k.replace('bal_', '');
         if (!isNaN(parseFloat(a[k])))
@@ -136,11 +139,11 @@ const Storage = (() => {
     return totals;
   }
 
-  // الخزينة بدون الأرباح (للعرض المنفصل)
+  // الخزينة بدون الأرباح ولا حساب الخزينة الفعلي (للعرض المنفصل)
   async function getTreasuryWithoutProfit() {
     const accounts = await getAccounts();
     const totals = {};
-    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).forEach(a => {
+    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID).forEach(a => {
       Object.keys(a).filter(k => k.startsWith('bal_')).forEach(k => {
         const cur = k.replace('bal_', '');
         if (!isNaN(parseFloat(a[k])))
@@ -569,15 +572,17 @@ const Storage = (() => {
     const customers = accounts.filter(a => a.type === 'customer');
     const companies = accounts.filter(a => a.type === 'company');
 
-    // حساب الخزينة بدون الأرباح
+    // حساب الخزينة بدون الأرباح ولا حساب الخزينة الفعلي (القيد المزدوج)
+    // — هذا المجموع يمثّل أرصدة الزبائن/الشركات فقط، وليس النقد الفعلي
     let tUsd = 0, tEur = 0;
-    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).forEach(a => {
+    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID).forEach(a => {
       tUsd += parseFloat(a.bal_usd || 0);
       tEur += parseFloat(a.bal_eur || 0);
     });
 
-    const debtors   = accounts.filter(a => parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0).length;
-    const creditors = accounts.filter(a => parseFloat(a.bal_usd||0) > 0 || parseFloat(a.bal_eur||0) > 0).length;
+    const nonStructural = a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID;
+    const debtors   = accounts.filter(a => nonStructural(a) && (parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0)).length;
+    const creditors = accounts.filter(a => nonStructural(a) && (parseFloat(a.bal_usd||0) > 0 || parseFloat(a.bal_eur||0) > 0)).length;
 
     await _sb.from('daily_snapshots').insert({
       snapshot_date:   today,
