@@ -325,16 +325,18 @@ function renderPage() {
   tbody.innerHTML = pagItems.map((a, idx) => {
     const debtor   = a.usd < 0 || a.eur < 0;
     const isProfit = a.id === CONFIG.PROFIT_ACCOUNT_ID;
-    const canDel   = isAdminUser && !isProfit;
+    const isTreasury = a.id === CONFIG.TREASURY_ACCOUNT_ID;
+    const canDel   = isAdminUser && !isProfit && !isTreasury;
     const typeLabel = a.type === 'company' ? I18n.t('lbl_company')
                     : a.type === 'profit'  ? I18n.t('lbl_profit')
+                    : a.type === 'treasury' ? I18n.t('lbl_treasury')
                     : I18n.t('lbl_customer');
     const safeId   = a.id.replace(/'/g, '');
     const safeName = a.name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
     return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
               onclick="navTo('account-view.html?acc=${safeId}')">
       <td style="color:var(--text3);">${start + idx + 1}</td>
-      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}</td>
+      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}${isTreasury?' 🏛️':''}</td>
       <td>${UI.escapeHtml(a.name)}</td>
       <td><span class="badge-type">${typeLabel}</span></td>
       <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.usd)}</td>
