@@ -1,6 +1,10 @@
 /**
- * transactions.js — SM-Group v6.3
- * العمليات المالية — بدون atomic RPC، مع حذف العمولة المرتبطة
+ * transactions.js — SM-Group v7 (MIGRATION_V32 — عودة للـ atomic RPC)
+ * كل عملية مالية = استدعاء RPC ذرّي واحد (راجع MIGRATION_V32_ATOMIC_RESTORE.sql):
+ * الحركة الرئيسية + قيد الخزينة المقابل + قيد العمولة كلها داخل نفس
+ * الـ transaction في القاعدة. لا سلسلة استدعاءات منفصلة من الواجهة،
+ * ولا قراءة-ثم-تعديل — فحص الرصيد وتنفيذ التحديث يحدثان معاً داخل
+ * نفس الدالة مع قفل صفوف (FOR UPDATE)، فلا race condition ممكن.
  */
 
 const Transactions = (() => {
@@ -13,7 +17,7 @@ const Transactions = (() => {
     return Storage.getTreasuryTotals();
   }
 
-  // ── حساب العمولة ─────────────────────────────────────
+  // ── حساب العمولة (منطق عمل، يبقى في الواجهة كما كان سابقاً) ──
   async function _calcCommission(accountId, amount) {
     // حساب الأرباح لا يُفرض عليه عمولة أبداً — بغض النظر عن قيمة
     // حقل type في قاعدة البيانات (حماية إضافية بجانب التحقق من النوع)
@@ -25,48 +29,6 @@ const Transactions = (() => {
     if (!ratePct) return 0;
     const raw = parseFloat((amount * ratePct / 100).toFixed(2));
     return raw >= 0.01 ? raw : 0;
-  }
-
-  // ── تسجيل حركتَي العمولة ─────────────────────────────
-  async function _saveCommissionEntry(accountId, currency, commission, parentId) {
-    if (commission <= 0) return;
-    const now   = new Date().toISOString();
-    const feeId = Date.now() + 1;
-    const by    = Auth.getUser()?.user || 'system';
-
-    // خصم العمولة من المتلقي
-    await Storage.saveTxn({
-      id: feeId, type: 'fee', acc: accountId,
-      cur: currency, amt: commission, commission_amt: 0,
-      is_commission_entry: true, parent_id: parentId,
-      by, date: now, note: 'عمولة تلقائية'
-    });
-
-    // إضافة العمولة لحساب الأرباح
-    await Storage.saveTxn({
-      id: feeId + 1, type: 'dep', acc: CONFIG.PROFIT_ACCOUNT_ID,
-      cur: currency, amt: commission, commission_amt: 0,
-      is_commission_entry: true, parent_id: parentId,
-      by: 'system', date: now, note: 'عمولة من حساب ' + accountId
-    });
-
-    // تحديث رصيد الأرباح
-    await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, currency, commission);
-  }
-
-  // ── تسجيل حركة مرئية لحساب الخزينة (نفس فكرة حركة العمولة) ──
-  // بدون هذا، تتحرك أرقام الخزينة لكن لا يظهر أي سجل حركات عند فتح
-  // حسابها — فقط تحديث رصيد صامت.
-  async function _saveTreasuryEntry(txType, currency, amount, parentId, note) {
-    if (!amount || amount <= 0) return;
-    const now = new Date().toISOString();
-    const entryId = Date.now() + 3; // معرّف مختلف عن معرّفَي حركة العمولة (+1/+2) لتفادي التعارض
-    await Storage.saveTxn({
-      id: entryId, type: txType, acc: CONFIG.TREASURY_ACCOUNT_ID,
-      cur: currency, amt: amount, commission_amt: 0,
-      is_commission_entry: true, parent_id: parentId,
-      by: 'system', date: now, note
-    });
   }
 
   // ── تنبيهات استباقية: رصيد سالب + عملية كبيرة (MIGRATION_V24) ──
@@ -96,6 +58,19 @@ const Transactions = (() => {
     } catch (e) { console.error('checkTxnAlerts:', e); }
   }
 
+  // رسائل خطأ من القاعدة (RPC) إلى نص عربي مفهوم
+  function _dbErrorMessage(code, fallback) {
+    const map = {
+      invalid_amount:        'أدخل مبلغاً صحيحاً',
+      cannot_target_treasury:'حساب الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن التعامل معه مباشرة',
+      insufficient_balance:  'الرصيد غير كافٍ',
+      no_profit_account:     'لا يوجد حساب أرباح — راجع الإعدادات',
+      same_account:          'لا يمكن التحويل لنفس الحساب',
+      db_error:              'خطأ في الاتصال بقاعدة البيانات',
+    };
+    return map[code] || fallback || 'خطأ في تنفيذ العملية';
+  }
+
   // ══ إيداع ════════════════════════════════════════════
   async function deposit(accountId, currency, amount) {
     if (!accountId)             return { ok: false, error: 'اختر الحساب' };
@@ -104,34 +79,17 @@ const Transactions = (() => {
       return { ok: false, error: 'رصيد الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن الإيداع فيه مباشرة' };
 
     const commission = await _calcCommission(accountId, amount);
-    const netAmount  = parseFloat((amount - commission).toFixed(2));
-    const txnId      = Date.now();
-    const by         = Auth.getUser()?.user || '?';
-    const now        = new Date().toISOString();
+    const txnId       = Date.now();
+    const by          = Auth.getUser()?.user || '?';
+    const now         = new Date().toISOString();
 
-    const saved = await Storage.saveTxn({
-      id: txnId, type: 'dep', acc: accountId,
-      cur: currency, amt: amount,
-      commission_amt: commission,
-      is_commission_entry: false, parent_id: null,
-      by, date: now, note: ''
-    });
-    if (!saved) return { ok: false, error: 'خطأ في الحفظ' };
+    const result = await Storage.atomicDeposit(txnId, accountId, currency, amount, commission, by, now, '');
+    if (!result.ok) return { ok: false, error: _dbErrorMessage(result.error) };
 
-    const balOk = await Storage.updateBalance(accountId, currency, netAmount);
-    if (!balOk) return { ok: false, error: 'خطأ في تحديث الرصيد' };
-
-    // قيد الخزينة المقابل (double-entry): الخزينة استلمت المبلغ الكامل نقداً
-    // من الزبون — تصبح أكثر سالبية (اصطلاح: سالب = الخزينة لديها نقد)
-    await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, -amount);
-    await _saveTreasuryEntry('dep', currency, amount, txnId, 'إيداع من حساب ' + accountId);
-
-    if (commission > 0) await _saveCommissionEntry(accountId, currency, commission, txnId);
-
-    await Storage.logAction('deposit', { accountId, currency, amount, commission, netAmount });
+    await Storage.logAction('deposit', { accountId, currency, amount, commission, netAmount: result.net_amount });
     Storage.invalidate();
     _checkTxnAlerts('إيداع', accountId, currency, amount);
-    return { ok: true, id: txnId, commission, netAmount };
+    return { ok: true, id: txnId, commission, netAmount: result.net_amount };
   }
 
   // ══ سحب ══════════════════════════════════════════════
@@ -141,38 +99,25 @@ const Transactions = (() => {
     if (accountId === CONFIG.TREASURY_ACCOUNT_ID)
       return { ok: false, error: 'رصيد الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن السحب منه مباشرة' };
 
-    const currentBal = await Storage.getBalance(accountId, currency);
-    if (!forceOverdraft && currentBal < amount) {
-      return {
-        ok: false, needsConfirm: true, currentBal,
-        error: 'رصيد الحساب (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(currentBal) : currentBal.toFixed(2)) + ') غير كافٍ'
-      };
-    }
-
     const txnId = Date.now();
     const by    = Auth.getUser()?.user || '?';
     const now   = new Date().toISOString();
 
-    const saved = await Storage.saveTxn({
-      id: txnId, type: 'wit', acc: accountId,
-      cur: currency, amt: amount,
-      commission_amt: 0,
-      is_commission_entry: false, parent_id: null,
-      by, date: now, note: ''
-    });
-    if (!saved) return { ok: false, error: 'خطأ في الحفظ' };
-
-    const balOk = await Storage.updateBalance(accountId, currency, -amount);
-    if (!balOk) return { ok: false, error: 'خطأ في تحديث الرصيد' };
-
-    // قيد الخزينة المقابل: الخزينة دفعت المبلغ نقداً للزبون —
-    // تصبح أكثر إيجابية (اصطلاح: موجب = الخزينة تحتاج نقداً)
-    await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, currency, amount);
-    await _saveTreasuryEntry('wit', currency, amount, txnId, 'سحب من حساب ' + accountId);
+    const result = await Storage.atomicWithdraw(txnId, accountId, currency, amount, by, now, forceOverdraft, '');
+    if (!result.ok) {
+      if (result.error === 'insufficient_balance') {
+        return {
+          ok: false, needsConfirm: true, currentBal: result.balance,
+          error: 'رصيد الحساب (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(result.balance) : result.balance.toFixed(2)) + ') غير كافٍ'
+        };
+      }
+      return { ok: false, error: _dbErrorMessage(result.error) };
+    }
 
     await Storage.logAction('withdraw', { accountId, currency, amount });
     Storage.invalidate();
-    _checkTxnAlerts('سحب', accountId, currency, amount, currentBal - amount);
+    const newBal = await Storage.getBalance(accountId, currency);
+    _checkTxnAlerts('سحب', accountId, currency, amount, newBal);
     return { ok: true, id: txnId };
   }
 
@@ -185,48 +130,32 @@ const Transactions = (() => {
     if (fromId === CONFIG.TREASURY_ACCOUNT_ID || toId === CONFIG.TREASURY_ACCOUNT_ID)
       return { ok: false, error: 'حساب الخزينة يتحرك تلقائياً مع كل عملية — لا يمكن التحويل منه أو إليه مباشرة' };
 
-    const r           = parseFloat(rate) || 1;
-    const gross       = parseFloat((amount * r).toFixed(2));
-    const commission  = await _calcCommission(toId, gross);
-    const netReceived = parseFloat((gross - commission).toFixed(2));
-    const txnId       = Date.now();
-    const by          = Auth.getUser()?.user || '?';
-    const now         = new Date().toISOString();
+    const r          = parseFloat(rate) || 1;
+    const gross      = parseFloat((amount * r).toFixed(2));
+    const commission = await _calcCommission(toId, gross);
+    const txnId      = Date.now();
+    const by         = Auth.getUser()?.user || '?';
+    const now        = new Date().toISOString();
 
-    const senderBal = await Storage.getBalance(fromId, currency);
-    if (!forceOverdraft && senderBal < amount) {
-      return {
-        ok: false, needsConfirm: true, currentBal: senderBal,
-        error: 'رصيد المرسل (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(senderBal) : senderBal.toFixed(2)) + ') غير كافٍ'
-      };
+    const result = await Storage.atomicTransfer(txnId, fromId, toId, currency, amount, r, commission, by, now, forceOverdraft);
+    if (!result.ok) {
+      if (result.error === 'insufficient_balance') {
+        return {
+          ok: false, needsConfirm: true, currentBal: result.balance,
+          error: 'رصيد المرسل (' + (typeof Currency !== 'undefined' ? Currency.formatNumber(result.balance) : result.balance.toFixed(2)) + ') غير كافٍ'
+        };
+      }
+      return { ok: false, error: _dbErrorMessage(result.error) };
     }
 
-    // تسجيل العملية — from وto مطلوبان لعرض الطرف الآخر في كشف الحساب
-    const saved = await Storage.saveTxn({
-      id: txnId, type: 'trf',
-      acc: fromId, from: fromId, to: toId,
-      cur: currency, amt: amount,
-      rate: r, commission_amt: commission,
-      is_commission_entry: false, parent_id: null,
-      by, date: now, note: ''
-    });
-    if (!saved) return { ok: false, error: 'خطأ في الحفظ' };
-
-    const debitOk = await Storage.updateBalance(fromId, currency, -amount);
-    if (!debitOk) return { ok: false, error: 'خطأ في خصم رصيد المرسل' };
-
-    const creditOk = await Storage.updateBalance(toId, currency, netReceived);
-    if (!creditOk) return { ok: false, error: 'خطأ في إضافة رصيد المستقبل' };
-
-    if (commission > 0) await _saveCommissionEntry(toId, currency, commission, txnId);
-
-    await Storage.logAction('transfer', { fromId, toId, currency, amount, rate: r, commission, netReceived });
+    await Storage.logAction('transfer', { fromId, toId, currency, amount, rate: r, commission, netReceived: result.net_received });
     Storage.invalidate();
-    _checkTxnAlerts('تحويل', fromId, currency, amount, senderBal - amount);
-    return { ok: true, id: txnId, commission, netReceived };
+    const senderNewBal = await Storage.getBalance(fromId, currency);
+    _checkTxnAlerts('تحويل', fromId, currency, amount, senderNewBal);
+    return { ok: true, id: txnId, commission, netReceived: result.net_received };
   }
 
-  // ══ حذف عملية — soft delete + عكس الرصيد + حذف العمولة المرتبطة ══
+  // ══ حذف عملية — عكس ذرّي عبر RPC حسب النوع ═══════════════
   async function deleteTxn(txnId) {
     if (!Auth.can('canDelete')) return { ok: false, error: 'ليس لديك صلاحية الحذف' };
 
@@ -236,48 +165,15 @@ const Transactions = (() => {
       return { ok: false, error: 'لا يمكن حذف حركة عمولة مباشرة — احذف العملية الأصلية' };
     if (t.is_deleted)     return { ok: false, error: 'العملية محذوفة مسبقاً' };
 
-    const by  = Auth.getUser()?.user || '?';
-    const cur = t.cur;
-    const amt = parseFloat(t.amt);
+    const by = Auth.getUser()?.user || '?';
+    let result;
 
-    // ── 1. عكس الرصيد الرئيسي ────────────────────────
-    if (t.type === 'dep') {
-      const net = parseFloat((amt - parseFloat(t.commission_amt || 0)).toFixed(2));
-      await Storage.updateBalance(t.acc, cur, -net);
-      // عكس قيد الخزينة المقابل (كانت قد نقصت بالمبلغ الكامل عند الإيداع)
-      await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, cur, amt);
+    if (t.type === 'dep')      result = await Storage.atomicReverseDeposit(txnId, by);
+    else if (t.type === 'wit') result = await Storage.atomicReverseWithdraw(txnId, by);
+    else if (t.type === 'trf') result = await Storage.atomicReverseTransfer(txnId, by);
+    else return { ok: false, error: 'نوع عملية غير مدعوم للحذف' };
 
-    } else if (t.type === 'wit') {
-      await Storage.updateBalance(t.acc, cur, amt);
-      // عكس قيد الخزينة المقابل (كانت قد زادت بالمبلغ عند السحب)
-      await Storage.updateBalance(CONFIG.TREASURY_ACCOUNT_ID, cur, -amt);
-
-    } else if (t.type === 'trf') {
-      const r           = parseFloat(t.rate || 1);
-      const gross       = parseFloat((amt * r).toFixed(2));
-      const commission  = parseFloat(t.commission_amt || 0);
-      const netReceived = parseFloat((gross - commission).toFixed(2));
-      await Storage.updateBalance(t.acc || t.from, cur,  amt);
-      await Storage.updateBalance(t.to,             cur, -netReceived);
-    }
-
-    // ── 2. عكس أي حركات فرعية مرتبطة (عمولة و/أو حركة خزينة) ──
-    // بلا شرط على وجود عمولة — حركة الخزينة تُنشأ في كل إيداع/سحب بغض
-    // النظر عن العمولة، ويجب تنظيفها دائماً عند حذف العملية الأصلية.
-    const linkedEntries = await Storage.getTxnByParent(txnId);
-    for (const ce of linkedEntries) {
-      if (ce.is_deleted) continue;
-      // إذا كانت الحركة لحساب الأرباح — اعكس رصيده (حركة الخزينة عُكس
-      // رصيدها بالفعل أعلاه ضمن الخطوة 1، فلا تحتاج عكساً إضافياً هنا)
-      if (ce.acc === CONFIG.PROFIT_ACCOUNT_ID) {
-        await Storage.updateBalance(CONFIG.PROFIT_ACCOUNT_ID, cur, -parseFloat(ce.amt || 0));
-      }
-      await Storage.deleteTxn(ce.id, by);
-    }
-
-    // ── 3. حذف العملية الأصلية ───────────────────────
-    const ok = await Storage.deleteTxn(txnId, by);
-    if (!ok) return { ok: false, error: 'خطأ في الإلغاء' };
+    if (!result.ok) return { ok: false, error: _dbErrorMessage(result.error, 'خطأ في الإلغاء') };
 
     await Storage.logAction('delete', { txnId, type: t.type });
     Storage.invalidate();

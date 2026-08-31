@@ -121,6 +121,58 @@ const Storage = (() => {
     return true;
   }
 
+  // ══ عمليات مالية ذرّية (MIGRATION_V32) ═══════════════════
+  // كل عملية = استدعاء RPC واحد ينفّذ (الحركة الرئيسية + قيد الخزينة
+  // المقابل + قيد العمولة) داخل نفس الـ transaction في القاعدة —
+  // إما ينجح كل شيء أو يفشل كل شيء، بلا حالات وسطى.
+  async function atomicDeposit(txnId, accId, currency, amount, commission, by, dateIso, note) {
+    const { data, error } = await _sb.rpc('atomic_deposit', {
+      p_txn_id: txnId, p_acc_id: accId, p_currency: currency,
+      p_amount: amount, p_commission: commission,
+      p_by: by, p_date: dateIso, p_note: note || null
+    });
+    if (error) { console.error('atomic_deposit:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
+  async function atomicWithdraw(txnId, accId, currency, amount, by, dateIso, force, note) {
+    const { data, error } = await _sb.rpc('atomic_withdraw', {
+      p_txn_id: txnId, p_acc_id: accId, p_currency: currency,
+      p_amount: amount, p_by: by, p_date: dateIso,
+      p_force: !!force, p_note: note || null
+    });
+    if (error) { console.error('atomic_withdraw:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
+  async function atomicTransfer(txnId, fromId, toId, currency, amount, rate, commission, by, dateIso, force) {
+    const { data, error } = await _sb.rpc('atomic_transfer', {
+      p_txn_id: txnId, p_from_id: fromId, p_to_id: toId, p_currency: currency,
+      p_amount: amount, p_rate: rate, p_commission: commission,
+      p_by: by, p_date: dateIso, p_force: !!force
+    });
+    if (error) { console.error('atomic_transfer:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
+  async function atomicReverseDeposit(txnId, deletedBy) {
+    const { data, error } = await _sb.rpc('atomic_reverse_deposit', { p_txn_id: txnId, p_deleted_by: deletedBy });
+    if (error) { console.error('atomic_reverse_deposit:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
+  async function atomicReverseWithdraw(txnId, deletedBy) {
+    const { data, error } = await _sb.rpc('atomic_reverse_withdraw', { p_txn_id: txnId, p_deleted_by: deletedBy });
+    if (error) { console.error('atomic_reverse_withdraw:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
+  async function atomicReverseTransfer(txnId, deletedBy) {
+    const { data, error } = await _sb.rpc('atomic_reverse_transfer', { p_txn_id: txnId, p_deleted_by: deletedBy });
+    if (error) { console.error('atomic_reverse_transfer:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
   // الخزينة = مجموع كل الأرصدة لكل العملات (شاملة الأرباح)
   // حساب الأرباح حساب عادي — رصيده يُحسب ضمن الخزينة
   async function getTreasuryTotals() {
@@ -761,6 +813,10 @@ const Storage = (() => {
   getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
   getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, getCashboxBalance, invalidate,
   deleteAccount, getRecyclableId, ensureProfitAccount, ensureTreasuryAccount, getProfitAccountId,
+
+  // عمليات مالية ذرّية (V32)
+  atomicDeposit, atomicWithdraw, atomicTransfer,
+  atomicReverseDeposit, atomicReverseWithdraw, atomicReverseTransfer,
 
   // transactions
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
