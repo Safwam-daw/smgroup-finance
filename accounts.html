@@ -278,7 +278,13 @@ function applyFilter() {
   const bal    = document.getElementById('filter-bal').value;
   const sortBy = document.getElementById('sort-by').value;
   _filtered = _allAccounts.filter(a => {
-    if (qCode && !a.id.toLowerCase().startsWith(qCode)) return false;
+    if (qCode) {
+      const suffix = Accounts.stripTypePrefix(a.id).toLowerCase();
+      const full   = a.id.toLowerCase();
+      // يطابق الرقم وحده (0001) أو الكود كاملاً (CU-0001) — النوع نفسه
+      // له فلتر مستقل بالأسفل (filter-type)، فلا داعي لكتابته هنا أصلاً
+      if (!suffix.startsWith(qCode) && !full.startsWith(qCode)) return false;
+    }
     if (qName && !a.name.toLowerCase().includes(qName)) return false;
     if (type !== 'all' && a.type !== type) return false;
     if (bal === 'debtor' && a.usd >= 0 && a.eur >= 0) return false;
