@@ -184,6 +184,7 @@ const I18n = (() => {
     lbl_company:        { ar: 'شركة', en: 'Company', tr: 'Şirket' },
     lbl_profit_account: { ar: 'حساب أرباح', en: 'Profit Account', tr: 'Kâr Hesabı' },
     lbl_profit:         { ar: '🏦 أرباح', en: '🏦 Profit', tr: '🏦 Kâr' },
+    lbl_treasury:       { ar: '🏛️ خزينة', en: '🏛️ Treasury', tr: '🏛️ Kasa' },
     account_created:    { ar: 'تم إنشاء الحساب', en: 'Account created', tr: 'Hesap oluşturuldu' },
     delete_account:     { ar: 'حذف الحساب', en: 'Delete Account', tr: 'Hesabı Sil' },
     delete_balance_note:{ ar: 'سيُحوَّل الرصيد تلقائياً لحساب الأرباح.', en: 'Balance will be transferred to profit account.', tr: 'Bakiye otomatik olarak kâr hesabına aktarılacak.' },
