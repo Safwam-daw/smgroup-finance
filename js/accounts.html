@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SM-Group — إدارة الحسابات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px; }
+.modal-back.open { display:flex; }
+.modal-box { background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:460px;padding:24px;
+  max-height:90vh; overflow-y:auto; }
+.modal-box h3 { margin-bottom:18px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="main">
+    <div id="treasury-placeholder"></div>
+    <div class="page-header">
+      <div>
+        <h2 data-i18n="manage_accounts">إدارة الحسابات</h2>
+        <p data-i18n="manage_accounts_sub">إنشاء ومتابعة حسابات الزبائن والشركات</p>
+      </div>
+      <button class="btn btn-primary no-print" id="open-create-btn" onclick="openCreateModal()" data-i18n="create_account">➕ فتح حساب جديد</button>
+      <button class="btn btn-primary no-print" id="publish-all-btn" style="display:none;"
+              onclick="publishAll()" data-i18n="publish_all">📤 نشر كشوف الزبائن</button>
+      <button class="btn btn-primary no-print" onclick="UI.exportExcel('acc-table','Accounts_List')">📊 Excel</button>
+      <button class="btn btn-ghost no-print" onclick="navTo('statement.html')" data-i18n="nav_statement">📋 كشف حساب</button>
+      <button class="btn btn-ghost no-print" id="client-portal-btn" data-i18n="nav_client_portal"
+              onclick="window.open('client.html','_blank')">👤 بوابة الزبون</button>
+    </div>
+
+    <!-- فتح حساب جديد -->
+    <div id="create-modal" class="modal-back">
+      <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin-bottom:0;" data-i18n="create_account">➕ فتح حساب جديد</h3>
+          <button onclick="closeCreateModal()" style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+        </div>
+        <div class="form-group">
+          <label data-i18n="account_type">نوع الحساب</label>
+          <select id="acc-type" onchange="refreshCode()">
+            <option value="customer" data-i18n="lbl_customer">زبون</option>
+            <option value="company" data-i18n="lbl_company">شركة</option>
+            <option value="profit" id="opt-profit-type" style="display:none;" data-i18n="lbl_profit_account">حساب أرباح</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="account_code_auto">كود الحساب (تلقائي — قابل للتعديل)</label>
+          <input type="text" id="acc-code">
+          <div style="font-size:0.72rem;color:var(--text3);margin-top:3px;" data-i18n="account_code_hint">
+            يقترح النظام الكود التالي تلقائياً (برمز نوع الحساب: CU للزبون، CO للشركة)، ويمكنك تعديل الرقم لكود مميز
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="account_name">اسم الحساب</label>
+          <input type="text" id="acc-name" data-i18n-placeholder="account_name_ph"
+                 placeholder="اسم الزبون أو الشركة"
+                 onkeydown="if(event.key==='Enter') doCreate()">
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:6px;"
+                onclick="doCreate()" data-i18n="save_account">💾 حفظ الحساب</button>
+      </div>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="card" style="margin-bottom:16px;padding:14px 16px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="search_by_code">بحث بالكود</label>
+          <input type="text" id="filter-code" inputmode="numeric" pattern="[0-9]*" data-i18n-placeholder="search_by_code_ph"
+                 placeholder="بحث بالكود…" oninput="applyFilter()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+          <label data-i18n="search_by_name">بحث بالاسم</label>
+          <input type="text" id="filter-name" data-i18n-placeholder="search_by_name_ph"
+                 placeholder="بحث بالاسم…" oninput="applyFilter()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0;">
+          <label data-i18n="filter_type">النوع</label>
+          <select id="filter-type" onchange="applyFilter()">
+            <option value="all" data-i18n="filter_all">الكل</option>
+            <option value="customer" data-i18n="filter_customers">زبائن</option>
+            <option value="company" data-i18n="filter_companies">شركات</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;">
+          <label data-i18n="filter_balance">الرصيد</label>
+          <select id="filter-bal" onchange="applyFilter()">
+            <option value="all" data-i18n="filter_all">الكل</option>
+            <option value="debtor" data-i18n="filter_debtors">مدينون ⚠️</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+          <label data-i18n="sort_by">الترتيب حسب</label>
+          <select id="sort-by" onchange="applyFilter()">
+            <option value="seq" data-i18n="sort_seq">الرقم التسلسلي</option>
+            <option value="code" data-i18n="sort_code">كود الحساب</option>
+            <option value="created" data-i18n="sort_created">تاريخ الإنشاء</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول الحسابات -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;" data-i18n="accounts_list">قائمة الحسابات</h3>
+        <span id="acc-count" style="font-size:0.75rem;color:var(--text3);"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table id="acc-table">
+          <thead><tr>
+            <th data-i18n="col_seq" style="width:44px;">#</th>
+            <th data-i18n="col_code">الكود</th>
+            <th data-i18n="col_name">الاسم</th>
+            <th data-i18n="col_type">النوع</th>
+            <th data-i18n="col_bal_usd">رصيد $</th>
+            <th data-i18n="col_bal_eur">رصيد €</th>
+            <th data-i18n="col_actions">إجراءات</th>
+          </tr></thead>
+          <tbody id="acc-tbody">
+            <tr><td colspan="7" class="empty-state" data-i18n="loading">جاري التحميل…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination no-print" id="acc-pages"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/app-constants.js"></script><script src="js/db-config.js"></script><script src="js/storage.js"></script><script src="js/auth.js"></script>
+<script src="js/accounts.js"></script><script src="js/transactions.js"></script>
+<script src="js/ui.js"></script><script src="js/currency.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/i18n.js"></script>
+<script>
+const PAGE_SIZE  = 15;
+let _allAccounts = [];
+let _filtered    = [];
+let _page        = 1;
+let _rawAccounts = [];
+
+(async () => {
+  if (!await initApp('accounts')) return;
+  if (!Auth.can('clientPortal')) document.getElementById('client-portal-btn')?.remove();
+  document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await UI.updateTreasury();
+  if (!Auth.isAdmin()) document.getElementById('open-create-btn').style.display='none';
+  if (Auth.isAdmin()) document.getElementById('publish-all-btn').style.display='inline-flex';
+  await refreshCode();
+  await loadAccounts();
+  I18n.apply();
+})();
+
+function openCreateModal() {
+  document.getElementById('create-modal').classList.add('open');
+  setTimeout(() => document.getElementById('acc-name').focus(), 150);
+}
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.remove('open');
+}
+
+async function publishAll() {
+  const btn = document.getElementById('publish-all-btn');
+  if (btn) { btn.disabled=true; btn.textContent=I18n.t('publishing'); }
+  try {
+    const accounts = await Storage.getAccounts();
+    const customers = accounts.filter(a => a.type === 'customer');
+    if (!customers.length) { UI.toast(I18n.t('publish_no_clients'), 'error'); return; }
+    const withPin = customers.filter(a => a.client_pin);
+    if (!withPin.length) { UI.toast(I18n.t('publish_no_pin'), 'error'); return; }
+
+    // نجلب كل الحركات لنعرف آخر نشاط فعلي لكل حساب، ونقارنه بآخر وقت نشر له
+    const allTxns = await Storage.getTxns({});
+    const lastActivity = {}; // accId -> أحدث تاريخ حركة
+    allTxns.forEach(tx => {
+      [tx.acc, tx.from, tx.to].filter(Boolean).forEach(id => {
+        const d = new Date(tx.date).getTime();
+        if (!lastActivity[id] || d > lastActivity[id]) lastActivity[id] = d;
+      });
+    });
+
+    const needsPublish = withPin.filter(a => {
+      if (!a.client_published_at) return true; // لم يُنشَر له أي كشف من قبل
+      const last = lastActivity[a.id];
+      if (!last) return false; // لا حركة إطلاقاً — لا داعي للنشر
+      return last > new Date(a.client_published_at).getTime();
+    });
+
+    if (!needsPublish.length) {
+      UI.toast(I18n.t('publish_already') || '✅ تم نشر جميع الكشوف مسبقاً — لا توجد أي تحديثات جديدة منذ آخر نشر');
+      return;
+    }
+
+    const ok = await Storage.publishAllClients(Auth.getUser().user);
+    if (ok) {
+      Storage.invalidate('accounts');
+      UI.toast(`✅ ${I18n.t('publish_success')} ${needsPublish.length} / ${withPin.length}`);
+      await Storage.addNotification('publish', '📤 ' + I18n.t('publish_all'),
+        `${I18n.t('publish_success')} ${needsPublish.length}`, '📤');
+    } else {
+      UI.toast(I18n.t('publish_error'), 'error');
+    }
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent=I18n.t('publish_all'); }
+  }
+}
+
+async function loadAccounts() {
+  UI.showLoading(true);
+  const raw = await Accounts.getAll();
+  _rawAccounts = raw;
+  _allAccounts = raw.map(a => ({
+    ...a,
+    usd: parseFloat(a.bal_usd || 0),
+    eur: parseFloat(a.bal_eur || 0)
+  }));
+  UI.showLoading(false);
+  const hasProfitAcc = _allAccounts.some(a => a.type === 'profit');
+  const optProfit = document.getElementById('opt-profit-type');
+  if (optProfit) optProfit.style.display = hasProfitAcc ? 'none' : '';
+  applyFilter();
+}
+
+async function refreshCode() {
+  document.getElementById('acc-code').value =
+    await Accounts.generateCode(document.getElementById('acc-type').value);
+}
+
+async function doCreate() {
+  const type = document.getElementById('acc-type').value;
+  const name = document.getElementById('acc-name').value;
+  const code = document.getElementById('acc-code').value;
+  UI.showLoading(true);
+  const result = await Accounts.create(type, name, code);
+  UI.showLoading(false);
+  if (result.ok) {
+    UI.toast(I18n.t('account_created') + ': ' + result.id);
+    document.getElementById('acc-name').value = '';
+    await refreshCode();
+    await loadAccounts();
+    await UI.updateTreasury();
+    closeCreateModal();
+  } else { UI.toast(result.error,'error'); }
+}
+
+function applyFilter() {
+  const qCode  = document.getElementById('filter-code').value.toLowerCase().trim();
+  const qName  = document.getElementById('filter-name').value.toLowerCase().trim();
+  const type   = document.getElementById('filter-type').value;
+  const bal    = document.getElementById('filter-bal').value;
+  const sortBy = document.getElementById('sort-by').value;
+  _filtered = _allAccounts.filter(a => {
+    if (qCode) {
+      const suffix = Accounts.stripTypePrefix(a.id).toLowerCase();
+      const full   = a.id.toLowerCase();
+      // يطابق الرقم وحده (0001) أو الكود كاملاً (CU-0001) — النوع نفسه
+      // له فلتر مستقل بالأسفل (filter-type)، فلا داعي لكتابته هنا أصلاً
+      if (!suffix.startsWith(qCode) && !full.startsWith(qCode)) return false;
+    }
+    if (qName && !a.name.toLowerCase().includes(qName)) return false;
+    if (type !== 'all' && a.type !== type) return false;
+    if (bal === 'debtor' && a.usd >= 0 && a.eur >= 0) return false;
+    return true;
+  });
+  if (sortBy === 'code') {
+    _filtered.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric:true }));
+  } else if (sortBy === 'created') {
+    // الأحدث أولاً — يعتمد على عمود created_at (يحتاج تشغيل MIGRATION_V18 + V19)
+    _filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  } else {
+    // seq = تسلسل الإنشاء الفعلي (الأقدم أولاً) — نفس عمود created_at لكن بالاتجاه المعاكس
+    _filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  }
+  if ((sortBy === 'created' || sortBy === 'seq') && _allAccounts.length && _allAccounts.every(a => !a.created_at)) {
+    UI.toast(I18n.t('created_at_missing_warning') || '⚠️ لا يوجد تاريخ إنشاء مسجّل لدى أي حساب — تأكد من تشغيل MIGRATION_V18.sql وMIGRATION_V19.sql', 'error');
+  }
+  _page = 1;
+  renderPage();
+}
+
+function renderPage() {
+  const total      = _filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  const start      = (_page - 1) * PAGE_SIZE;
+  const pagItems   = _filtered.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('acc-count').textContent = total + ' ' + I18n.t('account');
+
+  const tbody = document.getElementById('acc-tbody');
+  if (!pagItems.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-icon">👥</div>${I18n.t('no_results')}</td></tr>`;
+    document.getElementById('acc-pages').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = pagItems.map((a, idx) => {
+    const debtor   = a.usd < 0 || a.eur < 0;
+    const isProfit = a.id === CONFIG.PROFIT_ACCOUNT_ID;
+    const isTreasury = a.id === CONFIG.TREASURY_ACCOUNT_ID;
+    const typeLabel = a.type === 'company' ? I18n.t('lbl_company')
+                    : a.type === 'profit'  ? I18n.t('lbl_profit')
+                    : a.type === 'treasury' ? I18n.t('lbl_treasury')
+                    : I18n.t('lbl_customer');
+    const safeId   = a.id.replace(/'/g, '');
+    return `<tr class="${debtor ? 'row-debtor' : ''}" style="cursor:pointer;"
+              onclick="navTo('account-view.html?acc=${safeId}')">
+      <td style="color:var(--text3);">${start + idx + 1}</td>
+      <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}${isTreasury?' 🏛️':''}</td>
+      <td>${UI.escapeHtml(a.name)}</td>
+      <td><span class="badge-type">${typeLabel}</span></td>
+      <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.usd)}</td>
+      <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.eur)}</td>
+      <td onclick="event.stopPropagation();" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-ghost btn-sm" title="${I18n.t('movements')}"
+          onclick="event.stopPropagation();navTo('account-view.html?acc=${safeId}')">👁️</button>
+        <button class="btn btn-ghost btn-sm" title="${I18n.t('statement')}"
+          onclick="event.stopPropagation();navTo('statement.html?acc=${safeId}')">📋</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const pg = document.getElementById('acc-pages');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+  let html = `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page-1})" ${_page===1?'disabled':''}>‹</button>`;
+  const sp = Math.max(1, _page-2), ep = Math.min(totalPages, _page+2);
+  if (sp > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(1)">1</button>`;
+  if (sp > 2) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  for (let i = sp; i <= ep; i++)
+    html += `<button class="btn btn-sm ${i===_page?'btn-primary':'btn-ghost'}" onclick="goPage(${i})">${i}</button>`;
+  if (ep < totalPages-1) html += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+  if (ep < totalPages)   html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${_page+1})" ${_page===totalPages?'disabled':''}>›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
+  if (p < 1 || p > t) return;
+  _page = p; renderPage();
+}
+</script>
+</body>
+</html>
