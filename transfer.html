@@ -66,15 +66,11 @@
           <select id="trf-cur" class="currency-select" onchange="updatePreview()"></select>
         </div>
         <div class="form-group">
-          <label data-i18n="exchange_rate">سعر الصرف (للمستقبل)</label>
-          <input type="number" id="trf-rate" value="1" step="0.0001" min="0" oninput="updatePreview()">
+          <label data-i18n="amount">المبلغ</label>
+          <input type="number" id="trf-amount" placeholder="0.00" min="0" step="0.01"
+                 oninput="updatePreview()"
+                 onkeydown="if(event.key==='Enter') doTransfer(false)">
         </div>
-      </div>
-      <div class="form-group">
-        <label data-i18n="amount">المبلغ</label>
-        <input type="number" id="trf-amount" placeholder="0.00" min="0" step="0.01"
-               oninput="updatePreview()"
-               onkeydown="if(event.key==='Enter') doTransfer(false)">
       </div>
 
       <!-- معاينة -->
@@ -170,7 +166,7 @@ async function updatePreview() {
   const toId   = document.getElementById('trf-to-id').value;
   const cur    = document.getElementById('trf-cur').value;
   const amt    = parseFloat(document.getElementById('trf-amount').value) || 0;
-  const rate   = parseFloat(document.getElementById('trf-rate').value) || 1;
+  const rate   = 1; // سعر الصرف مُعطَّل حالياً — سيصير صفحة مستقلة مستقبلاً (V.next)
   const box    = document.getElementById('trf-preview');
   if (!fromId || !toId || amt <= 0) { box.style.display='none'; return; }
   const activeCurs = await Currency.getActive();
@@ -199,7 +195,6 @@ async function updatePreview() {
           padding-top:10px;border-top:1px solid var(--border);">
       <div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('gross_to_receiver')}</div>
            <b>${Currency.formatMoney(gross,sym)}</b>
-           ${rate!==1?`<span style="font-size:0.72rem;color:var(--text3);"> (×${rate})</span>`:''}
       </div>
       ${commission>0?`<div><div style="font-size:0.67rem;color:var(--text3);">${I18n.t('commission_pct')} (${ratePct}%)</div>
            <b style="color:var(--red);">-${Currency.formatMoney(commission,sym)}</b></div>`:''}
@@ -216,7 +211,7 @@ async function doTransfer(force) {
   const to   = document.getElementById('trf-to-id').value;
   const cur  = document.getElementById('trf-cur').value;
   const amt  = parseFloat(document.getElementById('trf-amount').value);
-  const rate = parseFloat(document.getElementById('trf-rate').value) || 1;
+  const rate = 1; // سعر الصرف مُعطَّل حالياً — سيصير صفحة مستقلة مستقبلاً (V.next)
   UI.showLoading(true);
   const result = await Transactions.transfer(from, to, cur, amt, rate, force);
   UI.showLoading(false);

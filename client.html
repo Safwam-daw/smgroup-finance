@@ -54,6 +54,13 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .bal-box{flex:1;min-width:130px;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid;display:flex;flex-direction:column;gap:4px;}
 .bal-label{font-size:0.67rem;color:var(--text3);}
 .bal-val{font-size:1.2rem;font-weight:700;}
+/* تضليل الرصيد: أحمر سالب، أخضر موجب، ذهبي للصفر — على الشاشة والطباعة معاً */
+.bal-box.bal-neg{border-color:var(--red);background:var(--red-dim);}
+.bal-box.bal-neg .bal-val{color:var(--red);}
+.bal-box.bal-pos{border-color:var(--green);background:var(--green-dim);}
+.bal-box.bal-pos .bal-val{color:var(--green);}
+.bal-box.bal-zero{border-color:var(--gold);background:var(--gold-dim2);}
+.bal-box.bal-zero .bal-val{color:var(--gold);}
 /* Quick filters */
 .qf-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .qf-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border2);
@@ -143,7 +150,15 @@ tr:last-child td{border-bottom:none;}
   .p-header{background:#fff!important;border:2px solid #c9a84c!important;}
   .p-name{color:#111!important;}
   .bal-box{background:#fffbef!important;border-color:#c9a84c!important;}
-  .bal-val,.bal-label{color:#111!important;}
+  .bal-label{color:#333!important;}
+  .bal-val{color:#111!important;}
+  /* نفس اصطلاح الشاشة: أحمر سالب، أخضر موجب، ذهبي للصفر */
+  .bal-box.bal-neg{background:#fee2e2!important;border-color:#dc2626!important;}
+  .bal-box.bal-neg .bal-val{color:#dc2626!important;}
+  .bal-box.bal-pos{background:#dcfce7!important;border-color:#16a34a!important;}
+  .bal-box.bal-pos .bal-val{color:#16a34a!important;}
+  .bal-box.bal-zero{background:#fffbef!important;border-color:#c9a84c!important;}
+  .bal-box.bal-zero .bal-val{color:#111!important;}
   .card{background:#fff!important;border:1px solid #ccc!important;}
   .tbl-wrap{border:1px solid #ccc!important;overflow:visible!important;}
   table{min-width:unset!important;width:100%!important;font-size:0.79rem;}
@@ -508,8 +523,11 @@ async function loadPortal() {
     const el=document.getElementById(id); if(el) el.textContent=now;
   });
 
-  const usd = parseFloat(_acc.bal_usd||0);
-  const eur = parseFloat(_acc.bal_eur||0);
+  // ملاحظة: bal_usd/bal_eur هنا هي آخر لقطة مُنشَرة، وليست الرصيد
+  // الحي — إن لم يُنشر أي كشف بعد لهذا الحساب تكون القيمتان null
+  const neverPublished = _acc.bal_usd === null || _acc.bal_usd === undefined;
+  const usd = neverPublished ? null : parseFloat(_acc.bal_usd || 0);
+  const eur = neverPublished ? null : parseFloat(_acc.bal_eur || 0);
   const pubAt = _acc.client_published_at;
 
   // اسم ومعلومات
@@ -517,22 +535,17 @@ async function loadPortal() {
   document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
   document.title = brandName() + ' — ' + _acc.name;
 
-  // أرصدة — أخضر لموجب، أحمر لسالب (بنفس اصطلاح account-view.html
-  // الداخلي — كانت هنا تستخدم الذهبي للموجب بدل الأخضر)
+  // أرصدة — أحمر سالب / أخضر موجب / ذهبي صفر / رمادي "—" إن لم
+  // يُنشر كشف بعد (نفس التضليل يظهر بالطباعة أيضاً عبر نفس الأصناف)
+  const _balCls = v => v === null ? '' : v < 0 ? 'bal-neg' : v > 0 ? 'bal-pos' : 'bal-zero';
   document.getElementById('p-bals').innerHTML = `
-    <div class="bal-box" style="border-color:${usd<0?'var(--red)':'var(--green)'};
-         background:${usd<0?'var(--red-dim)':'var(--green-dim)'};">
+    <div class="bal-box ${_balCls(usd)}">
       <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
-      <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--green)'};">
-        ${Currency.formatMoney(usd,'$')}
-      </div>
+      <div class="bal-val">${usd === null ? '—' : Currency.formatMoney(usd,'$')}</div>
     </div>
-    <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--green)'};
-         background:${eur<0?'var(--red-dim)':'var(--green-dim)'};">
+    <div class="bal-box ${_balCls(eur)}">
       <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
-      <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--green)'};">
-        ${Currency.formatMoney(eur,'€')}
-      </div>
+      <div class="bal-val">${eur === null ? '—' : Currency.formatMoney(eur,'€')}</div>
     </div>`;
 
   // ملاحظة التحديث
