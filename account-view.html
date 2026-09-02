@@ -1083,16 +1083,16 @@ async function doDelAcc() {
 function openEditAcc() {
   document.getElementById('edit-acc-name').value = _accObj.name || '';
 
-  // كود الحساب — قابل للتعديل فقط لحساب الأرباح/الخزينة
+  // كود الحساب — قابل للتعديل لأي نوع حساب (V35)
   const codeBox = document.getElementById('edit-code-box');
   if (codeBox) {
-    codeBox.style.display = _isProfitAcc ? 'block' : 'none';
-    if (_isProfitAcc) {
-      document.getElementById('edit-acc-code').value = _accId;
-      const requiredPrefix = _accObj.type === 'profit' ? 'PR-' : 'TN-';
-      document.getElementById('edit-code-hint').textContent =
-        t('code_prefix_hint', { prefix: requiredPrefix });
-    }
+    codeBox.style.display = 'block';
+    document.getElementById('edit-acc-code').value = _accId;
+    const prefixMap = { customer:'CU-', company:'CO-', profit:'PR-', treasury:'TN-' };
+    const requiredPrefix = prefixMap[_accObj.type] || '';
+    document.getElementById('edit-code-hint').textContent =
+      t('code_prefix_hint', { prefix: requiredPrefix }) +
+      (_accObj.type === 'company' ? ' · ' + I18n.t('code_company_numeric_hint') : '');
   }
 
   // إظهار PIN للزبائن فقط
@@ -1141,9 +1141,9 @@ async function saveEditAcc() {
 
   let targetId = _accId;
 
-  // تعديل كود الحساب (الأرباح/الخزينة فقط) — يُنفَّذ أولاً قبل أي
+  // تعديل كود الحساب (أي نوع الآن — V35) — يُنفَّذ أولاً قبل أي
   // تعديل آخر، لأنه يغيّر المعرّف الأساسي نفسه
-  if (_isProfitAcc) {
+  {
     const rawCode = document.getElementById('edit-acc-code').value.trim().toUpperCase();
     if (rawCode && rawCode !== _accId) {
       UI.showLoading(true);
@@ -1151,9 +1151,10 @@ async function saveEditAcc() {
       UI.showLoading(false);
       if (!renameResult.ok) {
         const errMsg = {
-          invalid_prefix: t('code_invalid_prefix_err', { prefix: renameResult.required_prefix || '' }),
-          id_taken:       I18n.t('code_taken_err'),
-          not_found:      I18n.t('acc_not_found_err'),
+          invalid_prefix:  t('code_invalid_prefix_err', { prefix: renameResult.required_prefix || '' }),
+          id_taken:        I18n.t('code_taken_err'),
+          not_found:       I18n.t('acc_not_found_err'),
+          company_code_must_be_numeric: I18n.t('code_company_numeric_err'),
         }[renameResult.error] || I18n.t('save_error');
         UI.toast(errMsg, 'error');
         return;

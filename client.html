@@ -517,19 +517,20 @@ async function loadPortal() {
   document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
   document.title = brandName() + ' — ' + _acc.name;
 
-  // أرصدة
+  // أرصدة — أخضر لموجب، أحمر لسالب (بنفس اصطلاح account-view.html
+  // الداخلي — كانت هنا تستخدم الذهبي للموجب بدل الأخضر)
   document.getElementById('p-bals').innerHTML = `
-    <div class="bal-box" style="border-color:${usd<0?'var(--red)':'var(--gold)'};
-         background:${usd<0?'var(--red-dim)':'var(--gold-dim2)'};">
+    <div class="bal-box" style="border-color:${usd<0?'var(--red)':'var(--green)'};
+         background:${usd<0?'var(--red-dim)':'var(--green-dim)'};">
       <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
-      <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--gold)'};">
+      <div class="bal-val" style="color:${usd<0?'var(--red)':'var(--green)'};">
         ${Currency.formatMoney(usd,'$')}
       </div>
     </div>
-    <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--euro)'};
-         background:${eur<0?'var(--red-dim)':'var(--euro-dim)'};">
+    <div class="bal-box" style="border-color:${eur<0?'var(--red)':'var(--green)'};
+         background:${eur<0?'var(--red-dim)':'var(--green-dim)'};">
       <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
-      <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--euro)'};">
+      <div class="bal-val" style="color:${eur<0?'var(--red)':'var(--green)'};">
         ${Currency.formatMoney(eur,'€')}
       </div>
     </div>`;
