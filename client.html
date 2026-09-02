@@ -175,7 +175,7 @@ tr:last-child td{border-bottom:none;}
     <div class="divider"></div>
     <div class="form-group">
       <label data-ct="acc_number">رقم الحساب</label>
-      <input type="text" id="c-acc" data-ct-placeholder="acc_ph" placeholder="0001" maxlength="6"
+      <input type="text" id="c-acc" data-ct-placeholder="acc_ph" placeholder="0001" maxlength="10"
              onkeydown="if(event.key==='Enter') document.getElementById('c-pin').focus()">
     </div>
     <div class="form-group">
@@ -435,9 +435,21 @@ function showToast(msg, type='success') {
 // ── Rate Limiting ─────────────────────────────────────
 const _CRL = { attempts: 0, lockedUntil: 0, MAX: 5, LOCKOUT: 120000 };
 
+// ── تطبيع كود الحساب ───────────────────────────────────
+// بوابة الزبون خاصة بالزبائن فقط (نوع CU) — لا داعي لكتابة نوع
+// الحساب أو اختياره؛ يكفي كتابة الرقم وحده (مثال: 0001) وتُضاف
+// له بادئة "CU-" تلقائياً. كتابة الكود كاملاً (CU-0001) تبقى تعمل أيضاً.
+function _normalizeClientAccId(raw) {
+  let v = String(raw || '').trim().toUpperCase();
+  if (!v) return '';
+  if (v.startsWith('CU-')) return v;
+  if (v.startsWith('CU'))  return 'CU-' + v.slice(2).replace(/^-+/, '');
+  return 'CU-' + v.replace(/^-+/, '');
+}
+
 // ── Login ─────────────────────────────────────────────
 async function doLogin() {
-  const accId = document.getElementById('c-acc').value.trim();
+  const accId = _normalizeClientAccId(document.getElementById('c-acc').value);
   const pin   = document.getElementById('c-pin').value.trim();
   const btn   = document.getElementById('login-btn');
   const err   = document.getElementById('login-err');
@@ -686,9 +698,8 @@ window.addEventListener('afterprint', () => {
     const s = sessionStorage.getItem('client_session');
     if (s) {
       const { id } = JSON.parse(s);
-      // نجلب بيانات الحساب مباشرة بدون PIN
-      const accounts = await Storage.getAccounts();
-      const acc = accounts.find(a => a.id === id && a.type === 'customer');
+      // حساب واحد فقط عبر RPC آمن — لا الجدول كاملاً (MIGRATION_V34)
+      const acc = await Storage.getClientAccount(id);
       if (acc) { _acc = acc; await loadPortal(); return; }
     }
   } catch(e){}

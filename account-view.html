@@ -396,6 +396,15 @@
       <input type="text" id="edit-acc-name" placeholder="اسم الزبون أو الشركة" data-i18n-placeholder="account_name_ph">
     </div>
 
+    <!-- كود الحساب — حساب الأرباح/الخزينة فقط -->
+    <div id="edit-code-box" style="display:none;">
+      <div class="form-group">
+        <label data-i18n="account_code_lbl">كود الحساب</label>
+        <input type="text" id="edit-acc-code" style="letter-spacing:1px;">
+        <div style="font-size:0.71rem;color:var(--text3);margin-top:5px;" id="edit-code-hint"></div>
+      </div>
+    </div>
+
     <!-- PIN الزبون -->
     <div id="edit-pin-box" style="display:none;">
       <div style="height:1px;background:var(--border);margin:14px 0;"></div>
@@ -1073,6 +1082,19 @@ async function doDelAcc() {
 // ── تعديل معلومات الحساب ─────────────────────────────
 function openEditAcc() {
   document.getElementById('edit-acc-name').value = _accObj.name || '';
+
+  // كود الحساب — قابل للتعديل فقط لحساب الأرباح/الخزينة
+  const codeBox = document.getElementById('edit-code-box');
+  if (codeBox) {
+    codeBox.style.display = _isProfitAcc ? 'block' : 'none';
+    if (_isProfitAcc) {
+      document.getElementById('edit-acc-code').value = _accId;
+      const requiredPrefix = _accObj.type === 'profit' ? 'PR-' : 'TN-';
+      document.getElementById('edit-code-hint').textContent =
+        t('code_prefix_hint', { prefix: requiredPrefix });
+    }
+  }
+
   // إظهار PIN للزبائن فقط
   const pinBox = document.getElementById('edit-pin-box');
   if (pinBox) {
@@ -1117,6 +1139,29 @@ async function saveEditAcc() {
   const newName = document.getElementById('edit-acc-name').value.trim();
   if (!newName) { UI.toast(I18n.t('acc_name_ph'),'error'); return; }
 
+  let targetId = _accId;
+
+  // تعديل كود الحساب (الأرباح/الخزينة فقط) — يُنفَّذ أولاً قبل أي
+  // تعديل آخر، لأنه يغيّر المعرّف الأساسي نفسه
+  if (_isProfitAcc) {
+    const rawCode = document.getElementById('edit-acc-code').value.trim().toUpperCase();
+    if (rawCode && rawCode !== _accId) {
+      UI.showLoading(true);
+      const renameResult = await Storage.renameStructuralAccountId(_accId, rawCode);
+      UI.showLoading(false);
+      if (!renameResult.ok) {
+        const errMsg = {
+          invalid_prefix: t('code_invalid_prefix_err', { prefix: renameResult.required_prefix || '' }),
+          id_taken:       I18n.t('code_taken_err'),
+          not_found:      I18n.t('acc_not_found_err'),
+        }[renameResult.error] || I18n.t('save_error');
+        UI.toast(errMsg, 'error');
+        return;
+      }
+      targetId = rawCode;
+    }
+  }
+
   const changes = { name: newName };
 
   if (_accObj.type === 'customer') {
@@ -1128,16 +1173,22 @@ async function saveEditAcc() {
   }
 
   UI.showLoading(true);
-  const ok = await Storage.updateAccount(_accId, changes);
+  const ok = await Storage.updateAccount(targetId, changes);
   UI.showLoading(false);
 
   if (ok) {
     closeEditAcc();
+    UI.toast(I18n.t('save_ok'));
+    if (targetId !== _accId) {
+      // تغيّر المعرّف الأساسي — أعِد تحميل الصفحة بالكود الجديد
+      // بدل محاولة تحديث الحالة محلياً (أضمن وأبسط)
+      navTo('account-view.html?acc=' + encodeURIComponent(targetId));
+      return;
+    }
     // تحديث محلي
     _accObj.name = newName;
     if (changes.commission_rate !== undefined) _accObj.commission_rate = changes.commission_rate;
     document.getElementById('hero-name').textContent = _accObj.name + ' · ' + _accId;
-    UI.toast(I18n.t('save_ok'));
   } else { UI.toast(I18n.t('save_error'),'error'); }
 }
 
