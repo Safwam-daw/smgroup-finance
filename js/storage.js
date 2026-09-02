@@ -565,22 +565,23 @@ const Storage = (() => {
     return (data && data.ok) ? data.account : null;
   }
 
+  // نشر كشف الزبون — يُجمِّد لقطة الرصيد الحالي وقت الضغط (V36)،
+  // لا يكتفي بتحديث التاريخ فقط. الزبون يرى هذه اللقطة إلى أن يُنشَر
+  // كشف جديد له.
   async function publishClientView(accountId, publishedBy) {
-    const now = new Date().toISOString();
-    const { error } = await _sb.from('accounts').update({
-      client_published_at: now, client_published_by: publishedBy
-    }).eq('id', accountId);
-    if (!error) invalidate('accounts');
-    return !error;
+    const { data, error } = await _sb.rpc('client_publish_one', {
+      p_account_id: accountId, p_by: publishedBy
+    });
+    if (error) { console.error('publishClientView:', error); return false; }
+    if (data && data.ok) invalidate('accounts');
+    return !!(data && data.ok);
   }
 
   async function publishAllClients(publishedBy) {
-    const now = new Date().toISOString();
-    const { error } = await _sb.from('accounts').update({
-      client_published_at: now, client_published_by: publishedBy
-    }).eq('type', 'customer');
-    if (!error) invalidate('accounts');
-    return !error;
+    const { data, error } = await _sb.rpc('client_publish_all', { p_by: publishedBy });
+    if (error) { console.error('publishAllClients:', error); return false; }
+    if (data && data.ok) invalidate('accounts');
+    return !!(data && data.ok);
   }
 
   async function regeneratePin(accountId) {
@@ -605,11 +606,14 @@ const Storage = (() => {
   }
 
   async function getClientTxns(accountId, publishedAt) {
+    // لم يُنشر أي كشف بعد لهذا الحساب => لا حركات تُعرض إطلاقاً
+    // (كانت هذه الحالة تعرض كل الحركات بلا فلترة — عكس المقصود)
+    if (!publishedAt) return [];
     let q = _sb.from('transactions')
       .select('*')
       .or(`acc.eq.${accountId},to.eq.${accountId}`)
       .order('date', { ascending: false });
-    if (publishedAt) q = q.lte('date', publishedAt);
+    q = q.lte('date', publishedAt);
     const { data, error } = await q;
     if (error) return [];
     // Post-filter to include 'from' column
