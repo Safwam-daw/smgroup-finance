@@ -71,6 +71,14 @@
   .acc-hero { background:#fff!important; border:2px solid #c9a84c!important; }
   .bal-box  { background:#fffbef!important; border-color:#c9a84c!important; }
   .bal-box-val { color:#111!important; }
+  .bal-box.bal-neg{background:#fee2e2!important;border-color:#dc2626!important;}
+  .bal-box.bal-neg .bal-box-val{color:#dc2626!important;}
+  .bal-box.bal-pos{background:#dcfce7!important;border-color:#16a34a!important;}
+  .bal-box.bal-pos .bal-box-val{color:#16a34a!important;}
+  .bal-box.bal-zero-usd{background:#fffbef!important;border-color:#c9a84c!important;}
+  .bal-box.bal-zero-usd .bal-box-val{color:#a16207!important;}
+  .bal-box.bal-zero-eur{background:#f3f0ff!important;border-color:#a78bfa!important;}
+  .bal-box.bal-zero-eur .bal-box-val{color:#7c3aed!important;}
   table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
   th  { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; }
   td  { border-bottom:1px solid #eee!important; color:#111!important; }
@@ -572,17 +580,21 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
 
 // ── Bal boxes ─────────────────────────────────────────
 function updateBalBoxes(usd, eur) {
-  const set = (boxId, valId, val, sym, posColor) => {
+  const set = (boxId, valId, val, sym, zeroCls) => {
     const box = document.getElementById(boxId);
     const el  = document.getElementById(valId);
-    const neg = val < 0;
     el.textContent = Currency.formatMoney(val, sym);
-    el.style.color = neg ? 'var(--red)' : posColor;
-    box.style.borderColor = neg ? 'var(--red)' : (posColor==='var(--gold)'?'var(--gold)':'var(--euro)');
-    box.style.background  = neg ? 'var(--red-dim)' : (posColor==='var(--gold)'?'var(--gold-dim2)':'var(--euro-dim)');
+    box.classList.remove('bal-neg','bal-pos','bal-zero-usd','bal-zero-eur');
+    box.classList.add(val < 0 ? 'bal-neg' : val > 0 ? 'bal-pos' : zeroCls);
+    // إبقاء inline style للشاشة فوراً (الأصناف تتكفّل بالطباعة أيضاً)
+    const color = val < 0 ? 'var(--red)' : val > 0 ? 'var(--green)' : (zeroCls==='bal-zero-usd'?'var(--gold)':'var(--euro)');
+    const dim   = val < 0 ? 'var(--red-dim)' : val > 0 ? 'var(--green-dim)' : (zeroCls==='bal-zero-usd'?'var(--gold-dim2)':'var(--euro-dim)');
+    el.style.color        = color;
+    box.style.borderColor = color;
+    box.style.background  = dim;
   };
-  set('box-usd','bal-usd', usd, '$', 'var(--gold)');
-  set('box-eur','bal-eur', eur, '€', 'var(--euro)');
+  set('box-usd','bal-usd', usd, '$', 'bal-zero-usd');
+  set('box-eur','bal-eur', eur, '€', 'bal-zero-eur');
 }
 
 // ── Quick Filters ─────────────────────────────────────

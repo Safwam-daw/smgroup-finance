@@ -59,8 +59,10 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .bal-box.bal-neg .bal-val{color:var(--red);}
 .bal-box.bal-pos{border-color:var(--green);background:var(--green-dim);}
 .bal-box.bal-pos .bal-val{color:var(--green);}
-.bal-box.bal-zero{border-color:var(--gold);background:var(--gold-dim2);}
-.bal-box.bal-zero .bal-val{color:var(--gold);}
+.bal-box.bal-zero-usd{border-color:var(--gold);background:var(--gold-dim2);}
+.bal-box.bal-zero-usd .bal-val{color:var(--gold);}
+.bal-box.bal-zero-eur{border-color:var(--euro);background:var(--euro-dim);}
+.bal-box.bal-zero-eur .bal-val{color:var(--euro);}
 /* Quick filters */
 .qf-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 .qf-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border2);
@@ -157,8 +159,10 @@ tr:last-child td{border-bottom:none;}
   .bal-box.bal-neg .bal-val{color:#dc2626!important;}
   .bal-box.bal-pos{background:#dcfce7!important;border-color:#16a34a!important;}
   .bal-box.bal-pos .bal-val{color:#16a34a!important;}
-  .bal-box.bal-zero{background:#fffbef!important;border-color:#c9a84c!important;}
-  .bal-box.bal-zero .bal-val{color:#111!important;}
+  .bal-box.bal-zero-usd{background:#fffbef!important;border-color:#c9a84c!important;}
+  .bal-box.bal-zero-usd .bal-val{color:#a16207!important;}
+  .bal-box.bal-zero-eur{background:#f3f0ff!important;border-color:#a78bfa!important;}
+  .bal-box.bal-zero-eur .bal-val{color:#7c3aed!important;}
   .card{background:#fff!important;border:1px solid #ccc!important;}
   .tbl-wrap{border:1px solid #ccc!important;overflow:visible!important;}
   table{min-width:unset!important;width:100%!important;font-size:0.79rem;}
@@ -271,7 +275,6 @@ tr:last-child td{border-bottom:none;}
           <option value="dep" data-ct="type_dep">💵 إيداع</option>
           <option value="wit" data-ct="type_wit">💸 سحب</option>
           <option value="trf" data-ct="type_trf">🔄 تحويل</option>
-          <option value="fee" data-ct="type_fee">💰 عمولة</option>
         </select>
       </div>
     </div>
@@ -283,12 +286,14 @@ tr:last-child td{border-bottom:none;}
       <table id="p-table">
         <thead>
           <tr>
-            <th data-ct="col_date">التاريخ</th><th data-ct="col_type">النوع</th><th data-ct="col_currency">العملة</th>
-            <th data-ct="col_debit">دين (خروج)</th><th data-ct="col_credit">دائن (دخول)</th><th data-ct="col_note">ملاحظة</th>
+            <th data-ct="col_date">التاريخ</th><th data-ct="col_type">النوع</th>
+            <th data-ct="col_other">الطرف الآخر</th><th data-ct="col_currency">العملة</th>
+            <th data-ct="col_value">القيمة</th><th data-ct="col_commission">العمولة</th>
+            <th data-ct="col_net">الصافي</th><th data-ct="col_note">ملاحظة</th>
           </tr>
         </thead>
         <tbody id="p-tbody">
-          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);" data-ct="loading">جاري التحميل…</td></tr>
+          <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3);" data-ct="loading">جاري التحميل…</td></tr>
         </tbody>
       </table>
     </div>
@@ -348,8 +353,10 @@ const ClientI18n = (() => {
     col_date:        { ar: 'التاريخ', en: 'Date', tr: 'Tarih' },
     col_type:        { ar: 'النوع', en: 'Type', tr: 'Tür' },
     col_currency:    { ar: 'العملة', en: 'Currency', tr: 'Para Birimi' },
-    col_debit:       { ar: 'دين (خروج)', en: 'Debit (Out)', tr: 'Borç (Çıkan)' },
-    col_credit:      { ar: 'دائن (دخول)', en: 'Credit (In)', tr: 'Alacak (Giren)' },
+    col_other:       { ar: 'الطرف الآخر', en: 'Other Party', tr: 'Diğer Taraf' },
+    col_value:       { ar: 'القيمة', en: 'Value', tr: 'Değer' },
+    col_commission:  { ar: 'العمولة', en: 'Commission', tr: 'Komisyon' },
+    col_net:         { ar: 'الصافي', en: 'Net', tr: 'Net' },
     col_note:        { ar: 'ملاحظة', en: 'Note', tr: 'Not' },
     type_dep:        { ar: '💵 إيداع', en: '💵 Deposit', tr: '💵 Yatırma' },
     type_wit:        { ar: '💸 سحب', en: '💸 Withdrawal', tr: '💸 Çekim' },
@@ -535,15 +542,16 @@ async function loadPortal() {
   document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
   document.title = brandName() + ' — ' + _acc.name;
 
-  // أرصدة — أحمر سالب / أخضر موجب / ذهبي صفر / رمادي "—" إن لم
-  // يُنشر كشف بعد (نفس التضليل يظهر بالطباعة أيضاً عبر نفس الأصناف)
-  const _balCls = v => v === null ? '' : v < 0 ? 'bal-neg' : v > 0 ? 'bal-pos' : 'bal-zero';
+  // أرصدة — أحمر سالب / أخضر موجب / لون العملة نفسها للصفر (ذهبي
+  // للدولار، بنفسجي لليورو — نفس اصطلاح صفحة الحساب الداخلية) /
+  // رمادي "—" إن لم يُنشر كشف بعد
+  const _balCls = (v, zeroCls) => v === null ? '' : v < 0 ? 'bal-neg' : v > 0 ? 'bal-pos' : zeroCls;
   document.getElementById('p-bals').innerHTML = `
-    <div class="bal-box ${_balCls(usd)}">
+    <div class="bal-box ${_balCls(usd,'bal-zero-usd')}">
       <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
       <div class="bal-val">${usd === null ? '—' : Currency.formatMoney(usd,'$')}</div>
     </div>
-    <div class="bal-box ${_balCls(eur)}">
+    <div class="bal-box ${_balCls(eur,'bal-zero-eur')}">
       <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
       <div class="bal-val">${eur === null ? '—' : Currency.formatMoney(eur,'€')}</div>
     </div>`;
@@ -561,7 +569,10 @@ async function loadPortal() {
   }
 
   // جلب الحركات المنشورة
-  _allTxns = await Storage.getClientTxns(_acc.id, pubAt);
+  // نستبعد حركات العمولة/مرآة الخزينة المشتقة تلقائياً — تظهر الآن
+  // كعمود "العمولة" ضمن الحركة الرئيسية بدل صف منفصل (نفس منطق
+  // account-view.html لحساب عادي غير حساب الأرباح/الخزينة)
+  _allTxns = (await Storage.getClientTxns(_acc.id, pubAt)).filter(t => !t.is_commission_entry);
   setQuick('month', false);
   filterRows();
 }
@@ -615,31 +626,46 @@ function renderPage() {
     ? page.map(t => {
         const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
         const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
-        const isFee  = t.type==='fee'||t.is_commission_entry;
-        const isFrom = t.type==='trf'&&t.from===accId;
-        const isTo   = t.type==='trf'&&t.to===accId;
-        let debit=0, credit=0;
-        if(t.type==='dep') credit=parseFloat(t.amt);
-        if(t.type==='wit') debit=parseFloat(t.amt);
-        if(isFee)          debit=parseFloat(t.amt);
-        if(isFrom) debit=parseFloat(t.amt);
-        if(isTo)   credit=parseFloat(t.amt)*(parseFloat(t.rate)||1);
-        const dCell=debit>0 ?`<span class="cell-debit">-${Currency.formatMoney(debit,sym)}</span>`:'—';
-        const cCell=credit>0?`<span class="cell-credit">+${Currency.formatMoney(credit,sym)}</span>`:'—';
-        const lbl = typeLabel(t.type);
-        const bCls= isFee?'badge-fee':`badge-${t.type}`;
-        const rSty= isFee?'background:rgba(201,168,76,0.04);border-right:2px solid var(--gold);':'';
+        const isFrom = t.type==='trf' && t.from===accId;
+        const isTo   = t.type==='trf' && t.to===accId;
+
+        // الطرف الآخر — نعرض كوده فقط (لا اسمه)، من بيانات الحركة
+        // نفسها مباشرة، دون أي جلب إضافي لبيانات حسابات أخرى
+        let other = '—';
+        if (t.type==='trf') {
+          const oid = isFrom ? t.to : t.from;
+          other = isFrom ? ('← '+oid) : ('→ '+oid);
+        }
+
+        // القيمة/العمولة/الصافي — بنفس منطق صفحة الحساب الداخلية
+        let value=0, commission=0;
+        if (t.type==='dep') { value = parseFloat(t.amt); commission = parseFloat(t.commission_amt||0); }
+        if (t.type==='wit') { value = parseFloat(t.amt); commission = 0; }
+        if (isFrom) { value = parseFloat(t.amt); commission = 0; }
+        if (isTo)   { value = parseFloat(t.amt) * (parseFloat(t.rate)||1); commission = parseFloat(t.commission_amt||0); }
+        const net   = value - commission;
+        const isIn  = t.type==='dep' || isTo;
+        const color = isIn ? 'cell-credit' : 'cell-debit';
+
+        const valCell  = `<span class="${color}">${Currency.formatMoney(value,sym)}</span>`;
+        const commCell = commission>0 ? `<span style="color:var(--gold);">${Currency.formatMoney(commission,sym)}</span>` : '—';
+        const netCell  = `<span class="${color}">${Currency.formatMoney(net,sym)}</span>`;
+
+        const lbl  = typeLabel(t.type);
+        const bCls = `badge-${t.type}`;
         const d = new Date(t.date).toLocaleString('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-        return `<tr style="${rSty}">
+        return `<tr>
           <td data-label="${ClientI18n.ct('col_date')}" style="font-size:0.71rem;color:var(--text3);white-space:nowrap;">${d}</td>
           <td data-label="${ClientI18n.ct('col_type')}"><span class="badge ${bCls}">${lbl}</span></td>
+          <td data-label="${ClientI18n.ct('col_other')}" style="font-size:0.77rem;color:var(--text2);">${other}</td>
           <td data-label="${ClientI18n.ct('col_currency')}">${t.cur.toUpperCase()}</td>
-          <td data-label="${ClientI18n.ct('col_debit')}">${dCell}</td>
-          <td data-label="${ClientI18n.ct('col_credit')}">${cCell}</td>
+          <td data-label="${ClientI18n.ct('col_value')}">${valCell}</td>
+          <td data-label="${ClientI18n.ct('col_commission')}">${commCell}</td>
+          <td data-label="${ClientI18n.ct('col_net')}">${netCell}</td>
           <td data-label="${ClientI18n.ct('col_note')}" style="font-size:0.73rem;color:var(--text2);">${t.note||'—'}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
+    : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3);">${ClientI18n.ct('no_movements')}</td></tr>`;
 
   document.getElementById('p-count').textContent =
     !total ? '' : _printMode

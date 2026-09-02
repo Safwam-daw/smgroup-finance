@@ -317,8 +317,8 @@ function renderPage() {
       <td style="font-weight:700;">${UI.escapeHtml(a.id)}${debtor?' ⚠️':''}${isProfit?' 🏦':''}${isTreasury?' 🏛️':''}</td>
       <td>${UI.escapeHtml(a.name)}</td>
       <td><span class="badge-type">${typeLabel}</span></td>
-      <td style="color:${a.usd<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.usd)}</td>
-      <td style="color:${a.eur<0?'var(--red)':'var(--text)'};font-weight:600;">${Currency.formatNumber(a.eur)}</td>
+      <td style="color:${a.usd<0?'var(--red)':a.usd>0?'var(--green)':'var(--gold)'};font-weight:600;">${Currency.formatNumber(a.usd)}</td>
+      <td style="color:${a.eur<0?'var(--red)':a.eur>0?'var(--green)':'var(--euro)'};font-weight:600;">${Currency.formatNumber(a.eur)}</td>
       <td onclick="event.stopPropagation();" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-ghost btn-sm" title="${I18n.t('movements')}"
           onclick="event.stopPropagation();navTo('account-view.html?acc=${safeId}')">👁️</button>
