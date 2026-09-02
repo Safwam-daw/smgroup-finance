@@ -97,12 +97,9 @@ const Accounts = (() => {
       .filter(a => a.id.includes(ql) || a.name.toLowerCase().includes(ql))
       .slice(0, limit);
   }
+  // بحث بالكود فقط — يطابق بداية الكود (بادئة) لتفادي نتائج عشوائية من البحث المدمج القديم
   // بحث بالكود فقط — يطابق رقم الحساب بعد إزالة بادئة النوع (CU-/CO-/...)
-  // بحيث تكتب "0001" فقط بدل "CU-0001" أو "CU0001". لا حاجة لعمود منفصل
-  // بقاعدة البيانات: النوع مخزَّن أصلاً بعمود type مستقل، ورقم الكود
-  // مُشتقّ بالكامل من id (بعد الشرطة) — اشتقاقه هنا وقت البحث فقط
-  // (البيانات محمّلة أصلاً بالكامل في الذاكرة عبر Storage.getAccounts)
-  // أبسط وأضمن من تخزينه مكرَّراً في عمود قد ينحرف عن id لاحقاً.
+  // بحيث تكتب "0001" فقط بدل "CU-0001" أو "CU0001".
   async function searchByCode(q, limit=6) {
     const ql = String(q||'').toLowerCase().trim();
     if (!ql) return [];
@@ -110,7 +107,6 @@ const Accounts = (() => {
       .filter(a => {
         const full   = a.id.toLowerCase();
         const suffix = _stripKnownPrefix(a.id).toLowerCase();
-        // يطابق سواء كُتب الكود كاملاً بالبادئة (CU-0001) أو الرقم فقط (0001)
         return suffix.startsWith(ql) || full.startsWith(ql);
       })
       .slice(0, limit);
@@ -126,6 +122,7 @@ const Accounts = (() => {
 
   return {
     generateCode, create, getAll, getById, search, searchByCode, searchByName,
-    stripTypePrefix: _stripKnownPrefix
+    stripTypePrefix: _stripKnownPrefix,
+    validManualCode: _validManualCode
   };
 })();

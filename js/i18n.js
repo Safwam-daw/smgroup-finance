@@ -190,6 +190,8 @@ const I18n = (() => {
     code_invalid_prefix_err: { ar: 'الكود يجب أن يبدأ بـ {prefix}', en: 'Code must start with {prefix}', tr: 'Kod {prefix} ile başlamalı' },
     code_taken_err:        { ar: 'هذا الكود مستخدم بالفعل', en: 'This code is already taken', tr: 'Bu kod zaten kullanımda' },
     acc_not_found_err:     { ar: 'الحساب غير موجود', en: 'Account not found', tr: 'Hesap bulunamadı' },
+    code_company_numeric_hint: { ar: 'كود الشركات يجب أن يكون رقماً فقط بعد CO-', en: 'Company codes must be numeric after CO-', tr: 'Şirket kodu CO- sonrası sadece rakam olmalı' },
+    code_company_numeric_err:  { ar: 'كود حساب الشركات يجب أن يكون رقماً بعد CO-', en: 'Company account code must be numeric after CO-', tr: 'Şirket hesap kodu CO- sonrası sadece rakam olmalı' },
     account_created:    { ar: 'تم إنشاء الحساب', en: 'Account created', tr: 'Hesap oluşturuldu' },
     delete_account:     { ar: 'حذف الحساب', en: 'Delete Account', tr: 'Hesabı Sil' },
     delete_balance_note:{ ar: 'سيُحوَّل الرصيد تلقائياً لحساب الأرباح.', en: 'Balance will be transferred to profit account.', tr: 'Bakiye otomatik olarak kâr hesabına aktarılacak.' },
