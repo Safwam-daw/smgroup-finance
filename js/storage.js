@@ -173,6 +173,15 @@ const Storage = (() => {
     return data;
   }
 
+  // تعديل كود حساب الأرباح/الخزينة فقط (MIGRATION_V34)
+  async function renameStructuralAccountId(oldId, newId) {
+    const { data, error } = await _sb.rpc('atomic_rename_structural_account', {
+      p_old_id: oldId, p_new_id: newId
+    });
+    if (error) { console.error('atomic_rename_structural_account:', error); return { ok:false, error:'db_error' }; }
+    return data;
+  }
+
   // الخزينة = مجموع كل الأرصدة لكل العملات (شاملة الأرباح)
   // حساب الأرباح حساب عادي — رصيده يُحسب ضمن الخزينة
   async function getTreasuryTotals() {
@@ -535,17 +544,25 @@ const Storage = (() => {
     return !error;
   }
 
-  // ══ بوابة الزبون ══════════════════════════════════════
+  // ══ بوابة الزبون (MIGRATION_V34 — تحقق داخل القاعدة فقط) ══════
+  // لا نجلب جدول accounts كاملاً هنا أبداً — كان هذا يُسرّب أرصدة
+  // وPIN كل الزبائن لأي زائر لصفحة الدخول قبل أي تحقق. المقارنة
+  // الآن تتم بالكامل داخل client_login()، ولا تُعاد سوى بيانات
+  // الحساب المطابق نفسه.
   async function clientLogin(accountId, pin) {
-    const accounts = await getAccounts();
-    const hashedPin = await hashPassword(pin.trim());
-    const acc = accounts.find(a =>
-      a.id === accountId.trim() &&
-      a.client_pin === hashedPin &&
-      a.type === 'customer'
-    );
-    if (!acc) return null;
-    return acc;
+    const { data, error } = await _sb.rpc('client_login', {
+      p_account_id: accountId.trim(), p_pin: pin.trim()
+    });
+    if (error) { console.error('clientLogin:', error); return null; }
+    return (data && data.ok) ? data.account : null;
+  }
+
+  // استعادة جلسة الزبون بعد أول دخول (تحديث الصفحة) — حساب واحد
+  // فقط بلا PIN، وليس الجدول كاملاً (نفس مبدأ clientLogin أعلاه)
+  async function getClientAccount(accountId) {
+    const { data, error } = await _sb.rpc('client_get_account', { p_account_id: accountId });
+    if (error) { console.error('getClientAccount:', error); return null; }
+    return (data && data.ok) ? data.account : null;
   }
 
   async function publishClientView(accountId, publishedBy) {
@@ -817,6 +834,7 @@ const Storage = (() => {
   // عمليات مالية ذرّية (V32)
   atomicDeposit, atomicWithdraw, atomicTransfer,
   atomicReverseDeposit, atomicReverseWithdraw, atomicReverseTransfer,
+  renameStructuralAccountId,
 
   // transactions
   getTxns, saveTxn, updateTxn, deleteTxn, getTxnById, getTxnByParent,
@@ -829,7 +847,7 @@ const Storage = (() => {
   getAlertSettings, saveAlertSettings,
 
   // client portal
-  clientLogin, publishClientView, publishAllClients, regeneratePin, getClientTxns,
+  clientLogin, getClientAccount, publishClientView, publishAllClients, regeneratePin, getClientTxns,
 
   // daily snapshots
   saveDailySnapshot, getSnapshots, getSnapshotOnOrBefore,
