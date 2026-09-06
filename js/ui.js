@@ -170,6 +170,18 @@ const UI = (() => {
 
     let _debounce;
 
+    let _activeIdx = -1;
+
+    function _highlight(idx) {
+      const items = [...resBox.querySelectorAll('.s-item')];
+      if (!items.length) { _activeIdx = -1; return; }
+      _activeIdx = Math.max(0, Math.min(idx, items.length - 1));
+      items.forEach((el, i) => {
+        el.style.background = i === _activeIdx ? 'var(--gold-dim)' : '';
+      });
+      items[_activeIdx].scrollIntoView({ block: 'nearest' });
+    }
+
     async function runSearch(mode) {
       clearTimeout(_debounce);
       _debounce = setTimeout(async () => {
@@ -186,8 +198,7 @@ const UI = (() => {
            </div>`
         ).join('');
         resBox.style.display = 'block';
-        const first = resBox.querySelector('.s-item-first');
-        if (first) first.style.background = 'var(--gold-dim)';
+        _highlight(0); // العنصر الأول مُفعَّل افتراضياً كما كان سابقاً
       }, 180);
     }
 
@@ -196,10 +207,27 @@ const UI = (() => {
 
     [codeInput, nameInput].forEach(inp => {
       inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+        const visible = resBox.style.display !== 'none';
+        const items = visible ? [...resBox.querySelectorAll('.s-item')] : [];
+
+        if (e.key === 'ArrowDown' && items.length) {
           e.preventDefault();
-          const first = resBox.querySelector('.s-item');
-          if (first) selectItem(first.dataset.id, first.dataset.name);
+          _highlight(_activeIdx < 0 ? 0 : _activeIdx + 1);
+          return;
+        }
+        if (e.key === 'ArrowUp' && items.length) {
+          e.preventDefault();
+          _highlight(_activeIdx < 0 ? 0 : _activeIdx - 1);
+          return;
+        }
+        if ((e.key === 'Enter' || e.key === ' ') && items.length) {
+          e.preventDefault();
+          const chosen = items[_activeIdx >= 0 ? _activeIdx : 0];
+          if (chosen) selectItem(chosen.dataset.id, chosen.dataset.name);
+          return;
+        }
+        if (e.key === 'Escape' && visible) {
+          resBox.style.display = 'none';
         }
       });
     });
