@@ -169,6 +169,15 @@ async function printLastReceipt() {
 
 function closeOverdraft() { document.getElementById('overdraft-modal').style.display='none'; }
 
+// إنتر يؤكد السحب بالسالب، إسكيب يلغي — بدون هذا كان الموظف مضطراً
+// للنقر بالمؤشر حتى لو أنهى كل الخطوات السابقة بلوحة المفاتيح
+document.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('overdraft-modal');
+  if (modal.style.display !== 'flex') return;
+  if (e.key === 'Enter')  { e.preventDefault(); doWithdraw(true); }
+  if (e.key === 'Escape') { e.preventDefault(); closeOverdraft(); }
+});
+
 async function renderRecent() {
   const [allTxns, accounts] = await Promise.all([
     Transactions.getAll({type:'wit'}),

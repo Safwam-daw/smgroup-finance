@@ -184,6 +184,39 @@
   <button class="btn btn-primary btn-sm" onclick="openDocSettings()" data-i18n="doc_settings_section">🖨️ إعدادات الكشوفات والمطابقة</button>
 </div>
 
+<!-- إعداد حد الدين + التنبيهات الاستباقية (أدمن فقط — انتقلت من التقارير) -->
+<div class="card settings-section" id="debt-alerts-section" style="display:none;">
+  <h3 data-i18n="debt_limit_title">⚙️ إعداد حد تنبيه الديون</h3>
+  <div class="form-group" style="max-width:300px;margin-top:10px;">
+    <label data-i18n="debt_limit_lbl">حد الدين (قيمة سالبة)</label>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="number" id="debt-limit-input" value="-500" max="0" step="50" style="flex:1;">
+      <button class="btn btn-primary btn-sm" onclick="saveDebtLimit()" data-i18n="save_btn">💾 حفظ</button>
+    </div>
+  </div>
+  <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;" data-i18n="debt_limit_note">
+    أي حساب يتجاوز هذا الحد يُظهر تنبيهاً في لوحة التحكم. الافتراضي: -500
+  </p>
+
+  <h3 style="margin-top:22px;border-top:1px solid var(--border2);padding-top:18px;" data-i18n="proactive_alerts_title">🔔 التنبيهات الاستباقية</h3>
+  <div class="form-group" style="max-width:420px;margin-top:10px;">
+    <label data-i18n="treasury_min_usd_lbl">حد أدنى لرصيد الخزينة (USD) — 0 = تعطيل</label>
+    <input type="number" id="treasury-min-usd-input" value="0" min="0" step="100">
+  </div>
+  <div class="form-group" style="max-width:420px;">
+    <label data-i18n="treasury_min_eur_lbl">حد أدنى لرصيد الخزينة (EUR) — 0 = تعطيل</label>
+    <input type="number" id="treasury-min-eur-input" value="0" min="0" step="100">
+  </div>
+  <div class="form-group" style="max-width:420px;">
+    <label data-i18n="large_txn_threshold_lbl">حد "العملية الكبيرة" (بأي عملة) — 0 = تعطيل</label>
+    <input type="number" id="large-txn-threshold-input" value="0" min="0" step="100">
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="saveProactiveAlerts()" data-i18n="save_btn">💾 حفظ</button>
+  <p style="font-size:0.74rem;color:var(--text3);margin-top:10px;" data-i18n="proactive_alerts_note">
+    تنبيه انخفاض الخزينة له فترة تهدئة 4 ساعات لتفادي التكرار. تنبيه الرصيد السالب يعمل تلقائياً بدون إعداد إضافي عند السماح بتجاوز الرصيد.
+  </p>
+</div>
+
 <!-- النافذة المنبثقة -->
 <div id="doc-settings-modal" class="modal-back">
   <div class="modal-box" style="max-width:560px;">
@@ -389,6 +422,14 @@ function _updateLangBtns() {
     await loadBrandPreviews();
     await loadReconMsg();
   }
+  if (Auth.isAdmin()) {
+    document.getElementById('debt-alerts-section').style.display = 'block';
+    const s = await Storage.getAlertSettings();
+    document.getElementById('debt-limit-input').value = s.debt_limit || -500;
+    document.getElementById('treasury-min-usd-input').value = s.treasury_min_usd || 0;
+    document.getElementById('treasury-min-eur-input').value = s.treasury_min_eur || 0;
+    document.getElementById('large-txn-threshold-input').value = s.large_txn_threshold || 0;
+  }
   I18n.applyAll();
 })();
 
@@ -554,6 +595,33 @@ async function saveReconMsg() {
 
 function resetReconMsg() {
   document.getElementById('recon-msg-input').value = PrintBrand.DEFAULT_RECONCILIATION_MSG;
+}
+
+// ── حد الدين (انتقلت من reports.html) ──────────────────
+async function saveDebtLimit() {
+  const limit = parseFloat(document.getElementById('debt-limit-input').value);
+  if (isNaN(limit) || limit > 0) { UI.toast(I18n.t('debt_limit_must_be_negative'),'error'); return; }
+  UI.showLoading(true);
+  const ok = await Storage.saveAlertSettings({ debt_limit: limit, updated_by: Auth.getUser().user });
+  UI.showLoading(false);
+  if (ok) UI.toast(I18n.t('debt_limit_saved_toast'));
+  else UI.toast(I18n.t('save_error'),'error');
+}
+
+// ── التنبيهات الاستباقية (رصيد الخزينة المنخفض + العملية الكبيرة) ──
+async function saveProactiveAlerts() {
+  const tUsd = parseFloat(document.getElementById('treasury-min-usd-input').value) || 0;
+  const tEur = parseFloat(document.getElementById('treasury-min-eur-input').value) || 0;
+  const lTxn = parseFloat(document.getElementById('large-txn-threshold-input').value) || 0;
+  if (tUsd < 0 || tEur < 0 || lTxn < 0) { UI.toast(I18n.t('proactive_alerts_must_be_positive'),'error'); return; }
+  UI.showLoading(true);
+  const ok = await Storage.saveAlertSettings({
+    treasury_min_usd: tUsd, treasury_min_eur: tEur, large_txn_threshold: lTxn,
+    updated_by: Auth.getUser().user
+  });
+  UI.showLoading(false);
+  if (ok) UI.toast(I18n.t('proactive_alerts_saved_toast'));
+  else UI.toast(I18n.t('save_error'),'error');
 }
 
 function _renderBrandPreview(kind, dataUrl) {

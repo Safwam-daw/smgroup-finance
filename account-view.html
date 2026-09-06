@@ -79,6 +79,8 @@
   .bal-box.bal-zero-usd .bal-box-val{color:#a16207!important;}
   .bal-box.bal-zero-eur{background:#f3f0ff!important;border-color:#a78bfa!important;}
   .bal-box.bal-zero-eur .bal-box-val{color:#7c3aed!important;}
+  .bal-box.bal-zero-generic{background:#f5f5f5!important;border-color:#9ca3af!important;}
+  .bal-box.bal-zero-generic .bal-box-val{color:#4b5563!important;}
   table { min-width:unset!important; width:100%!important; font-size:0.79rem; }
   th  { background:#f5f0e0!important; color:#333!important; border-bottom:2px solid #c9a84c!important; }
   td  { border-bottom:1px solid #eee!important; color:#111!important; }
@@ -523,7 +525,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   document.getElementById('hero-meta').textContent =
     (acc.type==='company'? I18n.t('type_company') : I18n.t('type_customer')) + ' · ' + txns.length + ' ' + I18n.t('movement_total');
 
-  updateBalBoxes(usd, eur);
+  await updateBalBoxes(usd, eur);
   UI.updateTreasury();
 
   // إظهار أزرار الأدمن
@@ -579,22 +581,53 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
 })();
 
 // ── Bal boxes ─────────────────────────────────────────
-function updateBalBoxes(usd, eur) {
+// usd/eur تبقى كما هي (توافقاً مع الاستدعاءات القديمة)، لكن الدالة
+// الآن تجلب الحساب كاملاً وتبني بطاقة لكل عملة مفعّلة فعلياً —
+// لا الدولار واليورو فقط. أي عملة تُفعَّل لاحقاً (ليرة، ذهب، فضة...)
+// تحصل على بطاقة هنا تلقائياً بلا أي تعديل إضافي.
+async function updateBalBoxes(usd, eur) {
+  const [accounts, activeCurs] = await Promise.all([
+    Storage.getAccounts(),
+    (typeof Currency !== 'undefined') ? Currency.getActive() : Promise.resolve([{code:'USD',symbol:'$'},{code:'EUR',symbol:'€'}])
+  ]);
+  const acc = accounts.find(a => a.id === _accId) || {};
+
   const set = (boxId, valId, val, sym, zeroCls) => {
     const box = document.getElementById(boxId);
     const el  = document.getElementById(valId);
+    if (!box || !el) return;
     el.textContent = Currency.formatMoney(val, sym);
-    box.classList.remove('bal-neg','bal-pos','bal-zero-usd','bal-zero-eur');
+    box.classList.remove('bal-neg','bal-pos','bal-zero-usd','bal-zero-eur','bal-zero-generic');
     box.classList.add(val < 0 ? 'bal-neg' : val > 0 ? 'bal-pos' : zeroCls);
-    // إبقاء inline style للشاشة فوراً (الأصناف تتكفّل بالطباعة أيضاً)
-    const color = val < 0 ? 'var(--red)' : val > 0 ? 'var(--green)' : (zeroCls==='bal-zero-usd'?'var(--gold)':'var(--euro)');
-    const dim   = val < 0 ? 'var(--red-dim)' : val > 0 ? 'var(--green-dim)' : (zeroCls==='bal-zero-usd'?'var(--gold-dim2)':'var(--euro-dim)');
+    const color = val < 0 ? 'var(--red)' : val > 0 ? 'var(--green)' : (zeroCls==='bal-zero-usd'?'var(--gold)':zeroCls==='bal-zero-eur'?'var(--euro)':'var(--text2)');
+    const dim   = val < 0 ? 'var(--red-dim)' : val > 0 ? 'var(--green-dim)' : (zeroCls==='bal-zero-usd'?'var(--gold-dim2)':zeroCls==='bal-zero-eur'?'var(--euro-dim)':'var(--surface2)');
     el.style.color        = color;
     box.style.borderColor = color;
     box.style.background  = dim;
   };
-  set('box-usd','bal-usd', usd, '$', 'bal-zero-usd');
-  set('box-eur','bal-eur', eur, '€', 'bal-zero-eur');
+  set('box-usd','bal-usd', parseFloat(acc.bal_usd ?? usd ?? 0), '$', 'bal-zero-usd');
+  set('box-eur','bal-eur', parseFloat(acc.bal_eur ?? eur ?? 0), '€', 'bal-zero-eur');
+
+  // بطاقات إضافية لأي عملة مفعّلة غير USD/EUR
+  const balRow = document.getElementById('bal-row');
+  if (balRow) {
+    balRow.querySelectorAll('.bal-box-extra').forEach(el => el.remove());
+    activeCurs
+      .filter(c => c.code !== 'USD' && c.code !== 'EUR')
+      .forEach(c => {
+        const col = c.code.toLowerCase();
+        const val = parseFloat(acc['bal_' + col] || 0);
+        const box = document.createElement('div');
+        box.className = 'bal-box bal-box-extra';
+        box.id = 'box-' + col;
+        box.style.cursor = 'pointer';
+        box.onclick = () => filterByCur(col);
+        box.innerHTML = `<div class="bal-box-label">${UI.escapeHtml(c.symbol)} ${UI.escapeHtml(c.name||c.code)}</div>
+          <div class="bal-box-val" id="bal-${col}">—</div>`;
+        balRow.appendChild(box);
+        set('box-'+col, 'bal-'+col, val, c.symbol, 'bal-zero-generic');
+      });
+  }
 }
 
 // ── Quick Filters ─────────────────────────────────────
@@ -739,8 +772,9 @@ function renderPage() {
     if (t.type==='trf') {
       const oid = isFrom?t.to:t.from;
       const oa  = _allAccounts.find(a=>a.id===oid);
-      other = UI.escapeHtml(oa?oa.name:oid);
-      other = isFrom?('← '+other):('→ '+other);
+      // زبون → يُعرض بالكود فقط | شركة → يُعرض بالاسم فقط
+      const label = (oa && oa.type === 'company') ? UI.escapeHtml(oa.name) : oid;
+      other = isFrom?('← '+label):('→ '+label);
     }
     if (isDerived) {
       // نستخرج الحساب المصدر من نص الملاحظة "... من حساب <id>" (عمولة أو مرآة خزينة)
@@ -979,7 +1013,7 @@ async function confirmOp(forceOverdraft=false) {
     _allTxns = _isProfitAcc ? txns : txns.filter(x => !x.is_commission_entry);
     document.getElementById('hero-meta').textContent =
       (_accObj.type==='company'? I18n.t('type_company') : I18n.t('type_customer')) + ' · ' + txns.length + ' ' + I18n.t('movement_total');
-    updateBalBoxes(usd, eur);
+    await updateBalBoxes(usd, eur);
     await UI.updateTreasury();
     renderRows();
   } else if (result.needsConfirm) {
@@ -1257,7 +1291,7 @@ async function doDelete() {
       Storage.getBalance(_accId,'usd'),
       Storage.getBalance(_accId,'eur')
     ]);
-    updateBalBoxes(usd, eur);
+    await updateBalBoxes(usd, eur);
     await UI.updateTreasury();
     renderRows();
   } else { UI.toast(r.error,'error'); }
