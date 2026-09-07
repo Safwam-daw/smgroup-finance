@@ -156,8 +156,6 @@
           <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
             <select id="f-cur" onchange="renderRows()">
               <option value="all" data-i18n="filter_all">الكل</option>
-              <option value="usd" data-i18n="filter_usd">دولار</option>
-              <option value="eur" data-i18n="filter_eur">يورو</option>
             </select>
           </div>
           <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -263,6 +261,7 @@ function typeLabel(type) {
 (async () => {
   if (!await initApp('statement')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await Currency.refreshFilterSelect('f-cur', I18n.t('filter_all'));
   await UI.updateTreasury();
 
   // هوية الشركة في الطباعة

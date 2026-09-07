@@ -184,8 +184,6 @@
         <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
           <select id="f-cur" onchange="renderRows()">
             <option value="all" data-i18n="op_type_all">الكل</option>
-            <option value="usd" data-i18n="cur_usd_full">دولار</option>
-            <option value="eur" data-i18n="cur_eur_full">يورو</option>
           </select>
         </div>
         <div class="form-group" style="flex:1;min-width:130px;margin-bottom:0;"><label data-i18n="from_date">من تاريخ</label>
@@ -484,6 +482,7 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
 (async () => {
   if (!await initApp('account-view')) return;
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+  await Currency.refreshFilterSelect('f-cur', I18n.t('op_type_all'));
 
   // هوية الشركة في الطباعة
   document.getElementById('print-brand-name').textContent = brandName();

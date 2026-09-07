@@ -57,8 +57,6 @@ border-left:0; border-right:0; height:34px;
 <div class="form-group" style="flex:1;min-width:110px;margin-bottom:0;"><label data-i18n="filter_currency">العملة</label>
 <select id="f-cur" onchange="applyFilter()">
 <option value="all" data-i18n="filter_all">الكل</option>
-<option value="usd" data-i18n="filter_usd">دولار</option>
-<option value="eur" data-i18n="filter_eur">يورو</option>
 </select>
 </div>
 <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0;"><label data-i18n="search_account_lbl">بحث بالحساب</label>
@@ -129,6 +127,7 @@ function typeLabel(type) {
 (async () => {
 if (!await initApp('ledger')) return;
 document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
+await Currency.refreshFilterSelect('f-cur', I18n.t('filter_all'));
 await UI.updateTreasury();
 _allAccounts = await Accounts.getAll();
 UI.showLoading(true);
