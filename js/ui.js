@@ -53,7 +53,7 @@ const UI = (() => {
 
   async function updateTreasury() {
     const [totals, profit, activeCurs] = await Promise.all([
-      Storage.getTreasuryTotals(),
+      Storage.getTreasuryWithoutProfit(), // لا يشمل حساب الأرباح ولا الخزينة الفعلية — راجع الملاحظة أدناه
       Storage.getProfitBalance(),
       (typeof Currency !== 'undefined') ? Currency.getActive() : Promise.resolve([
         { code:'USD', symbol:'$' }, { code:'EUR', symbol:'€' }

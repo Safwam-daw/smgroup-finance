@@ -94,5 +94,23 @@ const Currency = (() => {
   // إعادة تعيين الـ Cache
   function invalidate() { _currencies = null; }
 
-  return { getAll, getActive, toggle, symbol, name, buildSelectOptions, refreshSelects, invalidate, formatNumber, formatMoney };
+  // تحديث select من نوع "فلتر" (به خيار "الكل" أولاً) بمعرّف محدد —
+  // لا نستخدم .currency-select هنا لأن refreshSelects() تلك تمسح
+  // أي خيار غير مرتبط بعملة (مثل "الكل") بالكامل. تُستخدم في فلاتر
+  // العملة بصفحات الحساب/دفتر اليومية/كشف الحساب.
+  async function refreshFilterSelect(selectId, allLabel = 'الكل') {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const active = await getActive();
+    const cur = sel.value || 'all';
+    sel.innerHTML = `<option value="all">${allLabel}</option>` + active.map(c =>
+      `<option value="${c.code.toLowerCase()}">${c.symbol} ${c.name} (${c.code})</option>`
+    ).join('');
+    sel.value = [...sel.options].some(o => o.value === cur) ? cur : 'all';
+  }
+
+  return {
+    getAll, getActive, toggle, symbol, name, buildSelectOptions, refreshSelects,
+    refreshFilterSelect, invalidate, formatNumber, formatMoney
+  };
 })();
