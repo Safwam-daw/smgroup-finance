@@ -52,8 +52,14 @@ const UI = (() => {
   }
 
   async function updateTreasury() {
+    // بطاقة الخزينة تعرض رصيد حساب الخزينة الفعلي نفسه (قيد مزدوج
+    // حقيقي، يتحرك مع كل إيداع/سحب لأي حساب — يشمل عائد العمولة
+    // تلقائياً، ويشمل أي سحب من حساب الأرباح أيضاً) — هذا هو
+    // "النواة"/المصدر الوحيد للحقيقة، ونفس الرقم الذي تراه بالضبط
+    // عند فتح حساب الخزينة نفسه من قائمة الحسابات. لا نستخدم أي
+    // مجموع مُشتق آخر هنا لتفادي وجود رقمين مختلفين لنفس الشيء.
     const [totals, profit, activeCurs] = await Promise.all([
-      Storage.getTreasuryWithoutProfit(), // لا يشمل حساب الأرباح ولا الخزينة الفعلية — راجع الملاحظة أدناه
+      Storage.getCashboxBalance(),
       Storage.getProfitBalance(),
       (typeof Currency !== 'undefined') ? Currency.getActive() : Promise.resolve([
         { code:'USD', symbol:'$' }, { code:'EUR', symbol:'€' }

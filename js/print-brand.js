@@ -34,7 +34,11 @@ const PrintBrand = (() => {
       ({ error } = await sb.from('print_assets').insert(payload));
     }
     if (!error) _cache = null; // إجبار إعادة الجلب بالمرة القادمة
-    return !error;
+    else console.error('PrintBrand.saveAssets:', error);
+    // نُرجع كائناً كاملاً (لا true/false فقط) ليتمكن كل زر حفظ من
+    // عرض رسالة الخطأ الحقيقية القادمة من Supabase عند الفشل، بدل
+    // "خطأ" عامة لا تكشف السبب الفعلي
+    return { ok: !error, error: error ? (error.message || String(error)) : null };
   }
 
   function invalidate() { _cache = null; }
