@@ -234,35 +234,38 @@
       <div>
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="logo_lbl">الشعار</label>
         <div class="brand-preview" id="logo-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
-        <div style="display:flex;gap:6px;margin-top:6px;">
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
             <span data-i18n="upload_btn">📤 رفع</span>
             <input type="file" accept="image/*" style="display:none;" onchange="onBrandFileChange(event,'logo')">
           </label>
           <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('logo')" data-i18n="remove_btn">🗑️</button>
         </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="saveBrandAsset('logo')" data-i18n="save_logo_btn">💾 حفظ الشعار</button>
       </div>
       <div>
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="stamp_lbl">الختم (PNG شفاف)</label>
         <div class="brand-preview checkered" id="stamp-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
-        <div style="display:flex;gap:6px;margin-top:6px;">
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
             <span data-i18n="upload_btn">📤 رفع</span>
             <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'stamp')">
           </label>
           <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('stamp')" data-i18n="remove_btn">🗑️</button>
         </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="saveBrandAsset('stamp')" data-i18n="save_stamp_btn">💾 حفظ الختم</button>
       </div>
       <div>
         <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px;" data-i18n="signature_lbl">التوقيع (PNG شفاف)</label>
         <div class="brand-preview checkered" id="signature-preview" style="height:80px;"><span data-i18n="no_image">لا توجد صورة</span></div>
-        <div style="display:flex;gap:6px;margin-top:6px;">
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;flex:1;text-align:center;padding:5px;">
             <span data-i18n="upload_btn">📤 رفع</span>
             <input type="file" accept="image/png" style="display:none;" onchange="onBrandFileChange(event,'signature')">
           </label>
           <button class="btn btn-ghost btn-sm" style="padding:5px 9px;" onclick="removeBrandAsset('signature')" data-i18n="remove_btn">🗑️</button>
         </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="saveBrandAsset('signature')" data-i18n="save_signature_btn">💾 حفظ التوقيع</button>
       </div>
     </div>
 
@@ -284,7 +287,7 @@
 
     <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:flex-end;">
       <button class="btn btn-ghost btn-sm" onclick="resetReconMsg()" data-i18n="reset_default_btn">↺ استعادة الافتراضي</button>
-      <button class="btn btn-primary btn-sm" onclick="saveDocSettings()" data-i18n="save_btn2">💾 حفظ الكل</button>
+      <button class="btn btn-primary btn-sm" onclick="saveReconMsg()" data-i18n="save_recon_btn">💾 حفظ رسالة المطابقة</button>
     </div>
   </div>
 </div>
@@ -563,15 +566,13 @@ async function doImport() {
 
 // ── الشعار / الختم / التوقيع ─────────────────────────────
 const _BRAND_MAX_BYTES = 500 * 1024; // 500KB لكل صورة
+const _pendingBrand = {}; // { logo: dataUrl|null, stamp:..., signature:... } — قبل الضغط على حفظ
 
 function openDocSettings() {
   document.getElementById('doc-settings-modal').classList.add('open');
 }
 function closeDocSettings() {
   document.getElementById('doc-settings-modal').classList.remove('open');
-}
-async function saveDocSettings() {
-  await saveReconMsg();
 }
 
 async function loadBrandPreviews() {
@@ -588,9 +589,13 @@ async function loadReconMsg() {
 async function saveReconMsg() {
   const text = document.getElementById('recon-msg-input').value;
   UI.showLoading(true);
-  const ok = await PrintBrand.saveReconciliationTemplate(text);
+  const result = await PrintBrand.saveReconciliationTemplate(text);
   UI.showLoading(false);
-  UI.toast(ok ? (I18n.t('save_ok')||'تم الحفظ') : (I18n.t('generic_error')||'خطأ في الحفظ'), ok?undefined:'error');
+  if (result.ok) {
+    UI.toast(I18n.t('save_ok') || 'تم الحفظ');
+  } else {
+    UI.toast(((I18n.t('generic_error')||'خطأ في الحفظ')) + ' — ' + (result.error || ''), 'error');
+  }
 }
 
 function resetReconMsg() {
@@ -632,6 +637,8 @@ function _renderBrandPreview(kind, dataUrl) {
     : `<span data-i18n="no_image">${I18n.t('no_image')}</span>`;
 }
 
+// اختيار الملف يعرضه فوراً كمعاينة فقط — لا حفظ تلقائي. الحفظ
+// الفعلي الآن حصراً بالضغط على زر "حفظ" الخاص بكل عنصر (saveBrandAsset)
 function onBrandFileChange(event, kind) {
   const file = event.target.files[0];
   event.target.value = ''; // يسمح برفع نفس الملف مرة أخرى لاحقاً
@@ -647,36 +654,50 @@ function onBrandFileChange(event, kind) {
   }
 
   const reader = new FileReader();
-  reader.onload = async () => {
-    UI.showLoading(true);
-    const ok = await PrintBrand.saveAssets({
-      [kind + '_data']: reader.result,
-      updated_by: Auth.getUser().user
-    });
-    UI.showLoading(false);
-    if (ok) {
-      _renderBrandPreview(kind, reader.result);
-      UI.toast(I18n.t('brand_saved_toast'));
-    } else {
-      UI.toast(I18n.t('save_error'), 'error');
-    }
+  reader.onload = () => {
+    _pendingBrand[kind] = reader.result;
+    _renderBrandPreview(kind, reader.result);
+    UI.toast(I18n.t('brand_preview_pending_toast') || 'تم اختيار الصورة — اضغط "حفظ" لتثبيتها');
   };
   reader.onerror = () => UI.toast(I18n.t('save_error'), 'error');
   reader.readAsDataURL(file);
 }
 
+// الحفظ الفعلي — زر مستقل لكل عنصر (شعار/ختم/توقيع)
+async function saveBrandAsset(kind) {
+  if (!(kind in _pendingBrand)) {
+    UI.toast(I18n.t('brand_nothing_to_save_toast') || 'اختر صورة أولاً قبل الحفظ', 'error');
+    return;
+  }
+  UI.showLoading(true);
+  const result = await PrintBrand.saveAssets({
+    [kind + '_data']: _pendingBrand[kind],
+    updated_by: Auth.getUser().user
+  });
+  UI.showLoading(false);
+  if (result.ok) {
+    delete _pendingBrand[kind];
+    UI.toast(I18n.t('brand_saved_toast') || 'تم الحفظ');
+  } else {
+    // رسالة الخطأ الحقيقية القادمة من القاعدة، لا "خطأ" عامة —
+    // تساعد على تشخيص السبب الفعلي مباشرة (401/RLS/عمود ناقص...)
+    UI.toast((I18n.t('save_error')||'خطأ في الحفظ') + ' — ' + (result.error || ''), 'error');
+  }
+}
+
 async function removeBrandAsset(kind) {
   UI.showLoading(true);
-  const ok = await PrintBrand.saveAssets({
+  const result = await PrintBrand.saveAssets({
     [kind + '_data']: null,
     updated_by: Auth.getUser().user
   });
   UI.showLoading(false);
-  if (ok) {
+  if (result.ok) {
+    delete _pendingBrand[kind];
     _renderBrandPreview(kind, null);
     UI.toast(I18n.t('brand_removed_toast'));
   } else {
-    UI.toast(I18n.t('save_error'), 'error');
+    UI.toast((I18n.t('save_error')||'خطأ في الحفظ') + ' — ' + (result.error || ''), 'error');
   }
 }
 
