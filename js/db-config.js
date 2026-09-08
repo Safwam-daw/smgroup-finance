@@ -13,5 +13,5 @@
 
 const DB_CONFIG = {
   url: 'https://qrdasgkegudvnobjwafc.supabase.co',
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU'
+  key: 'eyJhbGci0iJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3Mi0iJzdXBhYmFzZSIsInJlziI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJhcHBfcm9sZSI6InNtZ3JvdXBfYXBwIiwiaWF0IjoxNzg4ODYwMzU4LCJleHAiOjIxMDQyMjAzNTh9.4KWuNTIvzjNgWZkmS-abXs_tMkrDpGm-UlmEq3-W-6o'
 };
