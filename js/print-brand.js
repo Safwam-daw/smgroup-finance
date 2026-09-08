@@ -11,13 +11,19 @@ const PrintBrand = (() => {
   let _cache = null; // { logo_data, stamp_data, signature_data }
 
   function _sb() {
-    return supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+    return supabase.createClient(DB_CONFIG.url, DB_CONFIG.key, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${DB_CONFIG.appToken}`
+        }
+      }
+    });
   }
 
   async function getAssets() {
     if (_cache) return _cache;
     try {
-      const { data } = await _sb().from('print_assets').select('*').single();
+      const { data } = await _sb().from('print_assets').select('*').maybeSingle();
       _cache = data || {};
     } catch (e) { _cache = {}; }
     return _cache;
@@ -25,7 +31,7 @@ const PrintBrand = (() => {
 
   async function saveAssets(fields) {
     const sb = _sb();
-    const { data: ex } = await sb.from('print_assets').select('id').single();
+    const { data: ex } = await sb.from('print_assets').select('id').maybeSingle();
     let error;
     const payload = { ...fields, updated_at: new Date().toISOString() };
     if (ex) {

@@ -17,7 +17,13 @@ const SUPABASE_URL = DB_CONFIG.url;
 // 5. شغّل MIGRATION_V13.sql في SQL Editor
 // ════════════════════════════════════════════════════════════
 const SUPABASE_KEY = DB_CONFIG.key;
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: {
+    headers: {
+      Authorization: `Bearer ${DB_CONFIG.appToken}`
+    }
+  }
+});
 window._sb = _sb;
 
 const Storage = (() => {
