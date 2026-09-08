@@ -11,13 +11,7 @@ const PrintBrand = (() => {
   let _cache = null; // { logo_data, stamp_data, signature_data }
 
   function _sb() {
-    return supabase.createClient(DB_CONFIG.url, DB_CONFIG.key, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${DB_CONFIG.appToken}`
-        }
-      }
-    });
+    return supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
   }
 
   async function getAssets() {
