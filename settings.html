@@ -278,6 +278,7 @@
       <span class="tag-chip" title="اسم الحساب">{account_name}</span>
       <span class="tag-chip" title="كود الحساب">{account_code}</span>
       <span class="tag-chip" title="تاريخ ووقت المطابقة">{date}</span>
+      <span class="tag-chip" title="كل أرصدة العملات المفعّلة (سطر لكل عملة)">{balances_block}</span>
       <span class="tag-chip" title="رصيد الدولار الحالي">{balance_usd}</span>
       <span class="tag-chip" title="رصيد اليورو الحالي">{balance_eur}</span>
     </div>
@@ -583,7 +584,7 @@ async function loadBrandPreviews() {
 }
 
 async function loadReconMsg() {
-  document.getElementById('recon-msg-input').value = await PrintBrand.getReconciliationTemplate();
+  document.getElementById('recon-msg-input').value = await PrintBrand.getReconciliationTemplate(I18n.getLang());
 }
 
 async function saveReconMsg() {
@@ -599,7 +600,9 @@ async function saveReconMsg() {
 }
 
 function resetReconMsg() {
-  document.getElementById('recon-msg-input').value = PrintBrand.DEFAULT_RECONCILIATION_MSG;
+  const lang = I18n.getLang();
+  document.getElementById('recon-msg-input').value =
+    PrintBrand.DEFAULT_RECONCILIATION_MSG[lang] || PrintBrand.DEFAULT_RECONCILIATION_MSG.ar;
 }
 
 // ── حد الدين (انتقلت من reports.html) ──────────────────

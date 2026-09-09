@@ -202,24 +202,33 @@ const box = document.getElementById('ledger-balance');
 if (!dateStr) { box.innerHTML = ''; return; }
 
 const dayTxns = _dayTxns(dateStr);
-let dep = {usd:0, eur:0}, wit = {usd:0, eur:0};
+// dep/wit ديناميكية: مفتاح لكل عملة تظهر فعلياً في حركات اليوم، بدل usd/eur ثابتين
+const dep = {}, wit = {};
 dayTxns.forEach(tx => {
-if (tx.type==='dep') dep[(tx.cur||'').toLowerCase()] += parseFloat(tx.amt);
-if (tx.type==='wit') wit[(tx.cur||'').toLowerCase()] += parseFloat(tx.amt);
+const c = (tx.cur||'').toLowerCase();
+if (!c) return;
+if (tx.type==='dep') dep[c] = (dep[c]||0) + parseFloat(tx.amt);
+if (tx.type==='wit') wit[c] = (wit[c]||0) + parseFloat(tx.amt);
 });
 
 const snap = await Storage.getSnapshotOnOrBefore(dateStr);
 const hasOpen = !!snap;
-const openUsd = hasOpen ? parseFloat(snap.treasury_usd||0) : 0;
-const openEur = hasOpen ? parseFloat(snap.treasury_eur||0) : 0;
-const closeUsd = openUsd + dep.usd - wit.usd;
-const closeEur = openEur + dep.eur - wit.eur;
+const activeCurrencies = await Currency.getActive();
 
-const row = (label, usdVal, eurVal, color) => `
+const lines = activeCurrencies.map(cur => {
+const code = cur.code.toLowerCase();
+const open  = hasOpen ? parseFloat(snap['treasury_' + code] || 0) : 0;
+const close = open + (dep[code]||0) - (wit[code]||0);
+return { symbol: cur.symbol, open, close };
+});
+
+const symbolsLine = vals => vals.map(v => Currency.formatMoney(v.val, v.symbol)).join(' &nbsp;|&nbsp; ');
+
+const row = (label, vals, color) => `
 <div style="text-align:center;padding:8px 0;border-bottom:1px solid var(--border2);">
 <div style="font-size:0.72rem;color:var(--text3);">${label}</div>
 <div style="font-weight:700;color:${color||'var(--text)'};font-size:0.95rem;margin-top:3px;">
-${Currency.formatMoney(usdVal,'$')} &nbsp;|&nbsp; ${Currency.formatMoney(eurVal,'€')}
+${symbolsLine(vals)}
 </div>
 </div>`;
 
@@ -227,11 +236,11 @@ box.innerHTML = `
 <div style="font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--gold);text-align:center;">
 ⚖️ ${t('daily_balance_title')}
 </div>
-${row(t('opening_balance'), openUsd, openEur)}
+${row(t('opening_balance'), lines.map(l => ({val:l.open, symbol:l.symbol})))}
 <div style="text-align:center;padding:14px 0 4px;">
 <div style="font-size:0.78rem;color:var(--text3);">${t('closing_balance')}</div>
 <div style="font-weight:700;color:var(--gold);font-size:1.25rem;margin-top:4px;">
-${Currency.formatMoney(closeUsd,'$')} &nbsp;|&nbsp; ${Currency.formatMoney(closeEur,'€')}
+${symbolsLine(lines.map(l => ({val:l.close, symbol:l.symbol})))}
 </div>
 </div>
 ${!hasOpen ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:8px;">

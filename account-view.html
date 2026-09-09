@@ -688,26 +688,37 @@ function renderRows() {
 }
 
 async function copyReconMsg() {
-  const template = await PrintBrand.getReconciliationTemplate();
+  const lang = I18n.getLang();
+  const template = await PrintBrand.getReconciliationTemplate(lang);
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
   const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} — ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const [balUsd, balEur] = await Promise.all([
-    Storage.getBalance(_accId, 'usd'),
-    Storage.getBalance(_accId, 'eur')
-  ]);
+
+  // ديناميكي: كل عملة مفعّلة حالياً، بدل usd/eur ثابتين
+  const activeCurrencies = await Currency.getActive();
+  const balances = await Promise.all(activeCurrencies.map(async cur => ({
+    code: cur.code,
+    symbol: cur.symbol,
+    value: parseFloat(await Storage.getBalance(_accId, cur.code) || 0)
+  })));
+  const balancesBlock = PrintBrand.buildBalancesBlock(balances, lang);
+
+  // fallback لأي قالب مخصص قديم لا يزال يستخدم {balance_usd}/{balance_eur} تحديداً
   const fmtBal = v => {
     const n = parseFloat(v||0);
     if (n === 0) return '0.00';
     return n < 0 ? `لنا ${Math.abs(n).toFixed(2)}` : `لكم ${n.toFixed(2)}`;
   };
+  const findVal = code => balances.find(b => b.code.toLowerCase() === code)?.value || 0;
+
   const msg = PrintBrand.fillTemplate(template, {
     company_name: brandName(),
     account_name: _accObj.name,
     account_code: _accObj.id,
     date: dateStr,
-    balance_usd: fmtBal(balUsd),
-    balance_eur: fmtBal(balEur)
+    balances_block: balancesBlock,
+    balance_usd: fmtBal(findVal('usd')),
+    balance_eur: fmtBal(findVal('eur'))
   });
   try {
     await navigator.clipboard.writeText(msg);
