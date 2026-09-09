@@ -17,6 +17,25 @@
   --euro:#a78bfa;--euro-dim:rgba(167,139,250,0.12);
   --radius:12px;--radius-sm:8px;
 }
+/* ══ LIGHT MODE (نفس لوحة الألوان المستخدمة في التطبيق الرئيسي) ══ */
+[data-theme="light"] {
+  --gold:#b8860b;--gold-light:#d4a017;--gold-dim:rgba(184,134,11,0.12);--gold-dim2:rgba(184,134,11,0.06);
+  --bg:#f4f6fa;--surface:#ffffff;--surface2:#f0f2f7;--surface3:#e8ebf2;
+  --border:#d8dde8;--border2:#c8cdd8;
+  --text:#1a2035;--text2:#4a5568;--text3:#8a9bb5;
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.1);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.1);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,0.1);
+  --euro:#7c3aed;--euro-dim:rgba(124,58,237,0.1);
+}
+[data-theme="light"] select option { background:var(--surface); color:var(--text); }
+[data-theme="light"] th { background:var(--surface2); color:var(--text2); }
+[data-theme="light"] td { color:var(--text); }
+/* زر تبديل الوضع */
+.theme-toggle-btn{background:none;border:1px solid var(--border2);border-radius:8px;width:34px;height:34px;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;
+  color:var(--text2);transition:background .2s;}
+.theme-toggle-btn:hover{background:var(--surface2);}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;}
 /* ── Login ── */
@@ -179,6 +198,11 @@ tr:last-child td{border-bottom:none;}
 </head>
 <body>
 <div id="toast"></div>
+
+<button type="button" class="theme-toggle-btn" id="theme-toggle-btn" onclick="clientToggleTheme()"
+  style="position:fixed;top:16px;left:16px;z-index:50;" title="">
+  <span id="theme-toggle-icon">☀️</span>
+</button>
 
 <!-- شاشة الدخول -->
 <div id="login-screen">
@@ -411,6 +435,19 @@ const ClientI18n = (() => {
 </script>
 <script>
 const PAGE_SIZE = 20;
+
+// ── الوضع الداكن/الساطع (نفس مفتاح localStorage المستخدم في التطبيق الرئيسي) ──
+function clientApplyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+  localStorage.setItem('smg_theme', theme);
+  const icon = document.getElementById('theme-toggle-icon');
+  if (icon) icon.textContent = theme === 'light' ? '☀️' : '🌕';
+}
+function clientToggleTheme() {
+  const current = localStorage.getItem('smg_theme') || 'dark';
+  clientApplyTheme(current === 'dark' ? 'light' : 'dark');
+}
+clientApplyTheme(localStorage.getItem('smg_theme') || 'dark');
 
 // ── تطبيق هوية الشركة ───────────────────────────────────
 (() => {

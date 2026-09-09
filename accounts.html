@@ -104,6 +104,9 @@
             <option value="created" data-i18n="sort_created">تاريخ الإنشاء</option>
           </select>
         </div>
+        <div class="form-group" style="margin-bottom:0;align-self:flex-end;">
+          <button class="btn btn-ghost btn-sm" onclick="checkAllBalances()" data-i18n="check_all_bal_btn_lbl">🔍 فحص جميع الأرصدة</button>
+        </div>
       </div>
     </div>
 
@@ -132,6 +135,20 @@
       <div class="pagination no-print" id="acc-pages"></div>
     </div>
   </main>
+</div>
+
+<!-- فحص جميع الأرصدة -->
+<div id="check-all-modal" class="modal-back">
+  <div class="modal-box" style="max-width:520px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin-bottom:0;" data-i18n="check_all_balance_title">🔍 فحص تطابق الأرصدة — النظام كامل</h3>
+      <button onclick="document.getElementById('check-all-modal').classList.remove('open')"
+        style="background:none;border:none;color:var(--text2);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="check-all-result" style="font-size:0.85rem;line-height:2;max-height:60vh;overflow-y:auto;" data-i18n="checking_lbl">
+      جاري الفحص…
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -346,6 +363,77 @@ function goPage(p) {
   const t = Math.ceil(_filtered.length / PAGE_SIZE) || 1;
   if (p < 1 || p > t) return;
   _page = p; renderPage();
+}
+
+// ── فحص جميع الأرصدة (نظام كامل) ──────────────────────────
+// نفس منطق checkBalance() في account-view.html، لكن على كل الحسابات
+// دفعة واحدة بدل حساب واحد — يجلب كل الحركات مرة واحدة ويوزّعها
+// محلياً بدل استعلام منفصل لكل حساب.
+async function checkAllBalances() {
+  document.getElementById('check-all-modal').classList.add('open');
+  const resultEl = document.getElementById('check-all-result');
+  resultEl.innerHTML = I18n.t('checking_bal') || 'جاري الفحص…';
+
+  const [accounts, allTxns] = await Promise.all([
+    Storage.getAccounts(),
+    Storage.getTxns({})
+  ]);
+  const currencies = ['usd','eur','try','gbp','sar','aed','egp','jod','kwd','qar','mad','lyd'];
+
+  const calcByAcc = {};
+  accounts.forEach(a => { calcByAcc[a.id] = {}; currencies.forEach(c => calcByAcc[a.id][c] = 0); });
+
+  allTxns.forEach(t => {
+    if (t.is_commission_entry) return; // تجاهل حركات العمولة (هي انعكاس فقط)
+    const cur = (t.cur||'usd').toLowerCase();
+    const amt = parseFloat(t.amt||0);
+    const commission = parseFloat(t.commission_amt||0);
+    const rate = parseFloat(t.rate||1);
+
+    if (t.type === 'dep' && calcByAcc[t.acc]) {
+      calcByAcc[t.acc][cur] += (amt - commission);
+    } else if (t.type === 'wit' && calcByAcc[t.acc]) {
+      calcByAcc[t.acc][cur] -= amt;
+    } else if (t.type === 'trf') {
+      if (calcByAcc[t.from]) calcByAcc[t.from][cur] -= amt;
+      if (calcByAcc[t.to]) {
+        const gross = parseFloat((amt * rate).toFixed(6));
+        calcByAcc[t.to][cur] += (gross - commission);
+      }
+    }
+  });
+
+  const mismatches = [];
+  accounts.forEach(acc => {
+    currencies.forEach(cur => {
+      const stored = parseFloat(acc['bal_'+cur]||0);
+      const calc   = parseFloat((calcByAcc[acc.id]?.[cur]||0).toFixed(6));
+      if (stored === 0 && calc === 0) return; // تجاهل العملات الفارغة
+      const diff = parseFloat((stored - calc).toFixed(6));
+      if (Math.abs(diff) >= 0.01) mismatches.push({ id: acc.id, name: acc.name, cur, diff });
+    });
+  });
+
+  if (!mismatches.length) {
+    resultEl.innerHTML = `<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:8px;padding:12px 14px;color:var(--green);font-weight:700;text-align:center;">
+      ${I18n.t('bal_match') || '✅ جميع الأرصدة متطابقة'}
+    </div>`;
+    return;
+  }
+
+  let html = `<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:var(--red);font-weight:700;">
+    ${I18n.t('bal_mismatch') || '⚠️ يوجد فرق في الأرصدة'} (${mismatches.length})
+  </div>`;
+  mismatches.forEach(m => {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:8px;margin-bottom:6px;background:var(--red-dim);
+      border:1px solid var(--red);cursor:pointer;" onclick="navTo('account-view.html?id=${m.id}')">
+      <span style="font-weight:700;">${m.name} <span style="color:var(--text3);font-weight:400;">(${m.id})</span></span>
+      <span style="font-size:0.78rem;">${m.cur.toUpperCase()}</span>
+      <span style="font-weight:700;color:var(--red);">${I18n.t('bal_diff_lbl') || 'فرق'}: ${Currency.formatNumber(m.diff)}</span>
+    </div>`;
+  });
+  resultEl.innerHTML = html;
 }
 </script>
 </body>

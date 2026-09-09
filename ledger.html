@@ -286,9 +286,13 @@ let accStr;
 if (t.type==='trf') {
 const fa=_allAccounts.find(x=>x.id===t.from);
 const ta=_allAccounts.find(x=>x.id===t.to);
-accStr=`<span style="color:var(--text2);">${UI.escapeHtml(fa?.name||t.from)}</span>
+accStr=`<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.72rem;"
+onclick="navTo('statement.html?acc=${UI.escapeHtml(t.from||'')}')"
+>${UI.escapeHtml(fa?.name||t.from||'—')}</button>
 <span style="color:var(--text3);"> ← </span>
-<span style="color:var(--text2);">${UI.escapeHtml(ta?.name||t.to)}</span>`;
+<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.72rem;"
+onclick="navTo('statement.html?acc=${UI.escapeHtml(t.to||'')}')"
+>${UI.escapeHtml(ta?.name||t.to||'—')}</button>`;
 } else {
 const a=_allAccounts.find(x=>x.id===t.acc);
 accStr=`<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:0.72rem;"

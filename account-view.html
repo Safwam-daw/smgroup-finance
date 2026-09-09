@@ -694,13 +694,20 @@ async function copyReconMsg() {
   const pad = n => String(n).padStart(2,'0');
   const dateStr = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} — ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  // ديناميكي: كل عملة مفعّلة حالياً، بدل usd/eur ثابتين
+  // ديناميكي: كل عملة مفعّلة حالياً — لكن العملات غير USD/EUR تُستثنى
+  // من الرسالة إن لم يكن لها أي حركة سابقة ولا رصيد حالي لهذا الحساب،
+  // حتى لا تُرسَل رسالة مطابقة مزدحمة بعملات لا تتعامل بها الشركة أصلاً.
+  // USD وEUR يظهران دائماً بغض النظر عن ذلك.
+  const ALWAYS_SHOW = ['usd', 'eur'];
   const activeCurrencies = await Currency.getActive();
-  const balances = await Promise.all(activeCurrencies.map(async cur => ({
-    code: cur.code,
-    symbol: cur.symbol,
-    value: parseFloat(await Storage.getBalance(_accId, cur.code) || 0)
-  })));
+  const balances = [];
+  for (const cur of activeCurrencies) {
+    const code = cur.code.toLowerCase();
+    const value = parseFloat(await Storage.getBalance(_accId, cur.code) || 0);
+    const hasTxn = _allTxns.some(tx => (tx.cur||'').toLowerCase() === code);
+    if (!ALWAYS_SHOW.includes(code) && value === 0 && !hasTxn) continue;
+    balances.push({ code: cur.code, symbol: cur.symbol, value });
+  }
   const balancesBlock = PrintBrand.buildBalancesBlock(balances, lang);
 
   // fallback لأي قالب مخصص قديم لا يزال يستخدم {balance_usd}/{balance_eur} تحديداً
