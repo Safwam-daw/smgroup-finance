@@ -171,18 +171,32 @@ Lütfen yukarıdaki bakiyeleri kontrol edip onaylayınız.
     tr: { owe_them: 'borcunuz', owe_us: 'alacağınız' }
   };
 
-  function _fmtBalWord(n, lang) {
+  function _fmtBalWord(n, lang, formatAmount) {
     const words = _BAL_WORDS[lang] || _BAL_WORDS.ar;
-    if (n === 0) return '0.00';
-    return n < 0 ? `${words.owe_us} ${Math.abs(n).toFixed(2)}` : `${words.owe_them} ${n.toFixed(2)}`;
+    const fmt = formatAmount || (v => v.toFixed(2));
+    if (n === 0) return fmt(0);
+    return n < 0 ? `${words.owe_us} ${fmt(Math.abs(n))}` : `${words.owe_them} ${fmt(n)}`;
+  }
+
+  // الذهب/الفضة تُخزَّن بالجرام (وليس بقيمة نقدية) — يُعرض بالكيلوغرام
+  // تلقائياً إذا بلغت الكمية 1000 جرام فأكثر (1000 جرام = 1 كيلو)
+  function _fmtGramsAmount(v) {
+    return v >= 1000 ? (v/1000).toFixed(2) + ' kg' : v.toFixed(2) + ' g';
   }
 
   // يبني سطر أرصدة ديناميكي لكل عملة مفعّلة حالياً (بدل usd/eur فقط)
   // balances: [{ code, symbol, value }]
   function buildBalancesBlock(balances, lang) {
-    const emoji = { usd: '💵', eur: '💶', try: '💴', gbp: '💷' };
+    const emoji = { usd: '💵', eur: '💶', try: '💴', gbp: '💷', gold: '🥇', silver: '🥈' };
+    // رموز البورصة المتعارفة للمعادن — تختلف عن code الداخلي (GOLD/SILVER)
+    // المستخدم فقط لربط عمود bal_gold/bal_silver في قاعدة البيانات
+    const TRADE_SYMBOL = { gold: 'XAU', silver: 'XAG' };
     return balances.map(b => {
-      const icon = emoji[b.code.toLowerCase()] || '💰';
+      const codeLower = b.code.toLowerCase();
+      const icon = emoji[codeLower] || '💰';
+      if (TRADE_SYMBOL[codeLower]) {
+        return `${icon} ${TRADE_SYMBOL[codeLower]}: ${_fmtBalWord(b.value, lang, _fmtGramsAmount)}`;
+      }
       return `${icon} ${b.code.toUpperCase()}: ${_fmtBalWord(b.value, lang)}${b.symbol}`;
     }).join('\n\n');
   }

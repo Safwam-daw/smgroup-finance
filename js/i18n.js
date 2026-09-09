@@ -556,6 +556,8 @@ const I18n = (() => {
     delete_acc_btn_lbl: { ar: '🗑️ حذف الحساب', en: '🗑️ Delete Account', tr: '🗑️ Hesabı Sil' },
     publish_stmt_btn:   { ar: '📤 نشر الكشف', en: '📤 Publish Statement', tr: '📤 Özeti Yayınla' },
     check_bal_btn_lbl:  { ar: '🔍 فحص الرصيد', en: '🔍 Check Balance', tr: '🔍 Bakiyeyi Kontrol Et' },
+    check_all_bal_btn_lbl: { ar: '🔍 فحص جميع الأرصدة', en: '🔍 Check All Balances', tr: '🔍 Tüm Bakiyeleri Kontrol Et' },
+    check_all_balance_title: { ar: '🔍 فحص تطابق الأرصدة — النظام كامل', en: '🔍 Balance Match Check — Whole System', tr: '🔍 Bakiye Eşleşme Kontrolü — Tüm Sistem' },
     recon_btn_lbl:      { ar: '🔄 مطابقة', en: '🔄 Reconcile', tr: '🔄 Mutabakat' },
     recon_copied:       { ar: '✅ تم نسخ رسالة المطابقة', en: '✅ Reconciliation message copied', tr: '✅ Mutabakat mesajı kopyalandı' },
     export_excel_btn:   { ar: '📊 Excel', en: '📊 Excel', tr: '📊 Excel' },
