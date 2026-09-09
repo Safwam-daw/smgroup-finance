@@ -651,31 +651,43 @@ const Storage = (() => {
     const customers = accounts.filter(a => a.type === 'customer');
     const companies = accounts.filter(a => a.type === 'company');
 
-    // حساب الخزينة بدون الأرباح ولا حساب الخزينة الفعلي (القيد المزدوج)
-    // — هذا المجموع يمثّل أرصدة الزبائن/الشركات فقط، وليس النقد الفعلي
-    let tUsd = 0, tEur = 0;
-    accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID).forEach(a => {
-      tUsd += parseFloat(a.bal_usd || 0);
-      tEur += parseFloat(a.bal_eur || 0);
-    });
-
     const nonStructural = a => a.id !== CONFIG.PROFIT_ACCOUNT_ID && a.id !== CONFIG.TREASURY_ACCOUNT_ID;
-    const debtors   = accounts.filter(a => nonStructural(a) && (parseFloat(a.bal_usd||0) < 0 || parseFloat(a.bal_eur||0) < 0)).length;
-    const creditors = accounts.filter(a => nonStructural(a) && (parseFloat(a.bal_usd||0) > 0 || parseFloat(a.bal_eur||0) > 0)).length;
+    const structuralAccounts = accounts.filter(nonStructural);
 
-    await _sb.from('daily_snapshots').insert({
-      snapshot_date:   today,
-      treasury_usd:    parseFloat(tUsd.toFixed(2)),
-      treasury_eur:    parseFloat(tEur.toFixed(2)),
-      profit_usd:      parseFloat(profit?.bal_usd || 0),
-      profit_eur:      parseFloat(profit?.bal_eur || 0),
-      total_accounts:  accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).length,
-      total_customers: customers.length,
-      total_companies: companies.length,
-      total_txns:      txns.length,
-      total_debtors:   debtors,
-      total_creditors: creditors
+    // حساب الخزينة بدون الأرباح ولا حساب الخزينة الفعلي (القيد المزدوج)
+    // — هذا المجموع يمثّل أرصدة الزبائن/الشركات فقط، وليس النقد الفعلي.
+    // يُحسب ديناميكياً لكل عملة مفعّلة (وليس USD/EUR فقط)، حتى تُحفظ لقطة
+    // كاملة صالحة لصف المطابقة اليومي في ledger.html لأي عملة تُفعَّل لاحقاً.
+    const activeCurrencies = await Currency.getActive();
+    const snapshotRow = { snapshot_date: today };
+    let debtors = 0, creditors = 0;
+    const seenDebtor = {}, seenCreditor = {};
+
+    activeCurrencies.forEach(cur => {
+      const code = cur.code.toLowerCase();
+      const col = 'bal_' + code;
+      let total = 0;
+      structuralAccounts.forEach(a => {
+        const v = parseFloat(a[col] || 0);
+        total += v;
+        if (v < 0) seenDebtor[a.id] = true;
+        if (v > 0) seenCreditor[a.id] = true;
+      });
+      snapshotRow['treasury_' + code] = parseFloat(total.toFixed(2));
     });
+    debtors   = Object.keys(seenDebtor).length;
+    creditors = Object.keys(seenCreditor).length;
+
+    snapshotRow.profit_usd      = parseFloat(profit?.bal_usd || 0);
+    snapshotRow.profit_eur      = parseFloat(profit?.bal_eur || 0);
+    snapshotRow.total_accounts  = accounts.filter(a => a.id !== CONFIG.PROFIT_ACCOUNT_ID).length;
+    snapshotRow.total_customers = customers.length;
+    snapshotRow.total_companies = companies.length;
+    snapshotRow.total_txns      = txns.length;
+    snapshotRow.total_debtors   = debtors;
+    snapshotRow.total_creditors = creditors;
+
+    await _sb.from('daily_snapshots').insert(snapshotRow);
 
     console.log('✅ تم حفظ السجل اليومي:', today);
   }

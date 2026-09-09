@@ -107,7 +107,13 @@ const PrintBrand = (() => {
   }
 
   // ── رسالة مطابقة الأرصدة ──────────────────────────────────
-const DEFAULT_RECONCILIATION_MSG =
+  // قالب لكل لغة مدعومة (ar/en/tr) بدل نص عربي ثابت واحد.
+  // {balances_block} عنصر نائب ديناميكي: سطر واحد لكل عملة مفعّلة
+  // حالياً (يُبنى في fillReconciliationBalances أدناه)، بدل
+  // {balance_usd}/{balance_eur} الثابتين سابقاً — يبقيان مدعومين
+  // أيضاً لأي قالب مخصص قديم حفظه المستخدم يستخدمهما تحديداً.
+  const DEFAULT_RECONCILIATION_MSG = {
+    ar:
 `*📊 كشف مطابقة أرصدة*
 *{company_name}*
 
@@ -117,18 +123,74 @@ const DEFAULT_RECONCILIATION_MSG =
 
 ━━━━━━━━━━━━━━━
 
-💵 دولار (USD): {balance_usd}$
-
-💶 يورو (EUR): {balance_eur}€
+{balances_block}
 
 ━━━━━━━━━━━━━━━
 
 يُرجى مراجعة الأرصدة أعلاه والرد بالتأكيد.
-شاكرين لكم حسن تعاونكم 🙏`;
+شاكرين لكم حسن تعاونكم 🙏`,
+    en:
+`*📊 Balance Reconciliation Statement*
+*{company_name}*
 
-  async function getReconciliationTemplate() {
+🏦 Account: {account_name}
+🔖 Code: {account_code}
+🕐 Date: {date}
+
+━━━━━━━━━━━━━━━
+
+{balances_block}
+
+━━━━━━━━━━━━━━━
+
+Please review the balances above and reply to confirm.
+Thank you for your cooperation 🙏`,
+    tr:
+`*📊 Bakiye Mutabakat Ekstresi*
+*{company_name}*
+
+🏦 Hesap: {account_name}
+🔖 Kod: {account_code}
+🕐 Tarih: {date}
+
+━━━━━━━━━━━━━━━
+
+{balances_block}
+
+━━━━━━━━━━━━━━━
+
+Lütfen yukarıdaki bakiyeleri kontrol edip onaylayınız.
+İş birliğiniz için teşekkür ederiz 🙏`
+  };
+
+  // اسم العملة المعروض في السطر (نفس منطق fmtBal القديم: موجب = "لكم"،
+  // سالب = "لنا") مترجم حسب اللغة الحالية.
+  const _BAL_WORDS = {
+    ar: { owe_them: 'لكم', owe_us: 'لنا' },
+    en: { owe_them: 'you owe', owe_us: 'owed to you' },
+    tr: { owe_them: 'borcunuz', owe_us: 'alacağınız' }
+  };
+
+  function _fmtBalWord(n, lang) {
+    const words = _BAL_WORDS[lang] || _BAL_WORDS.ar;
+    if (n === 0) return '0.00';
+    return n < 0 ? `${words.owe_us} ${Math.abs(n).toFixed(2)}` : `${words.owe_them} ${n.toFixed(2)}`;
+  }
+
+  // يبني سطر أرصدة ديناميكي لكل عملة مفعّلة حالياً (بدل usd/eur فقط)
+  // balances: [{ code, symbol, value }]
+  function buildBalancesBlock(balances, lang) {
+    const emoji = { usd: '💵', eur: '💶', try: '💴', gbp: '💷' };
+    return balances.map(b => {
+      const icon = emoji[b.code.toLowerCase()] || '💰';
+      return `${icon} ${b.code.toUpperCase()}: ${_fmtBalWord(b.value, lang)}${b.symbol}`;
+    }).join('\n\n');
+  }
+
+  async function getReconciliationTemplate(lang) {
     const a = await getAssets();
-    return a.reconciliation_msg || DEFAULT_RECONCILIATION_MSG;
+    if (a.reconciliation_msg) return a.reconciliation_msg; // تخصيص المستخدم يبقى كما هو بغض النظر عن اللغة
+    return DEFAULT_RECONCILIATION_MSG[lang] || DEFAULT_RECONCILIATION_MSG.ar;
   }
 
   async function saveReconciliationTemplate(text) {
@@ -146,6 +208,7 @@ const DEFAULT_RECONCILIATION_MSG =
     getAssets, saveAssets, invalidate,
     injectLogo, logoHTML,
     signatureBlockHTML, injectSignatureBlock,
-    DEFAULT_RECONCILIATION_MSG, getReconciliationTemplate, saveReconciliationTemplate, fillTemplate
+    DEFAULT_RECONCILIATION_MSG, getReconciliationTemplate, saveReconciliationTemplate, fillTemplate,
+    buildBalancesBlock
   };
 })();
