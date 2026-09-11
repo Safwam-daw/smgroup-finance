@@ -246,10 +246,7 @@
     <div id="op-dep-wit">
       <div class="form-group">
         <label data-i18n="currency_lbl">العملة</label>
-        <select id="op-cur">
-          <option value="usd" data-i18n="cur_usd_flag_code">🇺🇸 دولار USD</option>
-          <option value="eur" data-i18n="cur_eur_flag_code">🇪🇺 يورو EUR</option>
-        </select>
+        <select id="op-cur" class="currency-select"></select>
       </div>
       <div class="form-group">
         <label data-i18n="amount_lbl">المبلغ</label>
@@ -292,10 +289,7 @@
       <div class="grid-2">
         <div class="form-group">
           <label data-i18n="currency_lbl">العملة</label>
-          <select id="op-trf-cur">
-            <option value="usd" data-i18n="cur_usd_flag">🇺🇸 دولار</option>
-            <option value="eur" data-i18n="cur_eur_flag">🇪🇺 يورو</option>
-          </select>
+          <select id="op-trf-cur" class="currency-select"></select>
         </div>
         <div class="form-group">
           <label data-i18n="exchange_rate_lbl">سعر الصرف</label>
@@ -896,7 +890,7 @@ function goPage(p) {
 }
 
 // ── أزرار العمليات ────────────────────────────────────
-function openOp(type) {
+async function openOp(type) {
   _opType = type;
   const titles = {dep: I18n.t('dep_prefix'), wit: I18n.t('wit_prefix'), trf: I18n.t('trf_prefix')};
   document.getElementById('op-title').textContent = titles[type] + _accObj.name;
@@ -904,6 +898,10 @@ function openOp(type) {
   // إظهار/إخفاء الأقسام
   document.getElementById('op-dep-wit').style.display = type!=='trf' ? 'block' : 'none';
   document.getElementById('op-trf').style.display      = type==='trf'  ? 'block' : 'none';
+
+  // تحديث قائمة العملات ديناميكياً (تعكس أي عملة فُعِّلت حديثاً) بدل
+  // الاعتماد على خيارات usd/eur ثابتة في الـ HTML
+  await Currency.refreshSelects('usd');
 
   // لون زر التأكيد
   const btn = document.getElementById('op-confirm-btn');

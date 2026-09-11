@@ -129,10 +129,7 @@
           <h3 id="acc-header-name">—</h3>
           <p id="acc-header-meta">—</p>
         </div>
-        <div class="bal-chips">
-          <div class="bal-chip" id="chip-usd">🇺🇸 <span id="bal-usd">$0.00</span></div>
-          <div class="bal-chip" id="chip-eur">🇪🇺 <span id="bal-eur">€0.00</span></div>
-        </div>
+        <div class="bal-chips" id="bal-chips"></div>
       </div>
 
       <!-- فلاتر -->
@@ -249,8 +246,7 @@
 <script src="js/i18n.js"></script>
 <script>
 let _currentAccId = null;
-let _currentBalUsd = 0;
-let _currentBalEur = 0;
+let _currentBalances = {};
 let _allTxns      = [];
 let _allAccounts  = [];
 function typeLabel(type) {
@@ -322,6 +318,12 @@ function clearQuick() {
   document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
 }
 
+// أعلام/رموز لكل عملة في شرائح الرصيد — احتياطي 💱 لأي عملة مستقبلية
+const _CUR_FLAG = {
+  usd:'🇺🇸', eur:'🇪🇺', try:'🇹🇷', gbp:'🇬🇧', sar:'🇸🇦', aed:'🇦🇪', egp:'🇪🇬',
+  jod:'🇯🇴', kwd:'🇰🇼', qar:'🇶🇦', mad:'🇲🇦', lyd:'🇱🇾', gold:'🥇', silver:'🥈'
+};
+
 // ── Load Statement ────────────────────────────────────
 async function loadStatement() {
   const id = document.getElementById('stmt-acc-id').value;
@@ -329,14 +331,14 @@ async function loadStatement() {
   _currentAccId = id;
   UI.showLoading(true);
   const acc = _allAccounts.find(a=>a.id===id) || await Accounts.getById(id);
-  const [usd, eur, txns] = await Promise.all([
-    Storage.getBalance(id,'usd'),
-    Storage.getBalance(id,'eur'),
+  const activeCurrencies = await Currency.getActive();
+  const [balances, txns] = await Promise.all([
+    Promise.all(activeCurrencies.map(c => Storage.getBalance(id, c.code))),
     Storage.getTxns({ acc: id })
   ]);
   _allTxns = (id === CONFIG.PROFIT_ACCOUNT_ID) ? txns : txns.filter(x => !x.is_commission_entry);
-  _currentBalUsd = usd;
-  _currentBalEur = eur;
+  _currentBalances = {};
+  activeCurrencies.forEach((c,i) => { _currentBalances[c.code.toLowerCase()] = parseFloat(balances[i]||0); });
   UI.showLoading(false);
 
   // header
@@ -344,22 +346,22 @@ async function loadStatement() {
   document.getElementById('acc-header-meta').textContent =
     (acc.type==='company'?t('company_type_lbl'):t('customer_type_lbl')) + ' · ' + t('created_at_lbl') + ' ' + (acc.created_at ? UI.formatDate(acc.created_at) : '—');
 
-  // رصيد chips: أخضر للموجب، أحمر للسالب
-  const setChip = (chipId, valId, val, sym) => {
-    const chip = document.getElementById(chipId);
-    document.getElementById(valId).textContent = Currency.formatMoney(val, sym);
-    chip.classList.remove('chip-pos', 'chip-neg');
-    chip.classList.add(val < 0 ? 'chip-neg' : 'chip-pos');
-  };
-  setChip('chip-usd','bal-usd', usd, '$');
-  setChip('chip-eur','bal-eur', eur, '€');
+  // شرائح الرصيد: سطر لكل عملة مفعّلة — أخضر للموجب، أحمر للسالب
+  const chipsBox = document.getElementById('bal-chips');
+  chipsBox.innerHTML = activeCurrencies.map(c => {
+    const code = c.code.toLowerCase();
+    const val  = _currentBalances[code] || 0;
+    return `<div class="bal-chip ${val<0?'chip-neg':'chip-pos'}" id="chip-${code}">
+      ${_CUR_FLAG[code]||'💱'} <span id="bal-${code}">${Currency.formatMoney(val, c.symbol)}</span>
+    </div>`;
+  }).join('');
 
   document.getElementById('acc-header-box').style.display = 'block';
   renderRows();
 }
 
 // ── Render Rows (جدول مستقل لكل عملة) ──────────────────
-function renderRows() {
+async function renderRows() {
   const fType = document.getElementById('f-type').value;
   const fCur  = document.getElementById('f-cur').value;
   const fFrom = document.getElementById('f-from').value;
@@ -371,6 +373,12 @@ function renderRows() {
   if (fFrom) { const [y,m,d]=fFrom.split('-').map(Number); rows = rows.filter(t => new Date(t.date) >= new Date(y,m-1,d,0,0,0,0)); }
   if (fTo)   { const [y,m,d]=fTo.split('-').map(Number);   rows = rows.filter(t => new Date(t.date) <= new Date(y,m-1,d,23,59,59,999)); }
 
+  // خريطة رمز العملة (لكل العملات المفعّلة، وليس $/€ فقط) لاستخدامها
+  // في buildRow أدناه بدل الافتراض الثنائي القديم.
+  const activeCurrencies = await Currency.getActive();
+  const symMap = {};
+  activeCurrencies.forEach(c => { symMap[c.code.toLowerCase()] = c.symbol; });
+
   const canEdit = Auth.isAdmin();
   const isProfitAcc = _currentAccId === CONFIG.PROFIT_ACCOUNT_ID || _currentAccId === CONFIG.TREASURY_ACCOUNT_ID;
   const container = document.getElementById('stmt-tables-container');
@@ -381,7 +389,7 @@ function renderRows() {
   const th3Label = t('col_net_lbl') || 'الصافي';
 
   function buildRow(tx) {
-    const sym    = (tx.cur||'').toLowerCase()==='usd'?'$':'€';
+    const sym    = symMap[(tx.cur||'').toLowerCase()] || '';
     const isFrom = tx.type==='trf' && tx.from===_currentAccId;
     const isTo   = tx.type==='trf' && tx.to===_currentAccId;
     const isFeeIn = tx.type==='dep' && tx.is_commission_entry && tx.acc===CONFIG.PROFIT_ACCOUNT_ID;
@@ -472,9 +480,11 @@ function renderRows() {
     return;
   }
 
-  const currencies = ['usd','eur'].filter(c => fCur === 'all' || fCur === c);
+  const currencies = activeCurrencies
+    .map(c => c.code.toLowerCase())
+    .filter(c => fCur === 'all' || fCur === c);
   const groups = currencies
-    .map(cur => ({ cur, sym: cur==='usd'?'$':'€', bal: cur==='usd'?_currentBalUsd:_currentBalEur,
+    .map(cur => ({ cur, sym: symMap[cur] || '', bal: _currentBalances[cur] || 0,
                     rows: rows.filter(tx => (tx.cur||'').toLowerCase() === cur) }))
     .filter(g => g.rows.length > 0);
 

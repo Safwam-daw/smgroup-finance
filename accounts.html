@@ -105,7 +105,7 @@
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;align-self:flex-end;">
-          <button class="btn btn-ghost btn-sm" onclick="checkAllBalances()" data-i18n="check_all_bal_btn_lbl">🔍 فحص جميع الأرصدة</button>
+          <button class="btn btn-ghost btn-sm" id="check-all-bal-btn" onclick="checkAllBalances()" style="display:none;" data-i18n="check_all_bal_btn_lbl">🔍 فحص جميع الأرصدة</button>
         </div>
       </div>
     </div>
@@ -172,6 +172,7 @@ let _rawAccounts = [];
   await UI.updateTreasury();
   if (!Auth.isAdmin()) document.getElementById('open-create-btn').style.display='none';
   if (Auth.isAdmin()) document.getElementById('publish-all-btn').style.display='inline-flex';
+  if (Auth.isAdmin()) document.getElementById('check-all-bal-btn').style.display='inline-flex';
   await refreshCode();
   await loadAccounts();
   I18n.apply();

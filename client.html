@@ -461,6 +461,7 @@ clientApplyTheme(localStorage.getItem('smg_theme') || 'dark');
   ClientI18n.applyAll();
 })();
 let _acc = null, _allTxns = [], _filtered = [], _page = 1, _printMode = false;
+let _curSymMap = {}; // كود العملة (lowercase) → رمزها — يُبنى في loadPortal()
 function typeLabel(type) {
   const ct = ClientI18n.ct;
   const map = {dep: ct('type_dep'), wit: ct('type_wit'), trf: ct('type_trf'), fee: ct('type_fee')};
@@ -567,31 +568,45 @@ async function loadPortal() {
     const el=document.getElementById(id); if(el) el.textContent=now;
   });
 
-  // ملاحظة: bal_usd/bal_eur هنا هي آخر لقطة مُنشَرة، وليست الرصيد
-  // الحي — إن لم يُنشر أي كشف بعد لهذا الحساب تكون القيمتان null
-  const neverPublished = _acc.bal_usd === null || _acc.bal_usd === undefined;
-  const usd = neverPublished ? null : parseFloat(_acc.bal_usd || 0);
-  const eur = neverPublished ? null : parseFloat(_acc.bal_eur || 0);
+  // ملاحظة: acc.balances هنا هي آخر لقطة مُنشَرة (لكل العملات)، وليست
+  // الرصيد الحي — إن لم يُنشر أي كشف بعد لهذا الحساب تكون null
+  const neverPublished = !_acc.balances && (_acc.bal_usd === null || _acc.bal_usd === undefined);
   const pubAt = _acc.client_published_at;
+  // توافق خلفي: حسابات نُشرت قبل V39 ليس لديها balances بعد، لذا
+  // نبني منها usd/eur فقط حتى يُعاد نشر كشفها بالنظام الجديد
+  const balances = _acc.balances || (neverPublished ? null : { usd: _acc.bal_usd, eur: _acc.bal_eur });
 
   // اسم ومعلومات
   document.getElementById('p-name').textContent = _acc.name;
   document.getElementById('p-meta').textContent = ClientI18n.ct('acc_id_lbl') + ' ' + _acc.id;
   document.title = brandName() + ' — ' + _acc.name;
 
-  // أرصدة — أحمر سالب / أخضر موجب / لون العملة نفسها للصفر (ذهبي
-  // للدولار، بنفسجي لليورو — نفس اصطلاح صفحة الحساب الداخلية) /
-  // رمادي "—" إن لم يُنشر كشف بعد
-  const _balCls = (v, zeroCls) => v === null ? '' : v < 0 ? 'bal-neg' : v > 0 ? 'bal-pos' : zeroCls;
-  document.getElementById('p-bals').innerHTML = `
-    <div class="bal-box ${_balCls(usd,'bal-zero-usd')}">
-      <div class="bal-label">${ClientI18n.ct('bal_usd')}</div>
-      <div class="bal-val">${usd === null ? '—' : Currency.formatMoney(usd,'$')}</div>
-    </div>
-    <div class="bal-box ${_balCls(eur,'bal-zero-eur')}">
-      <div class="bal-label">${ClientI18n.ct('bal_eur')}</div>
-      <div class="bal-val">${eur === null ? '—' : Currency.formatMoney(eur,'€')}</div>
-    </div>`;
+  // أرصدة — سطر/صندوق لكل عملة مفعّلة حالياً (بدل USD/EUR ثابتين).
+  // USD وEUR يظهران دائماً؛ باقي العملات تظهر فقط إن كان لها رصيد
+  // غير صفري في آخر لقطة منشورة — نفس مبدأ رسالة المطابقة.
+  const _balCls = (v, zeroCls) => v === null || v === undefined ? '' : v < 0 ? 'bal-neg' : v > 0 ? 'bal-pos' : zeroCls;
+  const ALWAYS_SHOW = ['usd', 'eur'];
+  const activeCurrencies = await Currency.getActive();
+  _curSymMap = {};
+  activeCurrencies.forEach(c => { _curSymMap[c.code.toLowerCase()] = c.symbol; });
+  const zeroClsMap = { usd: 'bal-zero-usd', eur: 'bal-zero-eur' };
+  document.getElementById('p-bals').innerHTML = activeCurrencies
+    .filter(c => {
+      const code = c.code.toLowerCase();
+      if (ALWAYS_SHOW.includes(code)) return true;
+      const v = balances ? balances[code] : null;
+      return v !== null && v !== undefined && parseFloat(v) !== 0;
+    })
+    .map(c => {
+      const code = c.code.toLowerCase();
+      const v = balances ? balances[code] : null;
+      const val = (v === null || v === undefined) ? null : parseFloat(v);
+      const label = ClientI18n.ct('bal_' + code) || (c.symbol + ' ' + c.name);
+      return `<div class="bal-box ${_balCls(val, zeroClsMap[code]||'')}">
+        <div class="bal-label">${label}</div>
+        <div class="bal-val">${val === null ? '—' : Currency.formatMoney(val, c.symbol)}</div>
+      </div>`;
+    }).join('');
 
   // ملاحظة التحديث
   const pubEl = document.getElementById('p-pub');
@@ -661,8 +676,7 @@ function renderPage() {
 
   document.getElementById('p-tbody').innerHTML = page.length
     ? page.map(t => {
-        const _cm={'usd':'$','eur':'€','try':'₺','gbp':'£','sar':'﷼','aed':'د.إ','egp':'ج.م','jod':'د.أ','kwd':'د.ك','qar':'ر.ق','mad':'د.م','lyd':'ل.د'};
-        const sym=_cm[(t.cur||'usd').toLowerCase()]||(t.cur||'').toUpperCase();
+        const sym = _curSymMap[(t.cur||'usd').toLowerCase()] || (t.cur||'').toUpperCase();
         const isFrom = t.type==='trf' && t.from===accId;
         const isTo   = t.type==='trf' && t.to===accId;
 
