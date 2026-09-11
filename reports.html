@@ -323,8 +323,8 @@ window.addEventListener('afterprint', exitPrintMode);
 (async () => {
   if (!await initApp('reports')) return;
   if (!Auth.can('reports')) { navTo('accounts.html'); return; }
-  if (!Auth.can('audit')) document.getElementById('tab-btn-audit')?.remove();
-  if (!Auth.can('viewHistory')) document.getElementById('tab-btn-edits')?.remove();
+  // تبويبا التدقيق والتعديلات مدموجان الآن ضمن صلاحية "التقارير"
+  // نفسها — من يفتح هذه الصفحة أصلاً يرى التبويبين تلقائياً.
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   document.getElementById('print-report-brand').textContent = brandName() + ' — ' + t('financial_report_lbl');

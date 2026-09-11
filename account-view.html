@@ -536,8 +536,8 @@ const typeLabel  = () => ({dep: I18n.t('type_dep'), wit: I18n.t('type_wit'), trf
   }
 
   // زر نشر الكشف — صلاحية مستقلة (وليست حصراً على الأدمن) حتى
-  // يقدر أي موظف يملك صلاحية "نشر الكشوفات" استخدامه
-  if (Auth.can('publishStatements') && _accObj.type === 'customer') {
+  // يقدر أي موظف يملك صلاحية "الكشوفات" استخدامه
+  if (Auth.can('statement') && _accObj.type === 'customer') {
     const pubBtn = document.getElementById('publish-btn');
     if (pubBtn) pubBtn.style.display = 'inline-flex';
   }

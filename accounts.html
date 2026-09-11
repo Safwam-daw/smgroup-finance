@@ -167,11 +167,11 @@ let _rawAccounts = [];
 
 (async () => {
   if (!await initApp('accounts')) return;
-  if (!Auth.can('clientPortal')) document.getElementById('client-portal-btn')?.remove();
+  if (!Auth.can('statement')) document.getElementById('client-portal-btn')?.remove();
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   if (!Auth.isAdmin()) document.getElementById('open-create-btn').style.display='none';
-  if (Auth.can('publishStatements')) document.getElementById('publish-all-btn').style.display='inline-flex';
+  if (Auth.can('statement')) document.getElementById('publish-all-btn').style.display='inline-flex';
   if (Auth.isAdmin()) document.getElementById('check-all-bal-btn').style.display='inline-flex';
   await refreshCode();
   await loadAccounts();
