@@ -110,9 +110,23 @@ const UI = (() => {
     if (!toggle || !sidebar) return;
     toggle.addEventListener('click', () => toggleSidebar(true));
     if (overlay) overlay.addEventListener('click', () => toggleSidebar(false));
+
+    // زر الرجوع في الهاتف: إن كانت القائمة الجانبية مفتوحة، أول ضغطة
+    // تُغلقها فقط بدل مغادرة الصفحة — وأي ضغطة ثانية بعدها ترجع
+    // للصفحة السابقة كالمعتاد. نحقق هذا بدفع حالة تاريخ وهمية عند
+    // فتح القائمة، والاستماع لـ popstate لإغلاقها عند استهلاك تلك
+    // الحالة (سواء بزر الرجوع الفعلي أو بإغلاق القائمة يدوياً).
+    window.addEventListener('popstate', () => {
+      if (sidebar.classList.contains('open')) {
+        _sidebarNavPushed = false;
+        _setSidebarUI(false);
+      }
+    });
   }
 
-  function toggleSidebar(open) {
+  let _sidebarNavPushed = false;
+
+  function _setSidebarUI(open) {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
     if (!sidebar) return;
@@ -121,9 +135,34 @@ const UI = (() => {
     document.body.style.overflow = open ? 'hidden' : '';
   }
 
+  function toggleSidebar(open) {
+    if (!document.getElementById('sidebar')) return;
+    if (open) {
+      _setSidebarUI(true);
+      if (!_sidebarNavPushed) {
+        _sidebarNavPushed = true;
+        history.pushState({ mobileSidebar: true }, '');
+      }
+    } else if (_sidebarNavPushed) {
+      // نترك معالج popstate أعلاه يتولى إغلاق الواجهة فعلياً بعد
+      // استهلاك حالة التاريخ الوهمية، حتى لا يحتاج المستخدم لضغطتي
+      // رجوع لاحقاً لمغادرة الصفحة
+      _sidebarNavPushed = false;
+      history.back();
+    } else {
+      _setSidebarUI(false);
+    }
+  }
+
   function closeSidebarOnNav() {
     document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => toggleSidebar(false));
+      btn.addEventListener('click', () => {
+        // إغلاق فوري للواجهة فقط بدون لمس history — الصفحة على وشك
+        // التنقّل لصفحة جديدة فعلياً، فاستدعاء history.back() هنا
+        // سيتعارض مع ذلك التنقّل الحقيقي
+        _sidebarNavPushed = false;
+        _setSidebarUI(false);
+      });
     });
   }
 

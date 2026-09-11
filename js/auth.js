@@ -10,19 +10,17 @@ const Auth = (() => {
   const ADMIN_PERMS = {
     dashboard:true, accounts:true, deposit:true, withdraw:true,
     transfer:true, ledger:true, statement:true, employees:true,
-    reports:true, audit:true, clientPortal:true,
-    viewTreasury:true, viewProfit:true,
+    reports:true, viewTreasury:true, viewProfit:true,
     canDelete:true, canEdit:true, exportBackup:true,
-    publishStatements:true, viewNotifications:true, viewHistory:true
+    viewNotifications:true
   };
 
   const DEFAULT_PERMS = {
     dashboard:false, accounts:true, deposit:true, withdraw:true,
     transfer:true, ledger:true, statement:true, employees:false,
-    reports:false, audit:false, clientPortal:false,
-    viewTreasury:false, viewProfit:false,
+    reports:false, viewTreasury:false, viewProfit:false,
     canDelete:false, canEdit:false, exportBackup:false,
-    publishStatements:false, viewNotifications:false, viewHistory:false
+    viewNotifications:false
   };
   
   function _saveSession(user) {
