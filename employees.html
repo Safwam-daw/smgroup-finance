@@ -40,6 +40,10 @@
 .perm-item input[type=checkbox] { width:16px; height:16px; accent-color:var(--gold); flex-shrink:0; }
 .perm-item label { font-size:0.78rem; cursor:pointer; user-select:none; }
 .perm-divider { grid-column:1/-1; border-top:1px solid var(--border); margin:4px 0; }
+.perm-section-label {
+  grid-column:1/-1; font-size:0.72rem; font-weight:700; color:var(--gold);
+  padding:8px 2px 2px; margin-top:2px; letter-spacing:0.02em;
+}
 
 .modal-back { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
   display:none;align-items:center;justify-content:center;padding:16px; }
@@ -179,6 +183,7 @@
 // تعريف الصلاحيات وتسمياتها
 function getPermDefs() {
   return [
+    { key:'SECTION', label: '🧑‍💼 ' + t('perm_section_basic') },
     { key:'dashboard',    label:'📊 '+t('nav_dashboard') },
     { key:'accounts',     label:'👥 '+t('nav_accounts') },
     { key:'deposit',      label:'💵 '+t('perm_deposit') },
@@ -186,10 +191,11 @@ function getPermDefs() {
     { key:'transfer',     label:'🔄 '+t('perm_transfer') },
     { key:'ledger',       label:'📒 '+t('nav_ledger') },
     { key:'statement',    label:'📋 '+t('nav_statement') },
+    { key:'publishStatements', label:'📤 '+t('perm_publish_statements') },
+    { key:'SECTION', label: '🛡️ ' + t('perm_section_admin') },
     { key:'employees',    label:'🛡️ '+t('nav_employees') },
     { key:'reports',      label:'📊 '+t('nav_reports') },
     { key:'audit',        label:'🔍 '+t('tab_audit') },
-    { key:'DIVIDER' },
     { key:'viewTreasury', label:'💰 '+t('perm_view_treasury') },
     { key:'viewProfit',   label:'📈 '+t('perm_view_profit') },
     { key:'canDelete',    label:'🗑️ '+t('perm_can_delete') },
@@ -222,6 +228,7 @@ function buildPermGrid(containerId, currentPerms, prefix='np') {
   const container = document.getElementById(containerId);
   container.innerHTML = getPermDefs().map((p,i) => {
     if (p.key==='DIVIDER') return `<div class="perm-divider"></div>`;
+    if (p.key==='SECTION') return `<div class="perm-section-label">${p.label}</div>`;
     const checked = currentPerms[p.key] ? 'checked' : '';
     return `<div class="perm-item">
       <input type="checkbox" id="${prefix}_${p.key}" ${checked}
@@ -237,7 +244,7 @@ function syncPermCheck(prefix, key) {
 
 function getGridPerms(prefix) {
   const perms = {};
-  getPermDefs().filter(p=>p.key!=='DIVIDER').forEach(p => {
+  getPermDefs().filter(p=>p.key!=='DIVIDER' && p.key!=='SECTION').forEach(p => {
     const el = document.getElementById(prefix + '_' + p.key);
     if (el) perms[p.key] = el.checked;
   });

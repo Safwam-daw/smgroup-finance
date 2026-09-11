@@ -171,7 +171,7 @@ let _rawAccounts = [];
   document.getElementById('treasury-placeholder').outerHTML = buildTreasuryBar();
   await UI.updateTreasury();
   if (!Auth.isAdmin()) document.getElementById('open-create-btn').style.display='none';
-  if (Auth.isAdmin()) document.getElementById('publish-all-btn').style.display='inline-flex';
+  if (Auth.can('publishStatements')) document.getElementById('publish-all-btn').style.display='inline-flex';
   if (Auth.isAdmin()) document.getElementById('check-all-bal-btn').style.display='inline-flex';
   await refreshCode();
   await loadAccounts();
