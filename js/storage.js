@@ -84,6 +84,17 @@ const Storage = (() => {
     return !error;
   }
 
+  // تحديث نسبة العمولة لكل حسابات الزبائن (type='customer') دفعة واحدة —
+  // لا تمس هذا حسابات الشركات أو حساب الأرباح/الخزينة. تخصيص عمولة
+  // زبون معين بعد هذا يبقى ممكناً من نفس زر تعديل الزبون كما هو.
+  async function updateAllCustomersCommission(rate) {
+    const { error } = await _sb.from('accounts').update({ commission_rate: rate }).eq('type', 'customer');
+    if (!error && _cache.accounts.data) {
+      _cache.accounts.data.filter(a => a.type === 'customer').forEach(a => { a.commission_rate = rate; });
+    }
+    return !error;
+  }
+
   function _balCol(currency) {
     return 'bal_' + currency.toLowerCase();
   }
@@ -849,7 +860,7 @@ const Storage = (() => {
   
   return {
   // accounts
-  getAccounts, saveAccount, updateAccount, getBalance, updateBalance,
+  getAccounts, saveAccount, updateAccount, updateAllCustomersCommission, getBalance, updateBalance,
   getTreasuryTotals, getTreasuryWithoutProfit, getProfitBalance, getCashboxBalance, invalidate,
   deleteAccount, getRecyclableId, ensureProfitAccount, ensureTreasuryAccount, getProfitAccountId,
 

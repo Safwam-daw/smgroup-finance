@@ -13,7 +13,7 @@ const Auth = (() => {
     reports:true, audit:true, clientPortal:true,
     viewTreasury:true, viewProfit:true,
     canDelete:true, canEdit:true, exportBackup:true,
-    viewAnalytics:true, viewNotifications:true, viewHistory:true
+    viewNotifications:true, viewHistory:true
   };
 
   const DEFAULT_PERMS = {
@@ -22,7 +22,7 @@ const Auth = (() => {
     reports:false, audit:false, clientPortal:false,
     viewTreasury:false, viewProfit:false,
     canDelete:false, canEdit:false, exportBackup:false,
-viewAnalytics:false, viewNotifications:false, viewHistory:false
+    viewNotifications:false, viewHistory:false
   };
   
   function _saveSession(user) {
