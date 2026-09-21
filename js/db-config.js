@@ -14,7 +14,7 @@ const DB_CONFIG = {
   url: 'https://qrdasgkegudvnobjwafc.supabase.co',
 
   // مفتاح Supabase الأصلي Public Anon Key
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU',
+  key: '11eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZGFzZ2tlZ3Vkdm5vYmp3YWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjI3NTMsImV4cCI6MjA5NjIzODc1M30.aFTETaS0MrbrL9G7GJ8nXM4-sJO-1l9NpKST-KAvnNU',
 
   // هوية التطبيق: هيدر نصي بسيط (وليس JWT) تتحقق منه is_app_request()
   // في قاعدة البيانات عبر request.headers — لا علاقة له بتوقيع JWT
